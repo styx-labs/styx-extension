@@ -17,8 +17,8 @@ const SourceItem: React.FC<SourceItemProps> = ({ citation }) => {
         className={`w-full flex items-center gap-3 ${isOpen ? "mb-4" : ""}`}
       >
         <div className="flex items-center gap-3 flex-grow min-w-0">
-          <ExternalLink className="w-5 h-5 text-blue-400 flex-shrink-0" />
-          <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full text-sm font-medium">
+          <ExternalLink className="w-5 h-5 text-purple-400 flex-shrink-0" />
+          <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-purple-100 text-purple-600 rounded-full text-sm font-medium">
             {citation.index}
           </span>
           <h3 className="text-gray-900 font-semibold text-xl truncate">
@@ -49,7 +49,7 @@ const SourceItem: React.FC<SourceItemProps> = ({ citation }) => {
             href={citation.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center text-blue-600 hover:text-blue-700"
+            className="mt-2 inline-flex items-center text-purple-600 hover:text-purple-700"
           >
             View source
             <ExternalLink className="w-4 h-4 ml-1" />

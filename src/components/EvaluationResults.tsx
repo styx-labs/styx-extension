@@ -26,7 +26,7 @@ const EvaluationResults: React.FC<EvaluationResultsProps> = ({
     return content.replace(/\[(\d+)\]\(([^)]+)\)/g, (_, num, url) => {
       const citation = citationsMap[parseInt(num)];
       if (!citation) return `[[${num}]]`;
-      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700">[${num}]</a>`;
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-purple-600 hover:text-purple-700">[${num}]</a>`;
     });
   };
 
