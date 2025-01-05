@@ -3,6 +3,7 @@ import { Loader2, Send, AlertCircle } from "lucide-react";
 import EvaluationResults from "./EvaluationResults";
 import Section from "./Section";
 import type { EvaluationResponse } from "../types";
+import ReachoutMessage from "./ReachoutMessage";
 
 interface EvaluationFormProps {
   jobDescription: string;
@@ -63,12 +64,20 @@ const EvaluationForm: React.FC<EvaluationFormProps> = ({
       )}
 
       {(evaluation || loading) && (
-        <Section title="Evaluation Results">
-          <EvaluationResults
-            evaluation={evaluation || { sections: [], citations: [] }}
-            loading={loading}
-          />
-        </Section>
+        <>
+          {evaluation && !loading && (
+            <ReachoutMessage
+              jobDescription={jobDescription}
+              evaluation={evaluation}
+            />
+          )}
+          <Section title="Evaluation Results">
+            <EvaluationResults
+              evaluation={evaluation || { sections: [], citations: [] }}
+              loading={loading}
+            />
+          </Section>
+        </>
       )}
     </div>
   );
