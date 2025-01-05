@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.overlay {
+  position: fixed;
+  top: 10%;
+  right: 0;
+  pointer-events: none; /* Allows clicking through the overlay */
+}
+
+/* Extension container */
+.extension-container {
+  pointer-events: auto;
+  transform-origin: right;
+  transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, width, opacity;
+  max-height: 600px;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: -4px 0 32px rgba(0, 0, 0, 0.12), 0 0 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Modern typography */
+.extension-container {
+  @apply text-base antialiased;
+  font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+}
+
+.extension-container h1 {
+  @apply text-2xl font-bold tracking-tight;
+  background: linear-gradient(135deg, #1a365d 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.extension-container h2 {
+  @apply text-xl font-semibold;
+}
+
+.extension-container h3 {
+  @apply text-lg font-medium;
+}
+
+/* Modern form elements */
+.extension-container textarea {
+  @apply text-base leading-relaxed;
+  background: linear-gradient(to bottom, #f8fafc, #fff);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: all 200ms ease-out;
+}
+
+.extension-container textarea:focus {
+  background: #fff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* Modern button styles */
+.btn-primary {
+  @apply bg-gradient-to-r from-blue-600 to-blue-500;
+  @apply hover:from-blue-700 hover:to-blue-600;
+  @apply active:from-blue-800 active:to-blue-700;
+  @apply transition-all duration-200 ease-out;
+  @apply shadow-lg shadow-blue-500/20;
+}
+
+/* Results styling */
+.evaluation-results {
+  @apply space-y-6;
+}
+
+.result-card {
+  @apply bg-gradient-to-b from-gray-50 to-white;
+  @apply border border-gray-100;
+  @apply shadow-sm;
+  @apply transition-all duration-200;
+  @apply hover:shadow-md hover:border-gray-200;
+}
+
+/* Tab indicator when closed */
+.extension-tab-closed {
+  position: relative;
+}
+
+/* .extension-tab-closed::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, #3b82f6 0%, #2563eb 100%);
+  opacity: 0.9;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+} */
