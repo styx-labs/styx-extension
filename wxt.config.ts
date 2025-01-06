@@ -7,6 +7,12 @@ export default defineConfig({
     description: "Evaluate LinkedIn profiles against job descriptions",
     permissions: ["storage"],
     version: "1.0",
+    web_accessible_resources: [
+      {
+        matches: ["<all_urls>"],
+        resources: ["assets/styx.svg", "icon/*.png"],
+      },
+    ],
   },
   extensionApi: "chrome",
   modules: ["@wxt-dev/module-react"],

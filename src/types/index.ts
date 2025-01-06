@@ -15,3 +15,11 @@ export interface EvaluationResponse {
   citations: Citation[];
   sections: EvaluationSection[];
 }
+
+export interface Job {
+  id: string;
+  job_description: string;
+  key_traits: string[];
+  company_name: string;
+  job_title: string;
+}

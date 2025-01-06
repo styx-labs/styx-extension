@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { EvaluationResponse, Citation } from "../types";
+import type { EvaluationResponse, Citation } from "@/types";
 import ResultItem from "./ResultItem";
 import SourceItem from "./SourceItem";
 import Section from "./Section";

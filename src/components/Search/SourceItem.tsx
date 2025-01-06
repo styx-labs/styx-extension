@@ -1,7 +1,7 @@
 import React from "react";
 import { ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
-import type { Citation } from "../types";
-import { formatConfidence } from "../utils/formatters";
+import type { Citation } from "@/types";
+import { formatConfidence } from "@/utils/formatters";
 
 interface SourceItemProps {
   citation: Citation;

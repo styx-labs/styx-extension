@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { ClipboardCheck, Loader2, MessageSquare } from "lucide-react";
 import Section from "./Section";
-import { generateReachout } from "../utils/apiUtils";
-import type { EvaluationResponse } from "../types";
+import { generateReachout } from "@/utils/apiUtils";
+import type { EvaluationResponse } from "@/types";
 
 interface ReachoutMessageProps {
   jobDescription: string;

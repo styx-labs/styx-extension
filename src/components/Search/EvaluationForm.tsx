@@ -2,7 +2,7 @@ import React from "react";
 import { Loader2, Send, AlertCircle } from "lucide-react";
 import EvaluationResults from "./EvaluationResults";
 import Section from "./Section";
-import type { EvaluationResponse } from "../types";
+import type { EvaluationResponse } from "@/types";
 import ReachoutMessage from "./ReachoutMessage";
 
 interface EvaluationFormProps {

@@ -15,6 +15,25 @@
     "tabs",
     "scripting"
   ],
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "resources": [
+        "assets/styx.svg",
+        "icon/*.png"
+      ]
+    },
+    {
+      "resources": [
+        "content-scripts/content.css"
+      ],
+      "matches": [
+        "*://*.linkedin.com/*"
+      ]
+    }
+  ],
   "commands": {
     "wxt:reload-extension": {
       "description": "Reload the extension during development",
@@ -29,16 +48,6 @@
   "host_permissions": [
     "*://*.linkedin.com/*",
     "http://localhost/*"
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "content-scripts/content.css"
-      ],
-      "matches": [
-        "*://*.linkedin.com/*"
-      ]
-    }
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval' http://localhost:3000; object-src 'self';",

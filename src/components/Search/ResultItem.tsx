@@ -1,6 +1,6 @@
 import React from "react";
 import { Star, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
-import type { EvaluationSection } from "../types";
+import type { EvaluationSection } from "@/types";
 
 interface ResultItemProps {
   section: EvaluationSection;

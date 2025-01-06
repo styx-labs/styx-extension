@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import EvaluationForm from "./EvaluationForm";
 import ExtensionTab from "./ExtensionTab";
 import { useExtensionState } from "@/hooks/useExtensionState";
-import type { EvaluationResponse } from "../types";
-import { evaluateProfile } from "../utils/apiUtils";
-import { saveToStorage, loadFromStorage } from "../utils/storage";
+import type { EvaluationResponse } from "@/types";
+import { evaluateProfile } from "@/utils/apiUtils";
+import { saveToStorage, loadFromStorage } from "@/utils/storage";
 
 const ExtensionUI: React.FC = () => {
   const { isExpanded, toggleExpansion } = useExtensionState();
