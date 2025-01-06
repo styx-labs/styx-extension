@@ -11,10 +11,9 @@
     "128": "icon/128.png"
   },
   "permissions": [
-    "activeTab",
-    "scripting",
     "storage",
-    "tabs"
+    "tabs",
+    "scripting"
   ],
   "commands": {
     "wxt:reload-extension": {
