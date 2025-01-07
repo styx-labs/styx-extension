@@ -239,7 +239,10 @@ const JobsList: React.FC = () => {
     >
       <JobHeader isExpanded={isExpanded} onToggle={toggleExpansion} />
       {isExpanded && (
-        <div className="p-6">
+        <div
+          className="p-6"
+          style={{ maxHeight: "calc(600px - 80px)", overflowY: "auto" }}
+        >
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
             Click to add a candidate to this job
           </h2>
