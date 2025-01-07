@@ -52,7 +52,7 @@ const NoJobsState = () => (
         Add jobs through the Styx dashboard to start evaluating candidates.
       </p>
       <a
-        href="https://styx-ui-16250094868.us-central1.run.app/"
+        href="https://app.styxlabs.co/"
         target="_blank"
         rel="noopener noreferrer"
         className="btn-primary w-full flex items-center justify-center px-6 py-3 text-base font-medium text-white rounded-xl"
@@ -86,7 +86,7 @@ const JobHeader = ({
         >
           <div className="flex items-center gap-2">
             <img
-              src={chrome?.runtime?.getURL("icon/128.png")}
+              src={chrome.runtime.getURL("../../icon/128.png")}
               alt="Styx Logo"
               className="w-6 h-6"
             />
@@ -246,7 +246,7 @@ const JobsList: React.FC = () => {
   return (
     <div
       className={`extension-container bg-white rounded-l-lg shadow-lg ${
-        isExpanded ? "w-[450px]" : "w-18"
+        isExpanded ? "w-[450px]" : "w-20"
       }`}
     >
       <JobHeader isExpanded={isExpanded} onToggle={toggleExpansion} />
