@@ -93,7 +93,7 @@ const JobHeader = ({
         >
           <div className="flex items-center gap-2">
             <img
-              src={chrome.runtime.getURL("icon/128.png")}
+              src={chrome?.runtime?.getURL("icon/128.png")}
               alt="Styx Logo"
               className="w-6 h-6"
             />
@@ -111,7 +111,7 @@ const JobHeader = ({
         <ChevronRight className="w-6 h-6" strokeWidth={2} stroke="#9333ea" />
       ) : (
         <img
-          src={chrome.runtime.getURL("icon/128.png")}
+          src={chrome?.runtime?.getURL("icon/128.png")}
           alt="Styx Logo"
           className="w-6 h-6 object-contain"
         />
@@ -136,7 +136,7 @@ const JobCard = ({
     onClick={(e) => {
       // Prevent redirect if clicking the add candidate button
       if (!(e.target as HTMLElement).closest("button")) {
-        window.open(`https://app.styxlabs.co/${job.id}`, "_blank");
+        window.open(`https://app.styxlabs.co/jobs/${job.id}`, "_blank");
       }
     }}
   >
