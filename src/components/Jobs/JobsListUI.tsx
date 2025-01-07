@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getJobs } from "../../utils/apiUtils";
 import type { Job } from "../../types";
-import {
-  Loader2,
-  CircleAlert,
-  Plus,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Loader2, CircleAlert, Plus, Check, ChevronRight } from "lucide-react";
 import { useExtensionState } from "@/hooks/useExtensionState";
 
 const LoadingState = () => (
@@ -196,8 +189,27 @@ const JobsList: React.FC = () => {
     };
 
     fetchJobs();
-    setCurrentUrl(window.location.href);
   }, []);
+
+  React.useEffect(() => {
+    setCurrentUrl(window.location.href);
+
+    const observer = new MutationObserver(() => {
+      const newUrl = window.location.href;
+      if (newUrl !== currentUrl) {
+        setCurrentUrl(newUrl);
+        setAddedJobs(new Set());
+        setLoadingJobs(new Set());
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => observer.disconnect();
+  }, [currentUrl]);
 
   const handleCreateCandidate = async (jobId: string) => {
     try {
