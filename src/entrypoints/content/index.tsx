@@ -1,5 +1,5 @@
 import ReactDOM from "react-dom/client";
-import JobsListUI from "@/components/Jobs/JobsListUI";
+import App from "@/components/App";
 import { ContentScriptContext } from "wxt/client";
 import "./style.css";
 
@@ -33,7 +33,7 @@ function createUI(ctx: ContentScriptContext) {
 
       // Create a root on the UI container and render a component
       const root = ReactDOM.createRoot(shadowDOM);
-      root.render(<JobsListUI />);
+      root.render(<App />);
       return root;
     },
     onRemove: (root) => {

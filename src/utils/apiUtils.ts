@@ -158,3 +158,39 @@ export const getLinkedinContext = async (
     );
   }
 };
+
+export const createCandidatesBulk = async (
+  jobId: string,
+  urls: string[]
+): Promise<{ processed: number; total: number } | null> => {
+  const token = await getAuthToken();
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/jobs/${jobId}/candidates_bulk`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ urls }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to create candidates in bulk");
+    }
+
+    return response.json();
+  } catch (error) {
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "Failed to create candidates in bulk"
+    );
+  }
+};
