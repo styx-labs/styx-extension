@@ -1,0 +1,94 @@
+import React from "react";
+import { createCandidatesBulk } from "../../utils/apiUtils";
+import { useJobsState } from "../../hooks/useJobsState";
+import { useUrlWatcher } from "../../hooks/useUrlWatcher";
+import JobsContainer from "./JobsContainer";
+
+const BulkJobsList: React.FC = () => {
+  const {
+    jobs,
+    loading,
+    error,
+    addedJobs,
+    loadingJobs,
+    setError,
+    setAddedJobs,
+    setLoadingJobs,
+  } = useJobsState();
+
+  const currentUrl = useUrlWatcher(() => {
+    setAddedJobs(new Set());
+    setLoadingJobs(new Set());
+  });
+
+  const handleCreateCandidate = async (jobId: string) => {
+    try {
+      setLoadingJobs((prev) => new Set([...prev, jobId]));
+
+      // Find all LinkedIn profile links on the page
+      const links = Array.from(
+        document.querySelectorAll('a[href*="linkedin.com/in/"]')
+      )
+        .map((a) => a.getAttribute("href"))
+        .filter((href): href is string => {
+          if (!href || !href.includes("/in/")) return false;
+          // Check if the part after /in/ starts with ACoAA (which indicates a profile ID)
+          const parts = href.split("/in/");
+          if (parts.length !== 2) return false;
+          const profilePart = parts[1].split("?")[0]; // Get the part before any query parameters
+          return !profilePart.startsWith("ACoAA");
+        })
+        .map((href) => {
+          // Clean up the URL to get just the base profile URL
+          const parts = href.split("/in/");
+          const profilePart = parts[1].split("?")[0]; // Remove query parameters
+          return `https://www.linkedin.com/in/${profilePart}`;
+        });
+
+      // Deduplicate the links using Set
+      const uniqueLinks = [...new Set(links)];
+      console.log("Found unique profiles:", uniqueLinks);
+
+      if (uniqueLinks.length === 0) {
+        setError("No valid LinkedIn profile links found on this page");
+        return;
+      }
+
+      // Send all URLs in one request
+      const result = await createCandidatesBulk(jobId, uniqueLinks);
+      if (result === null) {
+        setError("not_authenticated");
+        return;
+      }
+
+      console.log(
+        `Successfully processed ${result.processed} out of ${result.total} profiles`
+      );
+      setAddedJobs((prev) => new Set([...prev, jobId]));
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to create candidates"
+      );
+    } finally {
+      setLoadingJobs((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(jobId);
+        return newSet;
+      });
+    }
+  };
+
+  return (
+    <JobsContainer
+      title="Click to add all candidates to this job"
+      onAddCandidate={handleCreateCandidate}
+      isAdded={(id) => addedJobs.has(id)}
+      isLoading={(id) => loadingJobs.has(id)}
+      jobs={jobs}
+      loading={loading}
+      error={error}
+    />
+  );
+};
+
+export default BulkJobsList;
