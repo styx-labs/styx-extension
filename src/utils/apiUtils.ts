@@ -1,4 +1,4 @@
-import type { EvaluationResponse, Job } from "../types";
+import type { EvaluationResponse, Job, LinkedinContext } from "../types";
 
 async function getAuthToken(): Promise<string | null> {
   return new Promise((resolve) => {
@@ -46,9 +46,46 @@ export const getJobs = async (): Promise<Job[] | null> => {
   }
 };
 
+export const getRecommendedJobs = async (
+  context: string
+): Promise<Job[] | null> => {
+  const token = await getAuthToken();
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/jobs_recommend?context=${encodeURIComponent(context)}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to get recommended jobs: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.jobs;
+  } catch (error) {
+    console.error("Error fetching recommended jobs:", error);
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to get recommended jobs"
+    );
+  }
+};
+
 export const createCandidate = async (
   jobId: string,
-  url: string
+  url?: string,
+  name?: string,
+  context?: string,
+  public_identifier?: string
 ): Promise<string | null> => {
   const token = await getAuthToken();
   if (!token) {
@@ -56,6 +93,12 @@ export const createCandidate = async (
   }
 
   try {
+    const body: Record<string, string> = {};
+    if (url) body.url = url;
+    if (name) body.name = name;
+    if (context) body.context = context;
+    if (public_identifier) body.public_identifier = public_identifier;
+
     const response = await fetch(
       `${import.meta.env.VITE_API_URL}/jobs/${jobId}/candidates`,
       {
@@ -64,7 +107,7 @@ export const createCandidate = async (
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ url: url }),
+        body: JSON.stringify(body),
       }
     );
 
@@ -76,6 +119,42 @@ export const createCandidate = async (
   } catch (error) {
     throw new Error(
       error instanceof Error ? error.message : "Failed to create candidate"
+    );
+  }
+};
+
+
+
+export const getLinkedinContext = async (
+  url: string
+): Promise<LinkedinContext | null> => {
+  const token = await getAuthToken();
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/get_linkedin_context?url=${encodeURIComponent(url)}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to get linkedin context: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching linkedin context:", error);
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to get linkedin context"
     );
   }
 };

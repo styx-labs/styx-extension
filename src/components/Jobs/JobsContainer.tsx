@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Sparkles } from "lucide-react";
 import { useExtensionState } from "@/hooks/useExtensionState";
 import type { Job } from "../../types";
 import JobCard from "./shared/JobCard";
@@ -18,6 +18,8 @@ interface JobsContainerProps {
   jobs: Job[];
   loading: boolean;
   error: string;
+  showBestFit?: boolean;
+  onBestFitChange?: (enabled: boolean) => void;
 }
 
 const JobHeader = ({
@@ -69,6 +71,29 @@ const JobHeader = ({
   </div>
 );
 
+const BestFitToggle = ({
+  enabled,
+  onChange,
+}: {
+  enabled: boolean;
+  onChange: (enabled: boolean) => void;
+}) => (
+  <div className="flex items-center justify-start mb-7 space-x-10 divide-x">
+    <span className="text-sm text-gray-600">Get recommended roles for this candidate</span>
+    <button
+      onClick={() => onChange(!enabled)}
+      className={`p-2 rounded-lg transition-colors border ${
+        enabled 
+          ? 'bg-purple-600 text-white hover:bg-gray-800' 
+          : 'bg-white text-purple-600 border-gray-200 hover:border-gray-300'
+      }`}
+      title={enabled ? 'Show all jobs' : 'Show best fit roles'}
+    >
+      <Sparkles className="w-5 h-5" />
+    </button>
+  </div>
+);
+
 const JobsContainer: React.FC<JobsContainerProps> = ({
   title,
   onAddCandidate,
@@ -77,6 +102,8 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
   jobs,
   loading,
   error,
+  showBestFit,
+  onBestFitChange,
 }) => {
   const { isExpanded, toggleExpansion } = useExtensionState();
 
@@ -97,6 +124,9 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
           </div>
+          {onBestFitChange && (
+            <BestFitToggle enabled={showBestFit || false} onChange={onBestFitChange} />
+          )}
           <div className="space-y-3">
             {jobs.map((job) => (
               <JobCard

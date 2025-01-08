@@ -11,9 +11,14 @@ const JobsList: React.FC = () => {
     error,
     addedJobs,
     loadingJobs,
+    showBestFit,
+    linkedinContext,
+    name,
+    publicIdentifier,
     setError,
     setAddedJobs,
     setLoadingJobs,
+    setShowBestFit,
   } = useJobsState();
 
   const currentUrl = useUrlWatcher(() => {
@@ -24,7 +29,14 @@ const JobsList: React.FC = () => {
   const handleCreateCandidate = async (jobId: string) => {
     try {
       setLoadingJobs((prev) => new Set([...prev, jobId]));
-      const response = await createCandidate(jobId, currentUrl);
+      let response;
+      if (name && linkedinContext && publicIdentifier) {
+        console.log("name");
+        response = await createCandidate(jobId, undefined, name, linkedinContext, publicIdentifier);
+      } else {
+        console.log("url");
+        response = await createCandidate(jobId, currentUrl);
+      }
       if (response === null) {
         setError("not_authenticated");
         return;
@@ -43,6 +55,8 @@ const JobsList: React.FC = () => {
     }
   };
 
+  if (!currentUrl.includes("linkedin.com/in/")) return null;
+
   return (
     <JobsContainer
       title="Click to add this candidate to a job"
@@ -52,6 +66,8 @@ const JobsList: React.FC = () => {
       jobs={jobs}
       loading={loading}
       error={error}
+      showBestFit={showBestFit}
+      onBestFitChange={setShowBestFit}
     />
   );
 };
