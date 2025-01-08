@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getJobs, openLogin } from "../../utils/apiUtils";
+import { getJobs, openLogin, createCandidate } from "../../utils/apiUtils";
 import type { Job } from "../../types";
 import { Loader2, CircleAlert, Plus, Check, ChevronRight } from "lucide-react";
 import { useExtensionState } from "@/hooks/useExtensionState";
@@ -240,20 +240,11 @@ const JobsList: React.FC = () => {
   const handleCreateCandidate = async (jobId: string) => {
     try {
       setLoadingJobs((prev) => new Set([...prev, jobId]));
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/jobs/${jobId}/candidates`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization:
-              "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImMwYTQwNGExYTc4ZmUzNGM5YTVhZGU5NTBhMjE2YzkwYjVkNjMwYjMiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiSmFzb24gSGUiLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSjBuaFJKOWI3bGpndUdpa2dmaFdlR2k4ZHdXdVZ4YXppVElrbWtKVi15SnFnNDk2X0lkUT1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9hc3R1dGUtdmVsZC00MzE3MDMtYjgiLCJhdWQiOiJhc3R1dGUtdmVsZC00MzE3MDMtYjgiLCJhdXRoX3RpbWUiOjE3MzYyOTU3NTksInVzZXJfaWQiOiJvSHZCeDhjcVVhZ2xha0lnMHNYVTJKaExxdDYyIiwic3ViIjoib0h2Qng4Y3FVYWdsYWtJZzBzWFUySmhMcXQ2MiIsImlhdCI6MTczNjI5NTg3MiwiZXhwIjoxNzM2Mjk5NDcyLCJlbWFpbCI6Imphc29uaGUubWRAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZ29vZ2xlLmNvbSI6WyIxMTgzODg5NjQ3ODIwMjMwMzczMjIiXSwiZW1haWwiOlsiamFzb25oZS5tZEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.ZnrGnJ6RLpNQ0nMbtWz6fdELaCVKi0A5ja9sCGhbzOmw58gh0Kl7iL1VheUdsnwKESfrx-xI1UNeIgazdZlNdGJcQNcjjjwCRy1JnxUVFq80LOM62wJIhRZud7MGR4nHxpUGYGDkOh48CBtYtA-7uFR2Y9l7MWhk7FRGSjQWR6oq5LNWXWdLL_Zi-RMAHb4j40smJgVWlkFf7t54NtHWsbuFtZKAcrGdQ2H3aYRg_cEanIxbbWcuebkSJjE1EM10mPoYxK5PCo13xvSmLypzN1SkInV3CjuJq-vGHpCahx7ekcSYb0e8emmfSq0s4_25ZJIEYeTVmKd5NlIjqjc4rA",
-          },
-          body: JSON.stringify({ url: currentUrl }),
-        }
-      );
-
-      if (!response.ok) throw new Error("Failed to create candidate");
+      const response = await createCandidate(jobId, currentUrl);
+      if (response === null) {
+        setError("not_authenticated");
+        return;
+      }
       setAddedJobs((prev) => new Set([...prev, jobId]));
     } catch (err) {
       setError(

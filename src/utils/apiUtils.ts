@@ -3,7 +3,6 @@ import type { EvaluationResponse, Job } from "../types";
 async function getAuthToken(): Promise<string | null> {
   return new Promise((resolve) => {
     chrome.runtime.sendMessage({ type: "GET_AUTH_TOKEN" }, (response) => {
-      console.log("Got auth token from background:", response);
       resolve(response);
     });
   });
@@ -65,9 +64,7 @@ export const createCandidate = async (
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          candidate: { url },
-        }),
+        body: JSON.stringify({ url: url }),
       }
     );
 
