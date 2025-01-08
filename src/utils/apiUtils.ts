@@ -56,13 +56,15 @@ export const getRecommendedJobs = async (
 
   try {
     const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/jobs_recommend?context=${encodeURIComponent(context)}`,
+      `${
+        import.meta.env.VITE_API_URL
+      }/jobs_recommend?context=${encodeURIComponent(context)}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-        }
+        },
       }
     );
 
@@ -123,8 +125,6 @@ export const createCandidate = async (
   }
 };
 
-
-
 export const getLinkedinContext = async (
   url: string
 ): Promise<LinkedinContext | null> => {
@@ -135,13 +135,15 @@ export const getLinkedinContext = async (
 
   try {
     const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/get_linkedin_context?url=${encodeURIComponent(url)}`,
+      `${
+        import.meta.env.VITE_API_URL
+      }/get_linkedin_context?url=${encodeURIComponent(url)}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-        }
+        },
       }
     );
 

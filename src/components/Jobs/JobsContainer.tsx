@@ -79,15 +79,17 @@ const BestFitToggle = ({
   onChange: (enabled: boolean) => void;
 }) => (
   <div className="flex items-center justify-start mb-7 space-x-10 divide-x">
-    <span className="text-sm text-gray-600">Get recommended roles for this candidate</span>
+    <span className="text-sm text-gray-600">
+      Get recommended roles for this candidate
+    </span>
     <button
       onClick={() => onChange(!enabled)}
       className={`p-2 rounded-lg transition-colors border ${
-        enabled 
-          ? 'bg-purple-600 text-white hover:bg-gray-800' 
-          : 'bg-white text-purple-600 border-gray-200 hover:border-gray-300'
+        enabled
+          ? "bg-purple-600 text-white hover:bg-gray-800"
+          : "bg-white text-purple-600 border-gray-200 hover:border-gray-300"
       }`}
-      title={enabled ? 'Show all jobs' : 'Show best fit roles'}
+      title={enabled ? "Show all jobs" : "Show best fit roles"}
     >
       <Sparkles className="w-5 h-5" />
     </button>
@@ -117,26 +119,34 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
       className={`extension-container bg-white rounded-l-lg shadow-lg ${
         isExpanded ? "w-[450px]" : "w-20"
       }`}
+      style={{ height: "calc(100vh - 100px)" }}
     >
       <JobHeader isExpanded={isExpanded} onToggle={toggleExpansion} />
       {isExpanded && (
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
-          </div>
-          {onBestFitChange && (
-            <BestFitToggle enabled={showBestFit || false} onChange={onBestFitChange} />
-          )}
-          <div className="space-y-3">
-            {jobs.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                onAddCandidate={onAddCandidate}
-                isAdded={isAdded(job.id)}
-                isLoading={isLoading(job.id)}
+        <div className="flex flex-col h-[calc(100%-56px)]">
+          <div className="flex-shrink-0 p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+            </div>
+            {onBestFitChange && (
+              <BestFitToggle
+                enabled={showBestFit || false}
+                onChange={onBestFitChange}
               />
-            ))}
+            )}
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6">
+            <div className="space-y-3">
+              {jobs.map((job) => (
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  onAddCandidate={onAddCandidate}
+                  isAdded={isAdded(job.id)}
+                  isLoading={isLoading(job.id)}
+                />
+              ))}
+            </div>
           </div>
         </div>
       )}
