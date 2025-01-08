@@ -23,3 +23,9 @@ export interface Job {
   company_name: string;
   job_title: string;
 }
+
+export interface LinkedinContext {
+  name: string;
+  context: string;
+  public_identifier: string;
+}

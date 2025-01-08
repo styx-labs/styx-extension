@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { getJobs, openLogin, createCandidate } from "../../utils/apiUtils";
+import {
+  getJobs,
+  getRecommendedJobs,
+  openLogin,
+  createCandidate,
+  getLinkedinContext
+} from "../../utils/apiUtils";
 import type { Job } from "../../types";
-import { Loader2, CircleAlert, Plus, Check, ChevronRight } from "lucide-react";
+import { Loader2, CircleAlert, Plus, Check, ChevronRight, Sparkles } from "lucide-react";
 import { useExtensionState } from "@/hooks/useExtensionState";
 
 const LoadingState = () => (
@@ -187,6 +193,29 @@ const JobCard = ({
   </div>
 );
 
+const BestFitToggle = ({
+  enabled,
+  onChange,
+}: {
+  enabled: boolean;
+  onChange: (enabled: boolean) => void;
+}) => (
+  <div className="flex items-center justify-start mb-7 space-x-10 divide-x">
+    <span className="text-sm text-gray-600">Get recommended roles for this candidate</span>
+    <button
+      onClick={() => onChange(!enabled)}
+      className={`p-2 rounded-lg transition-colors border ${
+        enabled 
+          ? 'bg-purple-600 text-white hover:bg-gray-800' 
+          : 'bg-white text-purple-600 border-gray-200 hover:border-gray-300'
+      }`}
+      title={enabled ? 'Show all jobs' : 'Show best fit roles'}
+    >
+      <Sparkles className="w-5 h-5" />
+    </button>
+  </div>
+);
+
 const JobsList: React.FC = () => {
   const { isExpanded, toggleExpansion } = useExtensionState();
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -195,11 +224,24 @@ const JobsList: React.FC = () => {
   const [currentUrl, setCurrentUrl] = useState("");
   const [addedJobs, setAddedJobs] = useState<Set<string>>(new Set());
   const [loadingJobs, setLoadingJobs] = useState<Set<string>>(new Set());
+  const [showBestFit, setShowBestFit] = useState(false);
+  const [linkedinContext, setLinkedinContext] = useState("");
+  const [name, setName] = useState("");
+  const [publicIdentifier, setPublicIdentifier] = useState("");
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const jobsList = await getJobs();
+        if (showBestFit && !name && !publicIdentifier && !linkedinContext) {
+          const linkedinResponse = await getLinkedinContext(currentUrl);
+          setLinkedinContext(linkedinResponse?.context || '');
+          setName(linkedinResponse?.name || '');
+          setPublicIdentifier(linkedinResponse?.public_identifier || '');
+        }
+        const jobsList = showBestFit 
+          ? await getRecommendedJobs(linkedinContext)
+          : await getJobs();
+          
         if (jobsList === null) {
           setJobs([]);
           setError("not_authenticated");
@@ -214,8 +256,9 @@ const JobsList: React.FC = () => {
       }
     };
 
+    setLoading(true);
     fetchJobs();
-  }, []);
+  }, [showBestFit]);
 
   React.useEffect(() => {
     setCurrentUrl(window.location.href);
@@ -240,7 +283,14 @@ const JobsList: React.FC = () => {
   const handleCreateCandidate = async (jobId: string) => {
     try {
       setLoadingJobs((prev) => new Set([...prev, jobId]));
-      const response = await createCandidate(jobId, currentUrl);
+      let response;
+      if (name && linkedinContext && publicIdentifier) {
+        console.log("name")
+        response = await createCandidate(jobId, undefined, name, linkedinContext, publicIdentifier);
+      } else {
+        console.log("currentUrl")
+        response = await createCandidate(jobId, currentUrl);
+      }
       if (response === null) {
         setError("not_authenticated");
         return;
@@ -280,6 +330,7 @@ const JobsList: React.FC = () => {
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
             Click to add a candidate to this job
           </h2>
+          <BestFitToggle enabled={showBestFit} onChange={setShowBestFit} />
           <div className="space-y-3">
             {jobs.map((job) => (
               <JobCard
