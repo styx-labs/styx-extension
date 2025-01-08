@@ -1,78 +1,40 @@
 import type { EvaluationResponse, Job } from "../types";
-// import { scrapeProfile } from "./profileScraper";
 
-export const evaluateProfile = async (
-  jobDescription: string,
-  linkedinUrl?: string
-): Promise<EvaluationResponse> => {
-  // const { fullName, profileContent } = scrapeProfile();
-  const response = await fetch(
-    `${import.meta.env.VITE_API_URL}/evaluate-headless`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        job_description: jobDescription || undefined,
-        name: "",
-        context: "",
-        url: linkedinUrl,
-      }),
-    }
-  );
+async function getAuthToken(): Promise<string | null> {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: "GET_AUTH_TOKEN" }, (response) => {
+      console.log("Got auth token from background:", response);
+      resolve(response);
+    });
+  });
+}
 
-  if (!response.ok) {
-    throw new Error("Failed to evaluate profile");
+export async function checkAuth(): Promise<boolean> {
+  const token = await getAuthToken();
+  return !!token;
+}
+
+export function openLogin() {
+  chrome.runtime.sendMessage({ type: "OPEN_LOGIN" });
+}
+
+export const getJobs = async (): Promise<Job[] | null> => {
+  const token = await getAuthToken();
+  if (!token) {
+    return null;
   }
 
-  return response.json();
-};
-
-export const generateReachout = async (
-  jobDescription: string,
-  evaluation: EvaluationResponse,
-  name: string = ""
-): Promise<string> => {
-  const response = await fetch(
-    `${import.meta.env.VITE_API_URL}/generate-reachout`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        job_description: jobDescription || undefined,
-        name,
-        sections: evaluation.sections,
-        citations: evaluation.citations,
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to generate reachout message");
-  }
-
-  const data = await response.json();
-  return data;
-};
-
-export const getJobs = async (): Promise<Job[]> => {
   try {
     const response = await fetch(`${import.meta.env.VITE_API_URL}/jobs`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
       },
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(
-        errorData?.message || `Failed to get jobs: ${response.status}`
-      );
+      throw new Error(`Failed to get jobs: ${response.status}`);
     }
 
     const data = await response.json();
@@ -88,25 +50,35 @@ export const getJobs = async (): Promise<Job[]> => {
 export const createCandidate = async (
   jobId: string,
   url: string
-): Promise<string> => {
-  const response = await fetch(
-    `${import.meta.env.VITE_API_URL}/jobs/${jobId}/candidates`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        candidate: {
-          url: url,
-        },
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to create candidate");
+): Promise<string | null> => {
+  const token = await getAuthToken();
+  if (!token) {
+    return null;
   }
 
-  return await response.json();
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/jobs/${jobId}/candidates`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          candidate: { url },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to create candidate");
+    }
+
+    return response.json();
+  } catch (error) {
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to create candidate"
+    );
+  }
 };

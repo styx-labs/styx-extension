@@ -5,7 +5,8 @@ export default defineConfig({
   manifest: {
     name: "Styx: LinkedIn Profile Evaluator",
     description: "Evaluate LinkedIn profiles against job descriptions",
-    permissions: ["storage"],
+    permissions: ["storage", "cookies"],
+    host_permissions: ["https://app.styxlabs.co/*", "http://localhost:3000/*"],
     version: "1.0",
     web_accessible_resources: [
       {

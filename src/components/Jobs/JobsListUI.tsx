@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getJobs } from "../../utils/apiUtils";
+import { getJobs, openLogin } from "../../utils/apiUtils";
 import type { Job } from "../../types";
 import { Loader2, CircleAlert, Plus, Check, ChevronRight } from "lucide-react";
 import { useExtensionState } from "@/hooks/useExtensionState";
@@ -60,6 +60,26 @@ const NoJobsState = () => (
         <Plus className="-ml-1 mr-2 h-5 w-5" />
         Add Jobs in Styx Dashboard
       </a>
+    </div>
+  </div>
+);
+
+const NotLoggedInState = () => (
+  <div className="extension-container bg-white rounded-l-lg shadow-lg w-[450px] p-6">
+    <div className="p-6">
+      <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        Login Required
+      </h2>
+      <p className="text-gray-600 mb-6">
+        Please log in to Styx to view and manage jobs.
+      </p>
+      <button
+        onClick={openLogin}
+        className="btn-primary w-full flex items-center justify-center px-6 py-3 text-base font-medium text-white rounded-xl"
+      >
+        <Plus className="-ml-1 mr-2 h-5 w-5" />
+        Login to Styx
+      </button>
     </div>
   </div>
 );
@@ -180,7 +200,13 @@ const JobsList: React.FC = () => {
     const fetchJobs = async () => {
       try {
         const jobsList = await getJobs();
-        setJobs(jobsList.sort((a, b) => a.id.localeCompare(b.id)));
+        if (jobsList === null) {
+          setJobs([]);
+          setError("not_authenticated");
+        } else {
+          setJobs(jobsList.sort((a, b) => a.id.localeCompare(b.id)));
+          setError("");
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch jobs");
       } finally {
@@ -218,7 +244,11 @@ const JobsList: React.FC = () => {
         `${import.meta.env.VITE_API_URL}/jobs/${jobId}/candidates`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization:
+              "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImMwYTQwNGExYTc4ZmUzNGM5YTVhZGU5NTBhMjE2YzkwYjVkNjMwYjMiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiSmFzb24gSGUiLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSjBuaFJKOWI3bGpndUdpa2dmaFdlR2k4ZHdXdVZ4YXppVElrbWtKVi15SnFnNDk2X0lkUT1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9hc3R1dGUtdmVsZC00MzE3MDMtYjgiLCJhdWQiOiJhc3R1dGUtdmVsZC00MzE3MDMtYjgiLCJhdXRoX3RpbWUiOjE3MzYyOTU3NTksInVzZXJfaWQiOiJvSHZCeDhjcVVhZ2xha0lnMHNYVTJKaExxdDYyIiwic3ViIjoib0h2Qng4Y3FVYWdsYWtJZzBzWFUySmhMcXQ2MiIsImlhdCI6MTczNjI5NTg3MiwiZXhwIjoxNzM2Mjk5NDcyLCJlbWFpbCI6Imphc29uaGUubWRAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZ29vZ2xlLmNvbSI6WyIxMTgzODg5NjQ3ODIwMjMwMzczMjIiXSwiZW1haWwiOlsiamFzb25oZS5tZEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.ZnrGnJ6RLpNQ0nMbtWz6fdELaCVKi0A5ja9sCGhbzOmw58gh0Kl7iL1VheUdsnwKESfrx-xI1UNeIgazdZlNdGJcQNcjjjwCRy1JnxUVFq80LOM62wJIhRZud7MGR4nHxpUGYGDkOh48CBtYtA-7uFR2Y9l7MWhk7FRGSjQWR6oq5LNWXWdLL_Zi-RMAHb4j40smJgVWlkFf7t54NtHWsbuFtZKAcrGdQ2H3aYRg_cEanIxbbWcuebkSJjE1EM10mPoYxK5PCo13xvSmLypzN1SkInV3CjuJq-vGHpCahx7ekcSYb0e8emmfSq0s4_25ZJIEYeTVmKd5NlIjqjc4rA",
+          },
           body: JSON.stringify({ url: currentUrl }),
         }
       );
@@ -240,6 +270,7 @@ const JobsList: React.FC = () => {
 
   if (!currentUrl.includes("linkedin.com/in/")) return null;
   if (loading) return <LoadingState />;
+  if (error === "not_authenticated") return <NotLoggedInState />;
   if (error) return <ErrorState message={error} />;
   if (jobs.length === 0) return <NoJobsState />;
 
