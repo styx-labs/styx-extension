@@ -32,7 +32,7 @@ const JobsList: React.FC = () => {
       let response;
       if (name && linkedinContext && publicIdentifier) {
         console.log("name");
-        response = await createCandidate(jobId, undefined, name, linkedinContext, publicIdentifier);
+        response = await createCandidate(jobId, currentUrl, name, linkedinContext, publicIdentifier);
       } else {
         console.log("url");
         response = await createCandidate(jobId, currentUrl);

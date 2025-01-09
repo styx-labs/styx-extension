@@ -1024,11 +1024,11 @@ video {
 .h-9 {
   height: 2.25rem;
 }
-.h-full {
-  height: 100%;
-}
 .h-\[calc\(100\%-56px\)\] {
   height: calc(100% - 56px);
+}
+.h-full {
+  height: 100%;
 }
 .min-h-0 {
   min-height: 0px;

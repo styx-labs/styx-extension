@@ -84,7 +84,7 @@ export const getRecommendedJobs = async (
 
 export const createCandidate = async (
   jobId: string,
-  url?: string,
+  url: string,
   name?: string,
   context?: string,
   public_identifier?: string
@@ -96,10 +96,11 @@ export const createCandidate = async (
 
   try {
     const body: Record<string, string> = {};
-    if (url) body.url = url;
     if (name) body.name = name;
     if (context) body.context = context;
     if (public_identifier) body.public_identifier = public_identifier;
+    body.url = url;
+    console.log(body);
 
     const response = await fetch(
       `${import.meta.env.VITE_API_URL}/jobs/${jobId}/candidates`,
