@@ -80,7 +80,7 @@ const BulkJobsList: React.FC = () => {
 
   return (
     <JobsContainer
-      title="Click to add all candidates to this job"
+      title="Click to add all candidates on this page to a job"
       onAddCandidate={handleCreateCandidate}
       isAdded={(id) => addedJobs.has(id)}
       isLoading={(id) => loadingJobs.has(id)}

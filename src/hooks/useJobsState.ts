@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getJobs, getRecommendedJobs, getLinkedinContext } from "../utils/apiUtils";
+import { getJobs } from "../utils/apiUtils";
 import type { Job } from "../types";
 
 export interface JobsState {
@@ -8,18 +8,9 @@ export interface JobsState {
   error: string;
   addedJobs: Set<string>;
   loadingJobs: Set<string>;
-  showBestFit: boolean;
-  linkedinContext: string;
-  name: string;
-  publicIdentifier: string;
   setError: (error: string) => void;
-  setAddedJobs: (
-    value: Set<string> | ((prev: Set<string>) => Set<string>)
-  ) => void;
-  setLoadingJobs: (
-    value: Set<string> | ((prev: Set<string>) => Set<string>)
-  ) => void;
-  setShowBestFit: (value: boolean) => void;
+  setAddedJobs: (value: Set<string>) => void;
+  setLoadingJobs: (value: Set<string>) => void;
 }
 
 export const useJobsState = (): JobsState => {
@@ -28,24 +19,11 @@ export const useJobsState = (): JobsState => {
   const [error, setError] = useState("");
   const [addedJobs, setAddedJobs] = useState<Set<string>>(new Set());
   const [loadingJobs, setLoadingJobs] = useState<Set<string>>(new Set());
-  const [showBestFit, setShowBestFit] = useState(false);
-  const [linkedinContext, setLinkedinContext] = useState("");
-  const [name, setName] = useState("");
-  const [publicIdentifier, setPublicIdentifier] = useState("");
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        if (showBestFit && !name && !publicIdentifier && !linkedinContext) {
-          const linkedinResponse = await getLinkedinContext(window.location.href);
-          setLinkedinContext(linkedinResponse?.context || '');
-          setName(linkedinResponse?.name || '');
-          setPublicIdentifier(linkedinResponse?.public_identifier || '');
-        }
-        const jobsList = showBestFit 
-          ? await getRecommendedJobs(linkedinContext)
-          : await getJobs();
-          
+        const jobsList = await getJobs();
         if (jobsList === null) {
           setJobs([]);
           setError("not_authenticated");
@@ -60,9 +38,8 @@ export const useJobsState = (): JobsState => {
       }
     };
 
-    setLoading(true);
     fetchJobs();
-  }, [showBestFit, linkedinContext, name, publicIdentifier]);
+  }, []);
 
   return {
     jobs,
@@ -70,13 +47,8 @@ export const useJobsState = (): JobsState => {
     error,
     addedJobs,
     loadingJobs,
-    showBestFit,
-    linkedinContext,
-    name,
-    publicIdentifier,
     setError,
     setAddedJobs,
     setLoadingJobs,
-    setShowBestFit,
   };
 };

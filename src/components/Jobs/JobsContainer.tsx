@@ -119,7 +119,7 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
       className={`extension-container bg-white rounded-l-lg shadow-lg ${
         isExpanded ? "w-[450px]" : "w-20"
       }`}
-      style={{ height: "calc(100vh - 100px)" }}
+      style={isExpanded ? { height: "calc(100vh - 100px)" } : undefined}
     >
       <JobHeader isExpanded={isExpanded} onToggle={toggleExpansion} />
       {isExpanded && (
