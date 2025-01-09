@@ -11,15 +11,15 @@ const JobsList: React.FC = () => {
     error,
     addedJobs,
     loadingJobs,
-    showBestFit,
     linkedinContext,
     name,
     publicIdentifier,
     setError,
     setAddedJobs,
     setLoadingJobs,
-    setShowBestFit,
   } = useJobsState();
+
+  const [showBestFit, setShowBestFit] = useState(true);
 
   const currentUrl = useUrlWatcher(() => {
     setAddedJobs(new Set());
@@ -32,7 +32,13 @@ const JobsList: React.FC = () => {
       let response;
       if (name && linkedinContext && publicIdentifier) {
         console.log("name");
-        response = await createCandidate(jobId, currentUrl, name, linkedinContext, publicIdentifier);
+        response = await createCandidate(
+          jobId,
+          currentUrl,
+          name,
+          linkedinContext,
+          publicIdentifier
+        );
       } else {
         console.log("url");
         response = await createCandidate(jobId, currentUrl);
