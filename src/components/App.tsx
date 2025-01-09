@@ -6,35 +6,39 @@ const App: React.FC = () => {
   const [currentPath, setCurrentPath] = useState<string>(
     window.location.pathname
   );
-  const [currentUrl, setCurrentUrl] = useState("");
 
-  React.useEffect(() => {
-    setCurrentUrl(window.location.href);
+  useEffect(() => {
+    // Update path immediately when component mounts
+    setCurrentPath(window.location.pathname);
 
-    const observer = new MutationObserver(() => {
-      const newUrl = window.location.href;
-      if (newUrl !== currentUrl) {
-        setCurrentUrl(newUrl);
+    // Function to handle URL changes
+    const handleUrlChange = () => {
+      const newPath = window.location.pathname;
+      if (newPath !== currentPath) {
+        setCurrentPath(newPath);
       }
+    };
+
+    // Create an observer for SPA navigation
+    const observer = new MutationObserver(() => {
+      handleUrlChange();
     });
 
+    // Observe DOM changes
     observer.observe(document.body, {
       childList: true,
       subtree: true,
     });
 
-    return () => observer.disconnect();
-  }, [currentUrl]);
-
-  useEffect(() => {
-    const handleUrlChange = () => {
-      setCurrentPath(window.location.pathname);
-    };
-
-    // Listen for URL changes
+    // Listen for regular navigation
     window.addEventListener("popstate", handleUrlChange);
-    return () => window.removeEventListener("popstate", handleUrlChange);
-  }, []);
+
+    // Cleanup
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("popstate", handleUrlChange);
+    };
+  }, [currentPath]);
 
   if (currentPath.includes("/in")) {
     return <JobsList />;
