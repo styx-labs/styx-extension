@@ -69,7 +69,8 @@ export const NotLoggedInState = () => (
         Login Required
       </h2>
       <p className="text-gray-600 mb-6">
-        Please log in to Styx to view and manage jobs.
+        Please log in to Styx to view and manage jobs. After logging in, you
+        will need to refresh the page to see the jobs.
       </p>
       <button
         onClick={openLogin}
