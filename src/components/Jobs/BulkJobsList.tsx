@@ -61,9 +61,6 @@ const BulkJobsList: React.FC = () => {
         return;
       }
 
-      console.log(
-        `Successfully processed ${result.processed} out of ${result.total} profiles`
-      );
       setAddedJobs((prev) => new Set([...prev, jobId]));
     } catch (err) {
       setError(
@@ -80,7 +77,7 @@ const BulkJobsList: React.FC = () => {
 
   return (
     <JobsContainer
-      title="Click to add all candidates on this page to a job"
+      title="Add all search result profiles to Styx"
       onAddCandidate={handleCreateCandidate}
       isAdded={(id) => addedJobs.has(id)}
       isLoading={(id) => loadingJobs.has(id)}

@@ -165,7 +165,7 @@ export const getLinkedinContext = async (
 export const createCandidatesBulk = async (
   jobId: string,
   urls: string[]
-): Promise<{ processed: number; total: number } | null> => {
+): Promise< string | null> => {
   const token = await getAuthToken();
   if (!token) {
     return null;

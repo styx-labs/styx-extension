@@ -11,15 +11,15 @@ const JobsList: React.FC = () => {
     error,
     addedJobs,
     loadingJobs,
+    showBestFit,
     linkedinContext,
     name,
     publicIdentifier,
     setError,
     setAddedJobs,
     setLoadingJobs,
+    setShowBestFit,
   } = useJobsState();
-
-  const [showBestFit, setShowBestFit] = useState(true);
 
   const currentUrl = useUrlWatcher(() => {
     setAddedJobs(new Set());
@@ -65,7 +65,7 @@ const JobsList: React.FC = () => {
 
   return (
     <JobsContainer
-      title="Click to add this candidate to a job"
+      title="Add this candidate to Styx"
       onAddCandidate={handleCreateCandidate}
       isAdded={(id) => addedJobs.has(id)}
       isLoading={(id) => loadingJobs.has(id)}
