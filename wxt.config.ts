@@ -7,7 +7,7 @@ export default defineConfig({
     description: "Evaluate LinkedIn profiles against job descriptions",
     permissions: ["storage", "cookies"],
     host_permissions: ["https://app.styxlabs.co/*", "http://localhost:3000/*"],
-    version: "1.0",
+    version: "1.1",
     web_accessible_resources: [
       {
         matches: ["<all_urls>"],
