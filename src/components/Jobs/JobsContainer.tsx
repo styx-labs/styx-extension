@@ -109,46 +109,60 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
 }) => {
   const { isExpanded, toggleExpansion } = useExtensionState();
 
-  if (loading) return <LoadingState />;
-  if (error === "not_authenticated") return <NotLoggedInState />;
-  if (error) return <ErrorState message={error} />;
-  if (jobs.length === 0) return <NoJobsState />;
+  const containerStyle =
+    isExpanded && !error && !loading && jobs.length > 0
+      ? { height: "min(calc(100vh - 100px), fit-content)" }
+      : undefined;
 
   return (
     <div
       className={`extension-container bg-white rounded-l-lg shadow-lg ${
         isExpanded ? "w-[450px]" : "w-20"
       }`}
-      style={isExpanded ? { height: "calc(100vh - 100px)" } : undefined}
+      style={containerStyle}
     >
       <JobHeader isExpanded={isExpanded} onToggle={toggleExpansion} />
       {isExpanded && (
-        <div className="flex flex-col h-[calc(100%-56px)]">
-          <div className="flex-shrink-0 p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+        <>
+          {loading ? (
+            <LoadingState />
+          ) : error === "not_authenticated" ? (
+            <NotLoggedInState />
+          ) : error ? (
+            <ErrorState message={error} />
+          ) : jobs.length === 0 ? (
+            <NoJobsState />
+          ) : (
+            <div className="flex flex-col h-[calc(100%-56px)]">
+              <div className="flex-shrink-0 p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    {title}
+                  </h2>
+                </div>
+                {onBestFitChange && (
+                  <BestFitToggle
+                    enabled={showBestFit || false}
+                    onChange={onBestFitChange}
+                  />
+                )}
+              </div>
+              <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6">
+                <div className="space-y-3">
+                  {jobs.map((job) => (
+                    <JobCard
+                      key={job.id}
+                      job={job}
+                      onAddCandidate={onAddCandidate}
+                      isAdded={isAdded(job.id)}
+                      isLoading={isLoading(job.id)}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
-            {onBestFitChange && (
-              <BestFitToggle
-                enabled={showBestFit || false}
-                onChange={onBestFitChange}
-              />
-            )}
-          </div>
-          <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6">
-            <div className="space-y-3">
-              {jobs.map((job) => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  onAddCandidate={onAddCandidate}
-                  isAdded={isAdded(job.id)}
-                  isLoading={isLoading(job.id)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
     </div>
   );

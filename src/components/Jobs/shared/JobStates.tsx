@@ -3,7 +3,7 @@ import { CircleAlert, Plus, Loader2 } from "lucide-react";
 import { openLogin } from "../../../utils/apiUtils";
 
 export const LoadingState = () => (
-  <div className="extension-container bg-white rounded-l-lg shadow-lg w-[450px] p-6">
+  <div className="p-6">
     <h2 className="text-xl font-semibold text-gray-900 mb-4">
       Loading available jobs...
     </h2>
@@ -27,7 +27,7 @@ export const LoadingState = () => (
 );
 
 export const ErrorState = ({ message }: { message: string }) => (
-  <div className="extension-container bg-white rounded-l-lg shadow-lg w-[450px] p-6">
+  <div className="p-6">
     <div className="rounded-xl bg-red-50 p-4">
       <div className="flex">
         <CircleAlert className="h-5 w-5 text-red-400 flex-shrink-0" />
@@ -41,44 +41,38 @@ export const ErrorState = ({ message }: { message: string }) => (
 );
 
 export const NoJobsState = () => (
-  <div className="extension-container bg-white rounded-l-lg shadow-lg w-[450px] p-6">
-    <div className="p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
-        No jobs available
-      </h2>
-      <p className="text-gray-600 mb-6">
-        Add jobs through the Styx dashboard to start evaluating candidates.
-      </p>
-      <a
-        href="https://app.styxlabs.co/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="btn-primary w-full flex items-center justify-center px-6 py-3 text-base font-medium text-white rounded-xl"
-      >
-        <Plus className="-ml-1 mr-2 h-5 w-5" />
-        Add Jobs in Styx Dashboard
-      </a>
-    </div>
+  <div className="p-6">
+    <h2 className="text-xl font-semibold text-gray-900 mb-4">
+      No jobs available
+    </h2>
+    <p className="text-gray-600 mb-6">
+      Add jobs through the Styx dashboard to start evaluating candidates.
+    </p>
+    <a
+      href="https://app.styxlabs.co/"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="btn-primary w-full flex items-center justify-center px-6 py-3 text-base font-medium text-white rounded-xl"
+    >
+      <Plus className="-ml-1 mr-2 h-5 w-5" />
+      Add Jobs in Styx Dashboard
+    </a>
   </div>
 );
 
 export const NotLoggedInState = () => (
-  <div className="extension-container bg-white rounded-l-lg shadow-lg w-[450px] p-6">
-    <div className="p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
-        Login Required
-      </h2>
-      <p className="text-gray-600 mb-6">
-        Please log in to Styx to view and manage jobs. After logging in, you
-        will need to refresh the page to see the jobs.
-      </p>
-      <button
-        onClick={openLogin}
-        className="btn-primary w-full flex items-center justify-center px-6 py-3 text-base font-medium text-white rounded-xl"
-      >
-        <Plus className="-ml-1 mr-2 h-5 w-5" />
-        Login to Styx
-      </button>
-    </div>
+  <div className="p-6">
+    <h2 className="text-xl font-semibold text-gray-900 mb-4">Login Required</h2>
+    <p className="text-gray-600 mb-6">
+      Please log in to Styx to view and manage jobs. After logging in, you will
+      need to refresh the page to see the jobs.
+    </p>
+    <button
+      onClick={openLogin}
+      className="btn-primary w-full flex items-center justify-center px-6 py-3 text-base font-medium text-white rounded-xl"
+    >
+      <Plus className="-ml-1 mr-2 h-5 w-5" />
+      Login to Styx
+    </button>
   </div>
 );
