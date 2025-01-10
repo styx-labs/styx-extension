@@ -78,22 +78,17 @@ const BestFitToggle = ({
   enabled: boolean;
   onChange: (enabled: boolean) => void;
 }) => (
-  <div className="flex items-center justify-start mb-7 space-x-10 divide-x">
-    <span className="text-sm text-gray-600">
-      Get recommended roles for this candidate
-    </span>
-    <button
-      onClick={() => onChange(!enabled)}
-      className={`p-2 rounded-lg transition-colors border ${
-        enabled
-          ? "bg-purple-600 text-white hover:bg-gray-800"
-          : "bg-white text-purple-600 border-gray-200 hover:border-gray-300"
-      }`}
-      title={enabled ? "Show all jobs" : "Show best fit roles"}
-    >
-      <Sparkles className="w-5 h-5" />
-    </button>
-  </div>
+  <button
+    onClick={() => onChange(!enabled)}
+    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-base font-medium ${
+      enabled
+        ? "bg-purple-600 text-white hover:bg-purple-700"
+        : "bg-white text-purple-600 hover:bg-gray-50 border border-gray-200"
+    }`}
+  >
+    <Sparkles className="w-4 h-4" />
+    {enabled ? "Show all roles" : "Sort roles by recommended"}
+  </button>
 );
 
 const JobsContainer: React.FC<JobsContainerProps> = ({
