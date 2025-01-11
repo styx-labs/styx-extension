@@ -115,6 +115,9 @@ export const createCandidate = async (
     );
 
     if (!response.ok) {
+      if (response.status === 402) {
+        throw new Error("Out of search credits");
+      }
       throw new Error("Failed to create candidate");
     }
 
@@ -185,6 +188,9 @@ export const createCandidatesBulk = async (
     );
 
     if (!response.ok) {
+      if (response.status === 402) {
+        throw new Error("Out of search credits");
+      }
       throw new Error("Failed to create candidates in bulk");
     }
 
