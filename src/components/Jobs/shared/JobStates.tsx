@@ -49,7 +49,7 @@ export const NoJobsState = () => (
       Add jobs through the Styx dashboard to start evaluating candidates.
     </p>
     <a
-      href="https://app.styxlabs.co/"
+      href={import.meta.env.VITE_FRONTEND_URL}
       target="_blank"
       rel="noopener noreferrer"
       className="btn-primary w-full flex items-center justify-center px-6 py-3 text-base font-medium text-white rounded-xl"

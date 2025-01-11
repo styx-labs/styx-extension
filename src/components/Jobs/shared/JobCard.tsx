@@ -20,7 +20,7 @@ export const JobCard: React.FC<JobCardProps> = ({
     onClick={(e) => {
       // Prevent redirect if clicking the add candidate button
       if (!(e.target as HTMLElement).closest("button")) {
-        window.open(`https://app.styxlabs.co/jobs/${job.id}`, "_blank");
+        window.open(`${import.meta.env.VITE_FRONTEND_URL}/jobs/${job.id}`, "_blank");
       }
     }}
   >
