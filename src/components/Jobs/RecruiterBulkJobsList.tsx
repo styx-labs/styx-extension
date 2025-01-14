@@ -112,28 +112,43 @@ const RecruiterBulkJobsList: React.FC = () => {
     }
   };
 
+  const getSelectedProfileLinks = (): string[] => {
+    // Find all profile list items
+    const profileItems = Array.from(
+      document.querySelectorAll(".profile-list-item")
+    );
+
+    // Filter to only get selected profiles and extract their links
+    return profileItems
+      .filter((item) => {
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        return checkbox instanceof HTMLInputElement && checkbox.checked;
+      })
+      .map((item) => {
+        const profileLink = item.querySelector('a[href*="/talent/profile/"]');
+        return profileLink?.getAttribute("href");
+      })
+      .filter((href): href is string => !!href);
+  };
+
   const handleCreateCandidate = async (jobId: string) => {
     try {
       setLoadingJobs((prev) => new Set([...prev, jobId]));
 
       // First scroll to load all results
-      console.log("Scrolling to load all results...");
       await scrollToBottom();
-      console.log("Finished scrolling");
 
-      // Find all LinkedIn Recruiter profile links on the page
-      const profileLinks = Array.from(
-        document.querySelectorAll('a[href*="/talent/profile/"]')
-      )
-        .map((a) => a.getAttribute("href"))
-        .filter((href): href is string => !!href);
-
-      console.log(`Found ${profileLinks.length} profile links`);
+      // Get links of selected profiles
+      const profileLinks = getSelectedProfileLinks();
 
       if (profileLinks.length === 0) {
-        setError("No LinkedIn Recruiter profile links found on this page");
+        setError(
+          "No profiles selected. Please select profiles to add to Styx."
+        );
         return;
       }
+
+      console.log(`Processing ${profileLinks.length} selected profiles`);
 
       // Process each profile link to get its public URL
       const publicUrls: string[] = [];
@@ -152,7 +167,7 @@ const RecruiterBulkJobsList: React.FC = () => {
       }
 
       console.log(
-        `Successfully retrieved ${publicUrls.length} public profile URLs out of ${profileLinks.length} profiles`
+        `Successfully retrieved ${publicUrls.length} public profile URLs out of ${profileLinks.length} selected profiles`
       );
 
       // Send all URLs in one request
@@ -173,12 +188,14 @@ const RecruiterBulkJobsList: React.FC = () => {
         newSet.delete(jobId);
         return newSet;
       });
+      // Scroll back to the top after processing
+      window.scrollTo(0, 0);
     }
   };
 
   return (
     <JobsContainer
-      title="Add all Recruiter LinkedIn profiles to Styx (this may take a while). It'll be running in the background."
+      title="Add selected Recruiter LinkedIn profiles to Styx"
       onAddCandidate={handleCreateCandidate}
       isAdded={(id) => addedJobs.has(id)}
       isLoading={(id) => loadingJobs.has(id)}
