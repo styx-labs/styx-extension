@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import JobsList from "./Jobs/JobsList";
 import BulkJobsList from "./Jobs/BulkJobsList";
+import RecruiterBulkJobsList from "./Jobs/RecruiterBulkJobsList";
 
 const App: React.FC = () => {
   const [currentPath, setCurrentPath] = useState<string>(
@@ -39,6 +40,13 @@ const App: React.FC = () => {
       window.removeEventListener("popstate", handleUrlChange);
     };
   }, [currentPath]);
+
+  if (
+    currentPath.includes("/talent/search") ||
+    /\d+\/discover\/recruiterSearch/.test(currentPath)
+  ) {
+    return <RecruiterBulkJobsList />;
+  }
 
   if (currentPath.includes("/in")) {
     return <JobsList />;
