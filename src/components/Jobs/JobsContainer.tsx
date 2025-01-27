@@ -23,7 +23,7 @@ interface JobsContainerProps {
   useSelected?: boolean;
   onAddSelectedChange?: (enabled: boolean) => void;
   onNumProfilesChange?: (numProfiles: number) => void;
-  isProcessing: boolean;
+  isProcessing?: boolean;
 }
 
 const JobHeader = ({
