@@ -84,7 +84,7 @@ export const getProfileURLs = async (
   
   console.log("total items", items.length);
   
-  const batchSize = 7;
+  const batchSize = 5;
   let results: string[] = [];
 
   // Process items in batches

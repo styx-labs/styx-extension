@@ -101,6 +101,7 @@ const RecruiterBulkJobsList: React.FC = () => {
         publicUrls.push(...urls);
         
         if (publicUrls.length < numProfiles) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
           nextPage();
         }
       }
