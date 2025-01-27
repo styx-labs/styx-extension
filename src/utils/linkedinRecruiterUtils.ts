@@ -80,63 +80,34 @@ export const getProfileURLs = async (
   await scrollToBottom();
 
   let items = Array.from(document.querySelectorAll('.profile-list-item'));
-  
-  console.log("total items", items.length);
-  
-  const batchSize = 5;
-  let results: string[] = [];
 
-  // Process items in batches
-  for (let i = 0; i < items.length; i += batchSize) {
-    const batch = items.slice(i, i + batchSize);
-    
-    // Scroll to middle element in the batch
-    const scrollIndex = Math.floor(batch.length / 2);
-    batch[scrollIndex].scrollIntoView({ behavior: 'smooth' });
-    
-    // Process the batch
-    const batchProfiles = await Promise.all(
-      batch.map(async (item) => {
-        if (getSelected) {
-          const checkbox = item.querySelector('input[type="checkbox"]');
-          if (!(checkbox as HTMLInputElement).checked) {
-            return null;
-          }
-        }
-        const profileLink = item.querySelector('a[href*="/talent/profile/"]');
-        const profileUrl = profileLink?.getAttribute("href");
-        
-        if (!profileUrl) return null;
-
-        const iframe = document.createElement("iframe");
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
-
-        try {
-          iframe.src = profileUrl;
-          await new Promise(resolve => iframe.addEventListener('load', resolve, { once: true }));
-          
-          const urlContainer = await waitForElement(iframe.contentDocument as Document, ".personal-info__link");
-          const publicUrl = urlContainer?.getAttribute('href');
-          return publicUrl;
-        } finally {
-          iframe.remove();
-        }
-      })
-    );
-
-    const validBatchProfiles = batchProfiles.filter((url): url is string => !!url);
-    results.push(...validBatchProfiles);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    if (numProfiles > 0 && results.length >= numProfiles) {
-      results = results.slice(0, numProfiles);
-      break;
-    }
+  if (getSelected) {
+    items = items.filter(item => {
+      const checkbox = item.querySelector('input[type="checkbox"]');
+      if ((checkbox as HTMLInputElement).checked) {
+        return true;
+      }
+      return false;
+    });
   }
 
-  console.log("Total valid profiles", results.length);
-  return results;
+  let urls = items.map(item => {
+    const profileLink = item.querySelector('a[href*="/talent/profile/"]');
+    const profileUrl = profileLink?.getAttribute("href");
+    
+    if (!profileUrl) return null;
+    
+    // Transform URL from talent/profile to public profile format
+    return profileUrl
+      .replace('/talent/profile/', '/in/')
+      .split('?')[0];
+  }).filter((url): url is string => url !== null);
+
+  if (numProfiles > 0 && urls.length >= numProfiles) {
+    urls = urls.slice(0, numProfiles);
+  }
+  console.log("urls", urls);
+  return urls;
 };
 
 // Add this helper function at the bottom of the file
