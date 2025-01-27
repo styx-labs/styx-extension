@@ -20,6 +20,10 @@ interface JobsContainerProps {
   error: string;
   showBestFit?: boolean;
   onBestFitChange?: (enabled: boolean) => void;
+  useSelected?: boolean;
+  onAddSelectedChange?: (enabled: boolean) => void;
+  onNumProfilesChange?: (numProfiles: number) => void;
+  isProcessing: boolean;
 }
 
 const JobHeader = ({
@@ -91,6 +95,55 @@ const BestFitToggle = ({
   </button>
 );
 
+const AddSelectedToggle = ({
+  enabled,
+  onChange,
+  onNumProfilesChange,
+}: {
+  enabled: boolean;
+  onChange: (enabled: boolean) => void;
+  onNumProfilesChange?: (numProfiles: number) => void;
+}) => (
+  <div className="mt-2 mb-4 space-y-2">
+    <button
+      onClick={() => onChange(!enabled)}
+      className="w-full"
+    >
+      <div className="relative inline-flex items-center w-full max-w-[200px]">
+        <input
+          type="checkbox"
+          className="sr-only peer"
+          checked={enabled}
+          readOnly
+        />
+        <div className="w-full h-10 bg-gray-100 rounded-full peer peer-checked:after:translate-x-[100%] after:content-[''] after:absolute after:top-0 after:left-0 after:bg-white after:border after:border-gray-300 after:rounded-full after:h-10 after:w-[50%] after:transition-all"></div>
+        <div className="absolute inset-0 flex items-center justify-between px-4 text-large font-large">
+          <span className={'text-gray-600'}>Add #</span>
+          <span className={'text-gray-600'}>Add Selected</span>
+        </div>
+      </div>
+    </button>
+    {!enabled && onNumProfilesChange && (
+      <div className="flex items-center gap-2 max-w-[300px]">
+        <label htmlFor="numProfiles" className="text-xl text-gray-600 whitespace-nowrap">Number of candidates:</label>
+        <input
+          id="numProfiles"
+          type="number"
+          min="1"
+          max="100"
+          defaultValue="25"
+          onChange={(e) => {
+            const value = e.target.value === '' ? '' : Math.min(parseInt(e.target.value) || 1, 100);
+            e.target.value = value.toString();
+            onNumProfilesChange(value === '' ? 1 : value);
+          }}
+          className="w-[80px] px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+        />
+      </div>
+    )}
+  </div>
+);
+
 const JobsContainer: React.FC<JobsContainerProps> = ({
   title,
   onAddCandidate,
@@ -101,6 +154,10 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
   error,
   showBestFit,
   onBestFitChange,
+  useSelected,
+  onAddSelectedChange,
+  onNumProfilesChange,
+  isProcessing=false,
 }) => {
   const { isExpanded, toggleExpansion } = useExtensionState();
 
@@ -124,6 +181,13 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
           ) : (
             <div className="flex flex-col">
               <div className="flex-shrink-0 p-6">
+                {onAddSelectedChange && (
+                  <AddSelectedToggle
+                    enabled={useSelected || false}
+                    onChange={onAddSelectedChange}
+                    onNumProfilesChange={onNumProfilesChange}
+                  />
+                )}
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold text-gray-900">
                     {title}
@@ -144,6 +208,7 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
                     onAddCandidate={onAddCandidate}
                     isAdded={isAdded(job.id)}
                     isLoading={isLoading(job.id)}
+                    isProcessing={isProcessing}
                   />
                 ))}
               </div>

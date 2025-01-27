@@ -8,7 +8,7 @@
 export const scrollToBottom = async (): Promise<void> => {
   return new Promise((resolve) => {
     let previousHeight = 0;
-    const checkAndScroll = setInterval(() => {
+    const checkAndScroll = setInterval(async () => {
       const scrollingElement = document.scrollingElement;
       if (!scrollingElement) {
         clearInterval(checkAndScroll);
@@ -17,107 +17,152 @@ export const scrollToBottom = async (): Promise<void> => {
       }
 
       const currentHeight = scrollingElement.scrollHeight;
-      window.scrollTo(0, currentHeight);
+      window.scrollTo({
+        top: window.scrollY + 2000,
+        behavior: 'smooth'
+      });
 
       // If height hasn't changed in the last scroll, we've reached the bottom
-      if (currentHeight === previousHeight) {
+      if (currentHeight === previousHeight && window.scrollY + window.innerHeight >= currentHeight) {
         clearInterval(checkAndScroll);
         resolve();
         return;
       }
 
       previousHeight = currentHeight;
-    }, 1000); // Check every second
+    }, 700);
   });
 };
 
 /**
- * Gets the public profile URL for a LinkedIn Recruiter profile
- * Uses a hidden iframe to load the profile and extract the public URL
+ * Scrolls to the top of the page until no new content loads
  */
-export const getPublicProfileUrl = async (
-  profileUrl: string
-): Promise<string | null> => {
-  try {
-    // Create a hidden iframe
-    const iframe = document.createElement("iframe");
-    iframe.style.display = "none";
-    document.body.appendChild(iframe);
+export const scrollToTop = async (): Promise<void> => {
+  return new Promise((resolve) => {
+    let previousScrollY = window.scrollY;
+    const checkAndScroll = setInterval(() => {
+      window.scrollTo({
+        top: Math.max(0, window.scrollY - 4000),
+        behavior: 'smooth'
+      });
 
-    // Load the profile URL in the iframe
-    return new Promise((resolve) => {
-      // Set up a timeout to prevent hanging
-      const timeout = setTimeout(() => {
-        iframe.remove();
-        resolve(null);
-      }, 10000); // 10 second timeout
+      // If scroll position hasn't changed or we're at the top, we're done
+      if (window.scrollY === previousScrollY || window.scrollY === 0) {
+        clearInterval(checkAndScroll);
+        resolve();
+        return;
+      }
 
-      iframe.onload = async () => {
-        try {
-          if (!iframe.contentWindow) {
-            clearTimeout(timeout);
-            iframe.remove();
-            resolve(null);
-            return;
-          }
-
-          // Wait a bit for the page to fully render
-          await new Promise((r) => setTimeout(r, 1000));
-
-          // Click the public profile button
-          const publicProfileBtn = iframe.contentDocument?.querySelector(
-            "#topcard-public-profile-hoverable-btn"
-          );
-          if (publicProfileBtn instanceof HTMLElement) {
-            publicProfileBtn.click();
-          }
-
-          // Wait for the popup to appear
-          await new Promise((r) => setTimeout(r, 500));
-
-          // Get the public profile URL
-          const publicProfileLink = iframe.contentDocument?.querySelector(
-            ".topcard-condensed__public-profile-hovercard"
-          );
-          const publicUrl = publicProfileLink?.getAttribute("href") || null;
-
-          clearTimeout(timeout);
-          iframe.remove();
-          resolve(publicUrl);
-        } catch (error) {
-          console.error("Error processing iframe:", error);
-          clearTimeout(timeout);
-          iframe.remove();
-          resolve(null);
-        }
-      };
-
-      iframe.src = profileUrl;
-    });
-  } catch (error) {
-    console.error("Error getting public profile URL:", error);
-    return null;
-  }
+      previousScrollY = window.scrollY;
+    }, 300);
+  });
 };
 
-/**
- * Gets the profile URLs of all selected profiles in the LinkedIn Recruiter interface
- */
-export const getSelectedProfileLinks = (): string[] => {
-  // Find all profile list items
-  const profileItems = Array.from(
-    document.querySelectorAll(".profile-list-item")
+export const nextPage = () => {
+  console.log("nextPage");
+  const nextButton = document.querySelector(
+    ".pagination__quick-link--next"
   );
+  if (!nextButton) {
+    return;
+  }
 
-  // Filter to only get selected profiles and extract their links
-  return profileItems
-    .filter((item) => {
-      const checkbox = item.querySelector('input[type="checkbox"]');
-      return checkbox instanceof HTMLInputElement && checkbox.checked;
-    })
-    .map((item) => {
-      const profileLink = item.querySelector('a[href*="/talent/profile/"]');
-      return profileLink?.getAttribute("href");
-    })
-    .filter((href): href is string => !!href);
+  // Click the next button
+  (nextButton as HTMLElement).click();
+};
+
+
+export const getProfileURLs = async (
+  getSelected: boolean = false,
+  numProfiles: number = 0,
+): Promise<string[]> => {
+  await scrollToTop();
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  await scrollToBottom();
+
+  let items = Array.from(document.querySelectorAll('.profile-list-item'));
+  
+  console.log("total items", items.length);
+  
+  const batchSize = 7;
+  let results: string[] = [];
+
+  // Process items in batches
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    
+    // Scroll to middle element in the batch
+    const scrollIndex = Math.floor(batch.length / 2);
+    batch[scrollIndex].scrollIntoView({ behavior: 'smooth' });
+    
+    // Process the batch
+    const batchProfiles = await Promise.all(
+      batch.map(async (item) => {
+        if (getSelected) {
+          const checkbox = item.querySelector('input[type="checkbox"]');
+          if (!(checkbox as HTMLInputElement).checked) {
+            return null;
+          }
+        }
+        const profileLink = item.querySelector('a[href*="/talent/profile/"]');
+        const profileUrl = profileLink?.getAttribute("href");
+        
+        if (!profileUrl) return null;
+
+        const iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+
+        try {
+          iframe.src = profileUrl;
+          await new Promise(resolve => iframe.addEventListener('load', resolve, { once: true }));
+          
+          const urlContainer = await waitForElement(iframe.contentDocument as Document, ".personal-info__link");
+          const publicUrl = urlContainer?.getAttribute('href');
+          return publicUrl;
+        } finally {
+          iframe.remove();
+        }
+      })
+    );
+
+    const validBatchProfiles = batchProfiles.filter((url): url is string => !!url);
+    results.push(...validBatchProfiles);
+
+    if (numProfiles > 0 && results.length >= numProfiles) {
+      results = results.slice(0, numProfiles);
+      break;
+    }
+  }
+
+  console.log("Total valid profiles", results.length);
+  return results;
+};
+
+// Add this helper function at the bottom of the file
+const waitForElement = (doc: Document, selector: string, timeout = 5000): Promise<Element | null> => {
+  return new Promise((resolve) => {
+    if (doc.querySelector(selector)) {
+      return resolve(doc.querySelector(selector));
+    }
+
+    const observer = new MutationObserver(() => {
+      const element = doc.querySelector(selector);
+      if (element) {
+        observer.disconnect();
+        resolve(element);
+      }
+    });
+
+    observer.observe(doc.body, {
+      childList: true,
+      subtree: true
+    });
+
+    // Fallback timeout
+    setTimeout(() => {
+      observer.disconnect();
+      resolve(doc.querySelector(selector));
+    }, timeout);
+  });
 };

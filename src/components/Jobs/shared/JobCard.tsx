@@ -7,6 +7,7 @@ interface JobCardProps {
   onAddCandidate: (id: string) => void;
   isAdded: boolean;
   isLoading: boolean;
+  isProcessing: boolean;
 }
 
 export const JobCard: React.FC<JobCardProps> = ({
@@ -14,10 +15,16 @@ export const JobCard: React.FC<JobCardProps> = ({
   onAddCandidate,
   isAdded,
   isLoading,
+  isProcessing,
 }) => (
   <div
-    className="result-card rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
+    className={`result-card rounded-xl p-4 transition-all ${
+      isProcessing 
+        ? "opacity-50 cursor-not-allowed" 
+        : "hover:shadow-md cursor-pointer"
+    }`}
     onClick={(e) => {
+      if (isProcessing) return;
       // Prevent redirect if clicking the add candidate button
       if (!(e.target as HTMLElement).closest("button")) {
         window.open(`${import.meta.env.VITE_FRONTEND_URL}/jobs/${job.id}`, "_blank");
@@ -36,15 +43,15 @@ export const JobCard: React.FC<JobCardProps> = ({
       <button
         onClick={(e) => {
           e.stopPropagation(); // Prevent card click when clicking button
-          onAddCandidate(job.id);
+          if (!isProcessing) onAddCandidate(job.id);
         }}
         className={`ml-4 p-2 ${
-          isAdded
+          isAdded || isProcessing
             ? "bg-green-600 cursor-not-allowed"
             : "bg-purple-600 hover:bg-purple-700"
         } text-white rounded-lg transition-colors`}
-        title={isAdded ? "Added as candidate" : "Add as candidate"}
-        disabled={isAdded || isLoading}
+        title={isAdded ? "Added as candidate" : isProcessing ? "Processing..." : "Add as candidate"}
+        disabled={isAdded || isLoading || isProcessing}
       >
         {isAdded ? (
           <Check className="w-5 h-5" />

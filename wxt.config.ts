@@ -3,11 +3,11 @@ import { defineConfig } from "wxt";
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   manifest: {
-    name: "Styx: LinkedIn Profile Evaluator",
-    description: "Evaluate LinkedIn profiles against job descriptions",
+    name: "Styx: LinkedIn Copilot",
+    description: "Evaluate LinkedIn profiles with AI at scale",
     permissions: ["storage", "cookies"],
     host_permissions: ["https://app.styxlabs.co/*", "http://localhost:3000/*"],
-    version: "1.1",
+    version: "1.1.2",
     web_accessible_resources: [
       {
         matches: ["<all_urls>"],
