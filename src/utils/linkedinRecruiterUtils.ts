@@ -77,7 +77,6 @@ export const getProfileURLs = async (
   numProfiles: number = 0,
 ): Promise<string[]> => {
   await scrollToTop();
-  await new Promise(resolve => setTimeout(resolve, 1000));
   await scrollToBottom();
 
   let items = Array.from(document.querySelectorAll('.profile-list-item'));
@@ -128,6 +127,7 @@ export const getProfileURLs = async (
 
     const validBatchProfiles = batchProfiles.filter((url): url is string => !!url);
     results.push(...validBatchProfiles);
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     if (numProfiles > 0 && results.length >= numProfiles) {
       results = results.slice(0, numProfiles);

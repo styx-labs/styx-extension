@@ -7,6 +7,7 @@ import {
   scrollToBottom,
   nextPage,
   getProfileURLs,
+  scrollToTop,
 } from "../../utils/linkedinRecruiterUtils";
 
 
@@ -101,14 +102,16 @@ const RecruiterBulkJobsList: React.FC = () => {
         publicUrls.push(...urls);
         
         if (publicUrls.length < numProfiles) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
           nextPage();
+          await new Promise(resolve => setTimeout(resolve, 3000));
         }
       }
       if (publicUrls.length === 0) {
         setError("Could not retrieve any public profile URLs");
         return;
       }
+
+      console.log(`Successfully retrieved ${publicUrls.length} public profile URLs out of ${numProfiles} selected profiles`);
 
       // Send all URLs in one request
       const result = await createCandidatesBulk(jobId, publicUrls);
