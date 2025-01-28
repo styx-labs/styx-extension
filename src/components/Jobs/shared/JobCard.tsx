@@ -46,7 +46,7 @@ export const JobCard: React.FC<JobCardProps> = ({
           if (!isProcessing) onAddCandidate(job.id);
         }}
         className={`ml-4 p-2 ${
-          isAdded || isProcessing
+          isAdded
             ? "bg-green-600 cursor-not-allowed"
             : "bg-purple-600 hover:bg-purple-700"
         } text-white rounded-lg transition-colors`}

@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronRight, Sparkles } from "lucide-react";
+import { ChevronRight, Sparkles, RefreshCw } from "lucide-react";
 import { useExtensionState } from "@/hooks/useExtensionState";
 import type { Job } from "../../types";
 import JobCard from "./shared/JobCard";
@@ -57,21 +57,35 @@ const JobHeader = ({
         </a>
       )}
     </div>
-    <button
-      onClick={onToggle}
-      className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-      aria-label={isExpanded ? "Minimize" : "Expand"}
-    >
-      {isExpanded ? (
-        <ChevronRight className="w-6 h-6" strokeWidth={2} stroke="#9333ea" />
-      ) : (
-        <img
-          src={chrome?.runtime?.getURL("icon/128.png")}
-          alt="Styx Logo"
-          className="w-6 h-6 object-contain"
-        />
+    <div className="flex items-center gap-2">
+      {isExpanded && (
+        <button
+          onClick={() => {
+            chrome.runtime.sendMessage({ type: 'RELOAD_EXTENSION' });
+            window.location.reload();
+          }}
+          className="w-10 h-10 flex items-center justify-center text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors border border-purple-200 hover:border-purple-300"
+          aria-label="Reload extension"
+        >
+          <RefreshCw className="w-5 h-5" strokeWidth={2} />
+        </button>
       )}
-    </button>
+      <button
+        onClick={onToggle}
+        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+        aria-label={isExpanded ? "Minimize" : "Expand"}
+      >
+        {isExpanded ? (
+          <ChevronRight className="w-6 h-6" strokeWidth={2} stroke="#9333ea" />
+        ) : (
+          <img
+            src={chrome?.runtime?.getURL("icon/128.png")}
+            alt="Styx Logo"
+            className="w-6 h-6 object-contain"
+          />
+        )}
+      </button>
+    </div>
   </div>
 );
 
@@ -157,7 +171,7 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
   useSelected,
   onAddSelectedChange,
   onNumProfilesChange,
-  isProcessing=false,
+  isProcessing = false,
 }) => {
   const { isExpanded, toggleExpansion } = useExtensionState();
 
