@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { createCandidatesBulk } from "../../utils/apiUtils";
 import { useJobsState } from "../../hooks/useJobsState";
 import { useUrlWatcher } from "../../hooks/useUrlWatcher";
 import JobsContainer from "./JobsContainer";
+import CandidatesList from "./CandidatesList";
 
 const BulkJobsList: React.FC = () => {
   const {
@@ -15,6 +16,9 @@ const BulkJobsList: React.FC = () => {
     setAddedJobs,
     setLoadingJobs,
   } = useJobsState();
+
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [selectedJobTitle, setSelectedJobTitle] = useState<string | null>(null);
 
   const currentUrl = useUrlWatcher(() => {
     setAddedJobs(new Set());
@@ -75,15 +79,35 @@ const BulkJobsList: React.FC = () => {
     }
   };
 
+  const handleViewCandidates = (jobId: string, jobTitle: string) => {
+    setSelectedJobId(jobId);
+    setSelectedJobTitle(jobTitle);
+  };
+
+  if (selectedJobId) {
+    return (
+      <CandidatesList
+        jobId={selectedJobId}
+        jobTitle={selectedJobTitle || undefined}
+        onBack={() => {
+          setSelectedJobId(null);
+          setSelectedJobTitle(null);
+        }}
+      />
+    );
+  }
+
   return (
     <JobsContainer
       title="Add all search result profiles to Styx"
       onAddCandidate={handleCreateCandidate}
-      isAdded={(id) => addedJobs.has(id)}
-      isLoading={(id) => loadingJobs.has(id)}
+      onViewCandidates={handleViewCandidates}
+      isAdded={(id: string) => addedJobs.has(id)}
+      isLoading={(id: string) => loadingJobs.has(id)}
       jobs={jobs}
       loading={loading}
       error={error}
+      selectedJobId={selectedJobId || undefined}
     />
   );
 };

@@ -1,33 +1,48 @@
 import React from "react";
-import { Loader2, Plus, Check } from "lucide-react";
+import { Loader2, Plus, Check, Users } from "lucide-react";
 import type { Job } from "../../../types";
+
+type Mode = "add" | "view";
 
 interface JobCardProps {
   job: Job;
   onAddCandidate: (id: string) => void;
+  onViewCandidates: (jobId: string, jobTitle: string) => void;
   isAdded: boolean;
   isLoading: boolean;
   isProcessing: boolean;
+  mode: Mode;
 }
 
 export const JobCard: React.FC<JobCardProps> = ({
   job,
   onAddCandidate,
+  onViewCandidates,
   isAdded,
   isLoading,
   isProcessing,
+  mode,
 }) => (
   <div
-    className={`result-card rounded-xl p-4 transition-all ${
-      isProcessing 
-        ? "opacity-50 cursor-not-allowed" 
+    className={`bg-white border border-gray-200 rounded-xl p-4 transition-all ${
+      mode === "view" ? "hover:shadow-md cursor-pointer" : isProcessing
+        ? "opacity-50 cursor-not-allowed"
         : "hover:shadow-md cursor-pointer"
     }`}
     onClick={(e) => {
-      if (isProcessing) return;
-      // Prevent redirect if clicking the add candidate button
-      if (!(e.target as HTMLElement).closest("button")) {
-        window.open(`${import.meta.env.VITE_FRONTEND_URL}/jobs/${job.id}`, "_blank");
+      if (mode === "view") {
+        if (!(e.target as HTMLElement).closest("button")) {
+          onViewCandidates(job.id, `${job.company_name} - ${job.job_title}`);
+        }
+      } else {
+        if (isProcessing) return;
+        // Prevent redirect if clicking the add candidate button
+        if (!(e.target as HTMLElement).closest("button")) {
+          window.open(
+            `${import.meta.env.VITE_FRONTEND_URL}/jobs/${job.id}`,
+            "_blank"
+          );
+        }
       }
     }}
   >
@@ -40,27 +55,48 @@ export const JobCard: React.FC<JobCardProps> = ({
           {job.job_description}
         </p>
       </div>
-      <button
-        onClick={(e) => {
-          e.stopPropagation(); // Prevent card click when clicking button
-          if (!isProcessing) onAddCandidate(job.id);
-        }}
-        className={`ml-4 p-2 ${
-          isAdded
-            ? "bg-green-600 cursor-not-allowed"
-            : "bg-purple-600 hover:bg-purple-700"
-        } text-white rounded-lg transition-colors`}
-        title={isAdded ? "Added as candidate" : isProcessing ? "Processing..." : "Add as candidate"}
-        disabled={isAdded || isLoading || isProcessing}
-      >
-        {isAdded ? (
-          <Check className="w-5 h-5" />
-        ) : isLoading ? (
-          <Loader2 className="w-5 h-5 animate-spin" />
+      <div className="flex items-center gap-2">
+        {mode === "add" ? (
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent card click when clicking button
+              if (!isProcessing) onAddCandidate(job.id);
+            }}
+            className={`p-2 rounded-lg transition-colors ${
+              isAdded
+                ? "bg-green-600 cursor-not-allowed"
+                : "bg-purple-600 hover:bg-purple-700"
+            } text-white`}
+            title={
+              isAdded
+                ? "Added as candidate"
+                : isProcessing
+                ? "Processing..."
+                : "Add as candidate"
+            }
+            disabled={isAdded || isLoading || isProcessing}
+          >
+            {isAdded ? (
+              <Check className="w-5 h-5" />
+            ) : isLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Plus className="w-5 h-5" />
+            )}
+          </button>
         ) : (
-          <Plus className="w-5 h-5" />
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewCandidates(job.id, `${job.company_name} - ${job.job_title}`);
+            }}
+            className="p-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+            title="View Candidates"
+          >
+            <Users className="w-5 h-5" />
+          </button>
         )}
-      </button>
+      </div>
     </div>
   </div>
 );

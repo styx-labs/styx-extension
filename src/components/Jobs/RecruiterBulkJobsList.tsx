@@ -3,6 +3,7 @@ import { createCandidatesBulk } from "../../utils/apiUtils";
 import { useJobsState } from "../../hooks/useJobsState";
 import { useUrlWatcher } from "../../hooks/useUrlWatcher";
 import JobsContainer from "./JobsContainer";
+import CandidatesList from "./CandidatesList";
 import {
   scrollToBottom,
   nextPage,
@@ -26,6 +27,8 @@ const RecruiterBulkJobsList: React.FC = () => {
   const [useSelected, setUseSelected] = useState(false);
   const [useSearchMode, setUseSearchMode] = useState(false);
   const [numProfiles, setNumProfiles] = useState(25);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [selectedJobTitle, setSelectedJobTitle] = useState<string | null>(null);
 
   const currentUrl = useUrlWatcher(() => {
     if (!isProcessing) {
@@ -138,6 +141,24 @@ const RecruiterBulkJobsList: React.FC = () => {
     }
   };
 
+  const handleViewCandidates = (jobId: string, jobTitle: string) => {
+    setSelectedJobId(jobId);
+    setSelectedJobTitle(jobTitle);
+  };
+
+  if (selectedJobId) {
+    return (
+      <CandidatesList
+        jobId={selectedJobId}
+        jobTitle={selectedJobTitle || undefined}
+        onBack={() => {
+          setSelectedJobId(null);
+          setSelectedJobTitle(null);
+        }}
+      />
+    );
+  }
+
   return (
     <JobsContainer
       title={
@@ -148,8 +169,9 @@ const RecruiterBulkJobsList: React.FC = () => {
       onAddCandidate={
         useSelected ? handleAddSelectedCandidates : handleAddNCandidates
       }
-      isAdded={(id) => addedJobs.has(id)}
-      isLoading={(id) => loadingJobs.has(id)}
+      onViewCandidates={handleViewCandidates}
+      isAdded={(id: string) => addedJobs.has(id)}
+      isLoading={(id: string) => loadingJobs.has(id)}
       jobs={jobs}
       loading={loading}
       error={error}
@@ -159,6 +181,7 @@ const RecruiterBulkJobsList: React.FC = () => {
       isProcessing={isProcessing}
       useSearchMode={useSearchMode}
       onSearchModeChange={setUseSearchMode}
+      selectedJobId={selectedJobId || undefined}
     />
   );
 };

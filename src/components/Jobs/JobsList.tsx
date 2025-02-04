@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { createCandidate } from "../../utils/apiUtils";
 import { useJobsState } from "../../hooks/useJobsState";
 import { useUrlWatcher } from "../../hooks/useUrlWatcher";
 import JobsContainer from "./JobsContainer";
+import CandidatesList from "./CandidatesList";
 
 const JobsList: React.FC = () => {
   const {
@@ -20,6 +21,9 @@ const JobsList: React.FC = () => {
     setLoadingJobs,
     setShowBestFit,
   } = useJobsState();
+
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [selectedJobTitle, setSelectedJobTitle] = useState<string | null>(null);
 
   const currentUrl = useUrlWatcher(() => {
     setAddedJobs(new Set());
@@ -61,19 +65,39 @@ const JobsList: React.FC = () => {
     }
   };
 
+  const handleViewCandidates = (jobId: string, jobTitle: string) => {
+    setSelectedJobId(jobId);
+    setSelectedJobTitle(jobTitle);
+  };
+
   if (!currentUrl.includes("linkedin.com/in/")) return null;
+
+  if (selectedJobId) {
+    return (
+      <CandidatesList
+        jobId={selectedJobId}
+        jobTitle={selectedJobTitle || undefined}
+        onBack={() => {
+          setSelectedJobId(null);
+          setSelectedJobTitle(null);
+        }}
+      />
+    );
+  }
 
   return (
     <JobsContainer
       title="Add this candidate to Styx"
       onAddCandidate={handleCreateCandidate}
-      isAdded={(id) => addedJobs.has(id)}
-      isLoading={(id) => loadingJobs.has(id)}
+      onViewCandidates={handleViewCandidates}
+      isAdded={(id: string) => addedJobs.has(id)}
+      isLoading={(id: string) => loadingJobs.has(id)}
       jobs={jobs}
       loading={loading}
       error={error}
       showBestFit={showBestFit}
       onBestFitChange={setShowBestFit}
+      selectedJobId={selectedJobId || undefined}
     />
   );
 };

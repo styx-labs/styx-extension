@@ -1,4 +1,9 @@
-import type { EvaluationResponse, Job, LinkedinContext } from "../types";
+import type {
+  EvaluationResponse,
+  Job,
+  LinkedinContext,
+  Candidate,
+} from "../types";
 
 async function getAuthToken(): Promise<string | null> {
   return new Promise((resolve) => {
@@ -88,7 +93,7 @@ export const createCandidate = async (
   name?: string,
   context?: string,
   public_identifier?: string,
-  search_mode?: boolean = false
+  search_mode = false
 ): Promise<string | null> => {
   const token = await getAuthToken();
   if (!token) {
@@ -202,6 +207,42 @@ export const createCandidatesBulk = async (
       error instanceof Error
         ? error.message
         : "Failed to create candidates in bulk"
+    );
+  }
+};
+
+export const getCandidates = async (
+  jobId: string,
+  filterTraits?: string[]
+): Promise<{ candidates: Candidate[] } | null> => {
+  const token = await getAuthToken();
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/jobs/${jobId}/candidates${
+        filterTraits?.length ? `?filter_traits=${filterTraits.join(",")}` : ""
+      }`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to get candidates: ${response.status}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error("Error fetching candidates:", error);
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to get candidates"
     );
   }
 };

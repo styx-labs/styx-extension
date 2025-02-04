@@ -1,6 +1,13 @@
 import React from "react";
-import { ChevronRight, Sparkles, RefreshCw } from "lucide-react";
-import { useExtensionState } from "@/hooks/useExtensionState";
+import {
+  ChevronRight,
+  Sparkles,
+  RefreshCw,
+  PlusCircle,
+  Eye,
+} from "lucide-react";
+import { useExtensionState } from "../../hooks/useExtensionState";
+import { useExtensionMode } from "../../hooks/useExtensionMode";
 import type { Job } from "../../types";
 import JobCard from "./shared/JobCard";
 import {
@@ -10,9 +17,12 @@ import {
   NotLoggedInState,
 } from "./shared/JobStates";
 
+type Mode = "add" | "view";
+
 interface JobsContainerProps {
   title: string;
   onAddCandidate: (jobId: string) => void;
+  onViewCandidates: (jobId: string, jobTitle: string) => void;
   isAdded: (jobId: string) => boolean;
   isLoading: (jobId: string) => boolean;
   jobs: Job[];
@@ -26,6 +36,7 @@ interface JobsContainerProps {
   isProcessing?: boolean;
   useSearchMode?: boolean;
   onSearchModeChange?: (value: boolean) => void;
+  selectedJobId?: string;
 }
 
 const JobHeader = ({
@@ -111,6 +122,39 @@ const BestFitToggle = ({
   </button>
 );
 
+const ModeTabs = ({
+  mode,
+  onChange,
+}: {
+  mode: Mode;
+  onChange: (mode: Mode) => void;
+}) => (
+  <div className="flex items-center justify-center gap-2 p-4 border-t border-gray-200">
+    <button
+      onClick={() => onChange("add")}
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+        mode === "add"
+          ? "bg-purple-600 text-white"
+          : "text-gray-600 hover:bg-gray-100"
+      }`}
+    >
+      <PlusCircle className="w-4 h-4" />
+      <span>Add</span>
+    </button>
+    <button
+      onClick={() => onChange("view")}
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+        mode === "view"
+          ? "bg-purple-600 text-white"
+          : "text-gray-600 hover:bg-gray-100"
+      }`}
+    >
+      <Eye className="w-4 h-4" />
+      <span>View</span>
+    </button>
+  </div>
+);
+
 const AddSelectedToggle = ({
   enabled,
   onChange,
@@ -168,6 +212,7 @@ const AddSelectedToggle = ({
 const JobsContainer: React.FC<JobsContainerProps> = ({
   title,
   onAddCandidate,
+  onViewCandidates,
   isAdded,
   isLoading,
   jobs,
@@ -181,93 +226,106 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
   isProcessing = false,
   useSearchMode,
   onSearchModeChange,
+  selectedJobId,
 }) => {
   const { isExpanded, toggleExpansion } = useExtensionState();
+  const { mode, setMode } = useExtensionMode();
 
   return (
     <div
       className={`extension-container bg-white rounded-l-lg shadow-lg flex flex-col ${
-        isExpanded ? "w-[450px] max-h-[calc(100vh-100px)]" : "w-20"
+        !isExpanded
+          ? "w-20"
+          : mode === "view" && selectedJobId
+          ? "w-[650px] max-h-[calc(100vh-50px)]"
+          : "w-[450px] max-h-[calc(100vh-100px)]"
       }`}
     >
       <JobHeader isExpanded={isExpanded} onToggle={toggleExpansion} />
       {isExpanded && (
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          {loading ? (
-            <LoadingState />
-          ) : error === "not_authenticated" ? (
-            <NotLoggedInState />
-          ) : error ? (
-            <ErrorState message={error} />
-          ) : jobs.length === 0 ? (
-            <NoJobsState />
-          ) : (
-            <div className="flex flex-col">
-              <div className="flex-shrink-0 p-6">
-                {onAddSelectedChange && (
-                  <AddSelectedToggle
-                    enabled={useSelected || false}
-                    onChange={onAddSelectedChange}
-                    onNumProfilesChange={onNumProfilesChange}
-                  />
-                )}
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    {title}
-                  </h2>
-                </div>
-                {onBestFitChange && (
-                  <BestFitToggle
-                    enabled={showBestFit || false}
-                    onChange={onBestFitChange}
-                  />
-                )}
-                {onSearchModeChange && (
-                  <div className="mt-4 flex items-center gap-3">
-                    <span className="text-base text-gray-600">Search Mode</span>
-                    <button
-                      role="switch"
-                      aria-checked={useSearchMode}
-                      onClick={() =>
-                        !isProcessing && onSearchModeChange(!useSearchMode)
-                      }
-                      disabled={isProcessing}
-                      className={`
-                        relative inline-flex h-5 w-9 items-center rounded-full transition-colors 
-                        focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-1
-                        ${useSearchMode ? "bg-purple-600" : "bg-gray-200"} 
-                        ${
-                          isProcessing
-                            ? "opacity-50 cursor-not-allowed"
-                            : "cursor-pointer"
-                        }
-                      `}
-                    >
-                      <span
-                        className={`
-                          inline-block h-4 w-4 transform rounded-full bg-white transition-transform 
-                          ${useSearchMode ? "translate-x-5" : "translate-x-1"}
-                        `}
-                      />
-                    </button>
+        <>
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {loading ? (
+              <LoadingState />
+            ) : error === "not_authenticated" ? (
+              <NotLoggedInState />
+            ) : error ? (
+              <ErrorState message={error} />
+            ) : jobs.length === 0 ? (
+              <NoJobsState />
+            ) : (
+              <div className="flex flex-col">
+                <div className="flex-shrink-0 p-6">
+                  {mode === "add" && onAddSelectedChange && (
+                    <AddSelectedToggle
+                      enabled={useSelected || false}
+                      onChange={onAddSelectedChange}
+                      onNumProfilesChange={onNumProfilesChange}
+                    />
+                  )}
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      {mode === "add" ? title : "Your Jobs"}
+                    </h2>
                   </div>
-                )}
+                  {mode === "add" && onBestFitChange && (
+                    <BestFitToggle
+                      enabled={showBestFit || false}
+                      onChange={onBestFitChange}
+                    />
+                  )}
+                  {mode === "add" && onSearchModeChange && (
+                    <div className="mt-4 flex items-center gap-3">
+                      <span className="text-base text-gray-600">
+                        Search Mode
+                      </span>
+                      <button
+                        role="switch"
+                        aria-checked={useSearchMode}
+                        onClick={() =>
+                          !isProcessing && onSearchModeChange(!useSearchMode)
+                        }
+                        disabled={isProcessing}
+                        className={`
+                          relative inline-flex h-5 w-9 items-center rounded-full transition-colors 
+                          focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-1
+                          ${useSearchMode ? "bg-purple-600" : "bg-gray-200"} 
+                          ${
+                            isProcessing
+                              ? "opacity-50 cursor-not-allowed"
+                              : "cursor-pointer"
+                          }
+                        `}
+                      >
+                        <span
+                          className={`
+                            inline-block h-4 w-4 transform rounded-full bg-white transition-transform 
+                            ${useSearchMode ? "translate-x-5" : "translate-x-1"}
+                          `}
+                        />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4">
+                  {jobs.map((job) => (
+                    <JobCard
+                      key={job.id}
+                      job={job}
+                      onAddCandidate={onAddCandidate}
+                      onViewCandidates={onViewCandidates}
+                      isAdded={isAdded(job.id)}
+                      isLoading={isLoading(job.id)}
+                      isProcessing={isProcessing}
+                      mode={mode}
+                    />
+                  ))}
+                </div>
               </div>
-              <div className="px-6 pb-6 space-y-3">
-                {jobs.map((job) => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    onAddCandidate={onAddCandidate}
-                    isAdded={isAdded(job.id)}
-                    isLoading={isLoading(job.id)}
-                    isProcessing={isProcessing}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+          <ModeTabs mode={mode} onChange={setMode} />
+        </>
       )}
     </div>
   );
