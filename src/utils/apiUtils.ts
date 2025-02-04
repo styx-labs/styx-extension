@@ -87,7 +87,8 @@ export const createCandidate = async (
   url: string,
   name?: string,
   context?: string,
-  public_identifier?: string
+  public_identifier?: string,
+  search_mode?: boolean = false
 ): Promise<string | null> => {
   const token = await getAuthToken();
   if (!token) {
@@ -100,7 +101,7 @@ export const createCandidate = async (
     if (context) body.context = context;
     if (public_identifier) body.public_identifier = public_identifier;
     body.url = url;
-    console.log(body);
+    body.search_mode = search_mode ? "true" : "false";
 
     const response = await fetch(
       `${import.meta.env.VITE_API_URL}/jobs/${jobId}/candidates`,
@@ -167,8 +168,9 @@ export const getLinkedinContext = async (
 
 export const createCandidatesBulk = async (
   jobId: string,
-  urls: string[]
-): Promise< string | null> => {
+  urls: string[],
+  search_mode: boolean = false
+): Promise<string | null> => {
   const token = await getAuthToken();
   if (!token) {
     return null;
@@ -183,7 +185,7 @@ export const createCandidatesBulk = async (
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ urls }),
+        body: JSON.stringify({ urls, search_mode }),
       }
     );
 

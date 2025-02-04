@@ -10,7 +10,6 @@ import {
   scrollToTop,
 } from "../../utils/linkedinRecruiterUtils";
 
-
 const RecruiterBulkJobsList: React.FC = () => {
   const {
     jobs,
@@ -24,6 +23,9 @@ const RecruiterBulkJobsList: React.FC = () => {
   } = useJobsState();
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [useSelected, setUseSelected] = useState(false);
+  const [useSearchMode, setUseSearchMode] = useState(false);
+  const [numProfiles, setNumProfiles] = useState(25);
 
   const currentUrl = useUrlWatcher(() => {
     if (!isProcessing) {
@@ -31,9 +33,6 @@ const RecruiterBulkJobsList: React.FC = () => {
       setLoadingJobs(new Set());
     }
   });
-
-  const [useSelected, setUseSelected] = useState(false);
-  const [numProfiles, setNumProfiles] = useState(25);
 
   const handleAddSelectedCandidates = async (jobId: string) => {
     try {
@@ -44,17 +43,12 @@ const RecruiterBulkJobsList: React.FC = () => {
       await scrollToBottom();
 
       // Get links of selected profiles
-      const publicUrls = await getProfileURLs(true);
+      const publicUrls = await getProfileURLs(true, 0, useSearchMode);
 
       if (publicUrls.length === 0) {
         setError(
           "No profiles selected. Please select profiles to add to Styx."
         );
-        return;
-      }
-
-      if (publicUrls.length === 0) {
-        setError("Could not retrieve any public profile URLs");
         return;
       }
 
@@ -82,7 +76,7 @@ const RecruiterBulkJobsList: React.FC = () => {
       });
       setIsProcessing(false);
       // Scroll back to the top after processing
-      window.scrollTo(0, 0);
+      scrollToTop();
     }
   };
 
@@ -95,23 +89,30 @@ const RecruiterBulkJobsList: React.FC = () => {
       let publicUrls: string[] = [];
 
       while (publicUrls.length < numProfiles) {
-        const urls = await getProfileURLs(useSelected, numProfiles - publicUrls.length);
+        const urls = await getProfileURLs(
+          useSelected,
+          numProfiles - publicUrls.length,
+          useSearchMode
+        );
         if (urls.length === 0) {
           break;
         }
         publicUrls.push(...urls);
-        
+
         if (publicUrls.length < numProfiles) {
           nextPage();
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          await new Promise((resolve) => setTimeout(resolve, 3000));
         }
       }
+
       if (publicUrls.length === 0) {
         setError("Could not retrieve any public profile URLs");
         return;
       }
 
-      console.log(`Successfully retrieved ${publicUrls.length} public profile URLs out of ${numProfiles} selected profiles`);
+      console.log(
+        `Successfully retrieved ${publicUrls.length} public profile URLs out of ${numProfiles} profiles`
+      );
 
       // Send all URLs in one request
       const result = await createCandidatesBulk(jobId, publicUrls);
@@ -133,14 +134,20 @@ const RecruiterBulkJobsList: React.FC = () => {
       });
       setIsProcessing(false);
       // Scroll back to the top after processing
-      window.scrollTo(0, 0);
+      scrollToTop();
     }
   };
 
   return (
     <JobsContainer
-      title={useSelected ? "Add selected LinkedIn profiles to Styx" : `Add First ${numProfiles} LinkedIn profiles to Styx`}
-      onAddCandidate={useSelected ? handleAddSelectedCandidates : handleAddNCandidates}
+      title={
+        useSelected
+          ? "Add selected LinkedIn profiles to Styx"
+          : `Add First ${numProfiles} LinkedIn profiles to Styx`
+      }
+      onAddCandidate={
+        useSelected ? handleAddSelectedCandidates : handleAddNCandidates
+      }
       isAdded={(id) => addedJobs.has(id)}
       isLoading={(id) => loadingJobs.has(id)}
       jobs={jobs}
@@ -150,6 +157,8 @@ const RecruiterBulkJobsList: React.FC = () => {
       onAddSelectedChange={setUseSelected}
       onNumProfilesChange={setNumProfiles}
       isProcessing={isProcessing}
+      useSearchMode={useSearchMode}
+      onSearchModeChange={setUseSearchMode}
     />
   );
 };

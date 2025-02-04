@@ -24,6 +24,8 @@ interface JobsContainerProps {
   onAddSelectedChange?: (enabled: boolean) => void;
   onNumProfilesChange?: (numProfiles: number) => void;
   isProcessing?: boolean;
+  useSearchMode?: boolean;
+  onSearchModeChange?: (value: boolean) => void;
 }
 
 const JobHeader = ({
@@ -61,7 +63,7 @@ const JobHeader = ({
       {isExpanded && (
         <button
           onClick={() => {
-            chrome.runtime.sendMessage({ type: 'RELOAD_EXTENSION' });
+            chrome.runtime.sendMessage({ type: "RELOAD_EXTENSION" });
             window.location.reload();
           }}
           className="w-10 h-10 flex items-center justify-center text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors border border-purple-200 hover:border-purple-300"
@@ -119,10 +121,7 @@ const AddSelectedToggle = ({
   onNumProfilesChange?: (numProfiles: number) => void;
 }) => (
   <div className="mt-2 mb-4 space-y-2">
-    <button
-      onClick={() => onChange(!enabled)}
-      className="w-full"
-    >
+    <button onClick={() => onChange(!enabled)} className="w-full">
       <div className="relative inline-flex items-center w-full max-w-[200px]">
         <input
           type="checkbox"
@@ -132,14 +131,19 @@ const AddSelectedToggle = ({
         />
         <div className="w-full h-10 bg-gray-100 rounded-full peer peer-checked:after:translate-x-[100%] after:content-[''] after:absolute after:top-0 after:left-0 after:bg-white after:border after:border-gray-300 after:rounded-full after:h-10 after:w-[50%] after:transition-all"></div>
         <div className="absolute inset-0 flex items-center justify-between px-4 text-large font-large">
-          <span className={'text-gray-600'}>Add #</span>
-          <span className={'text-gray-600'}>Add Selected</span>
+          <span className={"text-gray-600"}>Add #</span>
+          <span className={"text-gray-600"}>Add Selected</span>
         </div>
       </div>
     </button>
     {!enabled && onNumProfilesChange && (
       <div className="flex items-center gap-2 max-w-[300px]">
-        <label htmlFor="numProfiles" className="text-xl text-gray-600 whitespace-nowrap">Number of candidates:</label>
+        <label
+          htmlFor="numProfiles"
+          className="text-xl text-gray-600 whitespace-nowrap"
+        >
+          Number of candidates:
+        </label>
         <input
           id="numProfiles"
           type="number"
@@ -147,9 +151,12 @@ const AddSelectedToggle = ({
           max="100"
           defaultValue="25"
           onChange={(e) => {
-            const value = e.target.value === '' ? '' : Math.min(parseInt(e.target.value) || 1, 100);
+            const value =
+              e.target.value === ""
+                ? ""
+                : Math.min(parseInt(e.target.value) || 1, 100);
             e.target.value = value.toString();
-            onNumProfilesChange(value === '' ? 1 : value);
+            onNumProfilesChange(value === "" ? 1 : value);
           }}
           className="w-[80px] px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
         />
@@ -172,6 +179,8 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
   onAddSelectedChange,
   onNumProfilesChange,
   isProcessing = false,
+  useSearchMode,
+  onSearchModeChange,
 }) => {
   const { isExpanded, toggleExpansion } = useExtensionState();
 
@@ -212,6 +221,36 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
                     enabled={showBestFit || false}
                     onChange={onBestFitChange}
                   />
+                )}
+                {onSearchModeChange && (
+                  <div className="mt-4 flex items-center gap-3">
+                    <span className="text-base text-gray-600">Search Mode</span>
+                    <button
+                      role="switch"
+                      aria-checked={useSearchMode}
+                      onClick={() =>
+                        !isProcessing && onSearchModeChange(!useSearchMode)
+                      }
+                      disabled={isProcessing}
+                      className={`
+                        relative inline-flex h-5 w-9 items-center rounded-full transition-colors 
+                        focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-1
+                        ${useSearchMode ? "bg-purple-600" : "bg-gray-200"} 
+                        ${
+                          isProcessing
+                            ? "opacity-50 cursor-not-allowed"
+                            : "cursor-pointer"
+                        }
+                      `}
+                    >
+                      <span
+                        className={`
+                          inline-block h-4 w-4 transform rounded-full bg-white transition-transform 
+                          ${useSearchMode ? "translate-x-5" : "translate-x-1"}
+                        `}
+                      />
+                    </button>
+                  </div>
                 )}
               </div>
               <div className="px-6 pb-6 space-y-3">

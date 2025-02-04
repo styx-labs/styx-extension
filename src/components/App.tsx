@@ -43,7 +43,8 @@ const App: React.FC = () => {
 
   if (
     currentPath.includes("/talent/search") ||
-    /\/talent\/hire\/[^/]+\/discover\/recruiterSearch/.test(currentPath)
+    /\/talent\/hire\/[^/]+\/discover\/recruiterSearch/.test(currentPath) ||
+    /\/talent\/hire\/[^/]+\/manage/.test(currentPath)
   ) {
     return <RecruiterBulkJobsList />;
   }
