@@ -88,43 +88,58 @@ const RecruiterBulkJobsList: React.FC = () => {
       setIsProcessing(true);
       setLoadingJobs((prev) => new Set([...prev, jobId]));
 
-      // Use a local variable to control the flow since state updates are async
-      let publicUrls: string[] = [];
+      let totalProcessed = 0;
+      let failedAttempts = 0;
+      const MAX_FAILED_ATTEMPTS = 3;
 
-      while (publicUrls.length < numProfiles) {
-        const urls = await getProfileURLs(
-          useSelected,
-          numProfiles - publicUrls.length,
-          useSearchMode
-        );
+      while (totalProcessed < numProfiles && failedAttempts < MAX_FAILED_ATTEMPTS) {
+        // Calculate how many more profiles we need
+        const remainingProfiles = numProfiles - totalProcessed;
+        
+        // Get URLs from current page, limiting to remaining needed profiles
+        const urls = await getProfileURLs(useSelected, remainingProfiles, useSearchMode);
+        
         if (urls.length === 0) {
-          break;
+          failedAttempts++;
+          continue;
         }
-        publicUrls.push(...urls);
 
-        if (publicUrls.length < numProfiles) {
+        // Reset failed attempts since we found profiles
+        failedAttempts = 0;
+
+        console.log(
+          `Processing ${urls.length} profiles from current page (${totalProcessed}/${numProfiles} total)`
+        );
+
+        // Send current batch of URLs
+        const result = await createCandidatesBulk(jobId, urls);
+        if (result === null) {
+          setError("not_authenticated");
+          return;
+        }
+
+        totalProcessed += urls.length;
+        
+        // Update added jobs set
+        setAddedJobs((prev) => new Set([...prev, jobId]));
+
+        // If we haven't reached our target, go to next page
+        if (totalProcessed < numProfiles) {
           nextPage();
+          // Wait for page transition
           await new Promise((resolve) => setTimeout(resolve, 3000));
         }
       }
 
-      if (publicUrls.length === 0) {
+      if (totalProcessed === 0) {
         setError("Could not retrieve any public profile URLs");
         return;
       }
 
       console.log(
-        `Successfully retrieved ${publicUrls.length} public profile URLs out of ${numProfiles} profiles`
+        `Successfully processed ${totalProcessed} profiles out of ${numProfiles} requested`
       );
 
-      // Send all URLs in one request
-      const result = await createCandidatesBulk(jobId, publicUrls);
-      if (result === null) {
-        setError("not_authenticated");
-        return;
-      }
-
-      setAddedJobs((prev) => new Set([...prev, jobId]));
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to create candidates"
