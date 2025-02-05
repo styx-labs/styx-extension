@@ -19,6 +19,7 @@ import {
   Loader2,
   Trash2,
   Link,
+  UserPlus,
 } from "lucide-react";
 import type { Candidate, TraitEvaluation } from "@/types";
 import {
@@ -27,6 +28,7 @@ import {
   deleteCandidate,
 } from "@/utils/apiUtils";
 import toast from "react-hot-toast";
+import { connectAndMessage } from "@/utils/linkedinUtils";
 
 // Date formatting utilities
 const formatDate = (dateStr: string | null) => {
@@ -270,6 +272,42 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
     }
   };
 
+  const handleConnectClick = async () => {
+    if (!candidate.url || !jobId || !candidate.id) return;
+    try {
+      const response = await getCandidateReachout(
+        jobId,
+        candidate.id,
+        "linkedin"
+      );
+      await connectAndMessage(candidate.url, response?.data?.reachout);
+      toast.success("Connection request sent!", {
+        style: {
+          background: "#10B981",
+          color: "#FFFFFF",
+          padding: "16px",
+        },
+        iconTheme: {
+          primary: "#FFFFFF",
+          secondary: "#10B981",
+        },
+      });
+    } catch (error) {
+      console.error("Error connecting to candidate:", error);
+      toast.error("Failed to send connection request", {
+        style: {
+          background: "#EF4444",
+          color: "#FFFFFF",
+          padding: "16px",
+        },
+        iconTheme: {
+          primary: "#FFFFFF",
+          secondary: "#EF4444",
+        },
+      });
+    }
+  };
+
   const handleDelete = async () => {
     if (!candidate.id || !jobId) return;
     try {
@@ -319,6 +357,13 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                 }
               >
                 <LinkedinIcon className="h-5 w-5 text-[#0A66C2]" />
+              </button>
+              <button
+                disabled={!candidate.url}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50"
+                onClick={handleConnectClick}
+              >
+                <UserPlus className="h-5 w-5" />
               </button>
               <button
                 disabled={!candidate.url || !candidate.id}
