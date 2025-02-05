@@ -1,9 +1,4 @@
-import type {
-  EvaluationResponse,
-  Job,
-  LinkedinContext,
-  Candidate,
-} from "../types";
+import type { Job, LinkedinContext, Candidate } from "../types";
 
 async function getAuthToken(): Promise<string | null> {
   return new Promise((resolve) => {
@@ -213,7 +208,8 @@ export const createCandidatesBulk = async (
 
 export const getCandidates = async (
   jobId: string,
-  filterTraits?: string[]
+  filterTraits?: string[],
+  status: "complete" | "processing" = "complete"
 ): Promise<{ candidates: Candidate[] } | null> => {
   const token = await getAuthToken();
   if (!token) {
@@ -221,10 +217,16 @@ export const getCandidates = async (
   }
 
   try {
+    const queryParams = new URLSearchParams();
+    if (filterTraits && filterTraits.length > 0) {
+      queryParams.append("traits", filterTraits.join(","));
+    }
+    queryParams.append("status", status);
+
     const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/jobs/${jobId}/candidates${
-        filterTraits?.length ? `?filter_traits=${filterTraits.join(",")}` : ""
-      }`,
+      `${
+        import.meta.env.VITE_API_URL
+      }/jobs/${jobId}/candidates?${queryParams.toString()}`,
       {
         method: "GET",
         headers: {
@@ -238,11 +240,109 @@ export const getCandidates = async (
       throw new Error(`Failed to get candidates: ${response.status}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error("Error fetching candidates:", error);
     throw new Error(
       error instanceof Error ? error.message : "Failed to get candidates"
     );
+  }
+};
+
+export const getEmail = async (
+  linkedinUrl: string
+): Promise<{ data: { email: string } }> => {
+  const token = await getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/get_email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ linkedin_url: linkedinUrl }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get email: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return { data };
+  } catch (error) {
+    console.error("Error getting email:", error);
+    throw error;
+  }
+};
+
+export const getCandidateReachout = async (
+  jobId: string,
+  candidateId: string,
+  format: string
+): Promise<{ data: { reachout: string } }> => {
+  const token = await getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  try {
+    const response = await fetch(
+      `${
+        import.meta.env.VITE_API_URL
+      }/jobs/${jobId}/candidates/${candidateId}/generate-reachout`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ format }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to get reachout message: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return { data };
+  } catch (error) {
+    console.error("Error getting reachout message:", error);
+    throw error;
+  }
+};
+
+export const deleteCandidate = async (
+  jobId: string,
+  candidateId: string
+): Promise<void> => {
+  const token = await getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/jobs/${jobId}/candidates/${candidateId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete candidate: ${response.status}`);
+    }
+  } catch (error) {
+    console.error("Error deleting candidate:", error);
+    throw error;
   }
 };

@@ -1,6 +1,5 @@
 import React from "react";
 import type { Candidate } from "@/types";
-import { Check, X } from "lucide-react";
 
 interface CandidateRowProps {
   candidate: Candidate;
@@ -78,17 +77,6 @@ export const CandidateRow: React.FC<CandidateRowProps> = ({
           </span>
         </div>
       </td>
-      {/* <td className="px-6 py-4 whitespace-nowrap text-right min-w-[120px]">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            window.open(candidate.url, "_blank");
-          }}
-          className="text-purple-600 hover:text-purple-800 text-base font-medium"
-        >
-          View Profile
-        </button>
-      </td> */}
     </tr>
   );
 };

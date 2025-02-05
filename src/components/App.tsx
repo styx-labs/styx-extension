@@ -1,12 +1,22 @@
 import React, { useEffect, useState } from "react";
+import { useExtensionState } from "@/hooks/useExtensionState";
+import { Toaster } from "react-hot-toast";
 import JobsList from "./Jobs/JobsList";
+import { CandidatesList } from "./Jobs/CandidatesList";
 import BulkJobsList from "./Jobs/BulkJobsList";
 import RecruiterBulkJobsList from "./Jobs/RecruiterBulkJobsList";
 
+interface JobsListProps {
+  onSelectJob: (jobId: string, jobTitle: string) => void;
+}
+
 const App: React.FC = () => {
+  const { isExpanded } = useExtensionState();
   const [currentPath, setCurrentPath] = useState<string>(
     window.location.pathname
   );
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [selectedJobTitle, setSelectedJobTitle] = useState<string | null>(null);
 
   useEffect(() => {
     // Update path immediately when component mounts
@@ -47,18 +57,50 @@ const App: React.FC = () => {
     /\/talent\/hire\/[^/]+\/discover\/automatedSourcing/.test(currentPath) ||
     /\/talent\/hire\/[^/]+\/manage/.test(currentPath)
   ) {
-    return <RecruiterBulkJobsList />;
+    return (
+      <>
+        <RecruiterBulkJobsList />
+        <Toaster position="bottom-right" />
+      </>
+    );
   }
 
   if (currentPath.includes("/in")) {
-    return <JobsList />;
+    return (
+      <>
+        <JobsList />
+        <Toaster position="bottom-right" />
+      </>
+    );
   }
 
   if (currentPath.includes("/search/results/people")) {
-    return <BulkJobsList />;
+    return (
+      <>
+        <BulkJobsList />
+        <Toaster position="bottom-right" />
+      </>
+    );
   }
 
-  return null;
+  return (
+    <>
+      <div
+        className={`fixed top-0 right-0 h-screen bg-white shadow-lg transition-all duration-300 ease-in-out ${
+          isExpanded ? "w-[600px]" : "w-20"
+        }`}
+      >
+        {selectedJobId ? (
+          <CandidatesList
+            jobId={selectedJobId}
+            onBack={() => setSelectedJobId(null)}
+            jobTitle={selectedJobTitle || undefined}
+          />
+        ) : null}
+      </div>
+      <Toaster position="bottom-right" />
+    </>
+  );
 };
 
 export default App;
