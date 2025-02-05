@@ -71,7 +71,7 @@ interface CandidateSidebarProps {
 const TraitEvaluationItem: React.FC<{ evaluation: TraitEvaluation }> = ({
   evaluation,
 }) => {
-  const [isOpen, setIsOpen] = React.useState(true);
+  const [isOpen, setIsOpen] = React.useState(false);
 
   return (
     <div className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-all">
@@ -418,6 +418,19 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
       </div>
 
       <div className="p-6 space-y-8">
+        {candidate.sections && candidate.sections.length > 0 && (
+          <div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              Trait Evaluation
+            </h3>
+            <div className="space-y-4">
+              {candidate.sections.map((section, index) => (
+                <TraitEvaluationItem key={index} evaluation={section} />
+              ))}
+            </div>
+          </div>
+        )}
+
         {(candidate.summary || candidate.evaluation?.score !== undefined) && (
           <div className="bg-gray-50 p-6 rounded-xl">
             <div className="flex items-center justify-between mb-3">
@@ -595,19 +608,6 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                     </div>
                   )}
               </div>
-            </div>
-          </div>
-        )}
-
-        {candidate.sections && candidate.sections.length > 0 && (
-          <div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">
-              Trait Evaluation
-            </h3>
-            <div className="space-y-4">
-              {candidate.sections.map((section, index) => (
-                <TraitEvaluationItem key={index} evaluation={section} />
-              ))}
             </div>
           </div>
         )}

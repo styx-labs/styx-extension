@@ -1,6 +1,7 @@
 import ReactDOM from "react-dom/client";
 import App from "@/components/App";
 import { ContentScriptContext } from "wxt/client";
+import DraggableOverlay from "@/components/DraggableOverlay";
 import "./style.css";
 
 export default defineContentScript({
@@ -27,13 +28,16 @@ function createUI(ctx: ContentScriptContext) {
     onMount: (container) => {
       // Container is a body, and React warns when creating a root on the body, so create a wrapper div
       const shadowDOM = document.createElement("div");
-      shadowDOM.classList.add("overlay");
 
       container.append(shadowDOM);
 
       // Create a root on the UI container and render a component
       const root = ReactDOM.createRoot(shadowDOM);
-      root.render(<App />);
+      root.render(
+        <DraggableOverlay>
+          <App />
+        </DraggableOverlay>
+      );
       return root;
     },
     onRemove: (root) => {

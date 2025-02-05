@@ -92,13 +92,20 @@ const RecruiterBulkJobsList: React.FC = () => {
       let failedAttempts = 0;
       const MAX_FAILED_ATTEMPTS = 3;
 
-      while (totalProcessed < numProfiles && failedAttempts < MAX_FAILED_ATTEMPTS) {
+      while (
+        totalProcessed < numProfiles &&
+        failedAttempts < MAX_FAILED_ATTEMPTS
+      ) {
         // Calculate how many more profiles we need
         const remainingProfiles = numProfiles - totalProcessed;
-        
+
         // Get URLs from current page, limiting to remaining needed profiles
-        const urls = await getProfileURLs(useSelected, remainingProfiles, useSearchMode);
-        
+        const urls = await getProfileURLs(
+          useSelected,
+          remainingProfiles,
+          useSearchMode
+        );
+
         if (urls.length === 0) {
           failedAttempts++;
           continue;
@@ -119,7 +126,7 @@ const RecruiterBulkJobsList: React.FC = () => {
         }
 
         totalProcessed += urls.length;
-        
+
         // Update added jobs set
         setAddedJobs((prev) => new Set([...prev, jobId]));
 
@@ -139,7 +146,6 @@ const RecruiterBulkJobsList: React.FC = () => {
       console.log(
         `Successfully processed ${totalProcessed} profiles out of ${numProfiles} requested`
       );
-
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to create candidates"
