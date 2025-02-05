@@ -1,5 +1,5 @@
 import ReactDOM from "react-dom/client";
-import App from "@/components/App";
+import App from "@/App";
 import { ContentScriptContext } from "wxt/client";
 import DraggableOverlay from "@/components/DraggableOverlay";
 import "./style.css";
