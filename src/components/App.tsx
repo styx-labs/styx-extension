@@ -10,6 +10,13 @@ interface JobsListProps {
   onSelectJob: (jobId: string, jobTitle: string) => void;
 }
 
+const PageLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <>
+    {children}
+    <Toaster position="bottom-right" />
+  </>
+);
+
 const App: React.FC = () => {
   const { isExpanded } = useExtensionState();
   const [currentPath, setCurrentPath] = useState<string>(
@@ -51,55 +58,61 @@ const App: React.FC = () => {
     };
   }, [currentPath]);
 
-  if (
-    currentPath.includes("/talent/search") ||
-    /\/talent\/hire\/[^/]+\/discover\/recruiterSearch/.test(currentPath) ||
-    /\/talent\/hire\/[^/]+\/discover\/automatedSourcing/.test(currentPath) ||
-    /\/talent\/hire\/[^/]+\/manage/.test(currentPath)
-  ) {
+  const pathMatches = (patterns: (string | RegExp)[]) => {
+    return patterns.some((pattern) =>
+      typeof pattern === "string"
+        ? currentPath.includes(pattern)
+        : pattern.test(currentPath)
+    );
+  };
+
+  const recruiterPaths = [
+    "/talent/search",
+    /\/talent\/hire\/[^/]+\/discover\/recruiterSearch/,
+    /\/talent\/hire\/[^/]+\/discover\/automatedSourcing/,
+    /\/talent\/hire\/[^/]+\/manage/,
+  ];
+
+  if (pathMatches(recruiterPaths)) {
     return (
-      <>
+      <PageLayout>
         <RecruiterBulkJobsList />
-        <Toaster position="bottom-right" />
-      </>
+      </PageLayout>
     );
   }
 
-  if (currentPath.includes("/in")) {
+  if (pathMatches(["/in"])) {
     return (
-      <>
+      <PageLayout>
         <JobsList />
-        <Toaster position="bottom-right" />
-      </>
+      </PageLayout>
     );
   }
 
-  if (currentPath.includes("/search/results/people")) {
+  if (pathMatches(["/search/results/people"])) {
     return (
-      <>
+      <PageLayout>
         <BulkJobsList />
-        <Toaster position="bottom-right" />
-      </>
+      </PageLayout>
     );
   }
 
   return (
-    <>
+    <PageLayout>
       <div
-        className={`fixed top-0 right-0 h-screen bg-white shadow-lg transition-all duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 h-screen transition-all duration-300 ease-in-out ${
           isExpanded ? "w-[600px]" : "w-20"
         }`}
       >
-        {selectedJobId ? (
+        {selectedJobId && (
           <CandidatesList
             jobId={selectedJobId}
             onBack={() => setSelectedJobId(null)}
             jobTitle={selectedJobTitle || undefined}
           />
-        ) : null}
+        )}
       </div>
-      <Toaster position="bottom-right" />
-    </>
+    </PageLayout>
   );
 };
 

@@ -20,7 +20,6 @@ interface CandidatesListProps {
   filterTraits?: string[];
   onBack: () => void;
   jobTitle?: string;
-  job: Job;
 }
 
 interface LoadingStates {
@@ -121,7 +120,7 @@ const TraitFilter: React.FC<TraitFilterProps> = ({ job, onFilterChange }) => {
   useEffect(() => {
     setSelectedTraits([]);
     onFilterChange([]);
-  }, [onFilterChange]);
+  }, [job.id, onFilterChange]);
 
   const handleTraitToggle = (trait: string) => {
     setSelectedTraits((prev) => {
@@ -140,15 +139,13 @@ const TraitFilter: React.FC<TraitFilterProps> = ({ job, onFilterChange }) => {
 
   const hasFilters = selectedTraits.length > 0;
 
-  // Safely get traits with defensive checks
-  const traits = job?.key_traits || [];
-  const midpoint = Math.ceil(traits.length / 2);
-  const requiredTraits = traits.slice(0, midpoint);
-  const optionalTraits = traits.slice(midpoint);
-
-  if (!job || !job.key_traits) {
-    return null;
-  }
+  // Group traits by required/optional
+  const requiredTraits = job.key_traits.filter((trait) =>
+    trait.includes("required")
+  );
+  const optionalTraits = job.key_traits.filter(
+    (trait) => !trait.includes("required")
+  );
 
   return (
     <div className="relative" ref={popoverRef}>
@@ -199,51 +196,47 @@ const TraitFilter: React.FC<TraitFilterProps> = ({ job, onFilterChange }) => {
               )}
             </div>
             <div className="max-h-[400px] overflow-y-auto p-4 space-y-4">
-              {requiredTraits.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-gray-700">
-                    Required Traits
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {requiredTraits.map((trait) => (
-                      <button
-                        key={trait}
-                        onClick={() => handleTraitToggle(trait)}
-                        className={`flex items-center gap-1 px-2 py-1 text-sm rounded-full border transition-colors ${
-                          selectedTraits.includes(trait)
-                            ? "bg-purple-100 text-purple-700 border-purple-200"
-                            : "border-gray-200 hover:border-purple-200 hover:bg-purple-50 hover:text-purple-700"
-                        }`}
-                      >
-                        {trait}
-                        <Star className="w-3 h-3 fill-current" />
-                      </button>
-                    ))}
-                  </div>
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-700">
+                  Required Traits
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {requiredTraits.map((trait) => (
+                    <button
+                      key={trait}
+                      onClick={() => handleTraitToggle(trait)}
+                      className={`flex items-center gap-1 px-2 py-1 text-sm rounded-full border transition-colors ${
+                        selectedTraits.includes(trait)
+                          ? "bg-purple-100 text-purple-700 border-purple-200"
+                          : "border-gray-200 hover:border-purple-200 hover:bg-purple-50 hover:text-purple-700"
+                      }`}
+                    >
+                      {trait}
+                      <Star className="w-3 h-3 fill-current" />
+                    </button>
+                  ))}
                 </div>
-              )}
-              {optionalTraits.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-gray-700">
-                    Optional Traits
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {optionalTraits.map((trait) => (
-                      <button
-                        key={trait}
-                        onClick={() => handleTraitToggle(trait)}
-                        className={`flex items-center gap-1 px-2 py-1 text-sm rounded-full border transition-colors ${
-                          selectedTraits.includes(trait)
-                            ? "bg-gray-100 text-gray-700 border-gray-200"
-                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                        }`}
-                      >
-                        {trait}
-                      </button>
-                    ))}
-                  </div>
+              </div>
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-700">
+                  Optional Traits
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {optionalTraits.map((trait) => (
+                    <button
+                      key={trait}
+                      onClick={() => handleTraitToggle(trait)}
+                      className={`flex items-center gap-1 px-2 py-1 text-sm rounded-full border transition-colors ${
+                        selectedTraits.includes(trait)
+                          ? "bg-gray-100 text-gray-700 border-gray-200"
+                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {trait}
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
             </div>
           </motion.div>
         )}
@@ -257,7 +250,6 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
   filterTraits,
   onBack,
   jobTitle,
-  job,
 }) => {
   const { isExpanded, toggleExpansion } = useExtensionState();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -271,6 +263,8 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
   const [selectedTraits, setSelectedTraits] = useState<string[]>(
     filterTraits || []
   );
+  const [availableTraits, setAvailableTraits] = useState<string[]>([]);
+  const [job, setJob] = useState<Job | null>(null);
 
   useEffect(() => {
     const fetchCandidates = async () => {
@@ -282,6 +276,13 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
           return;
         }
         setCandidates(response.candidates);
+
+        // Extract unique traits from all candidates
+        const traits = new Set<string>();
+        response.candidates.forEach((candidate) => {
+          candidate.traits?.forEach((trait) => traits.add(trait));
+        });
+        setAvailableTraits(Array.from(traits));
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to fetch candidates"
@@ -293,6 +294,31 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
 
     fetchCandidates();
   }, [jobId, selectedTraits]);
+
+  useEffect(() => {
+    // Add job fetching logic here
+    const fetchJob = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/jobs/${jobId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${await chrome.runtime.sendMessage({
+                type: "GET_AUTH_TOKEN",
+              })}`,
+            },
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setJob(data.job);
+        }
+      } catch (error) {
+        console.error("Error fetching job:", error);
+      }
+    };
+    fetchJob();
+  }, [jobId]);
 
   const handleTraitToggle = (trait: string) => {
     setSelectedTraits((prev) =>
@@ -394,7 +420,7 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
                     Processing
                   </button>
                 </div>
-                {job && job.key_traits && job.key_traits.length > 0 && (
+                {job && (
                   <TraitFilter job={job} onFilterChange={setSelectedTraits} />
                 )}
               </div>
