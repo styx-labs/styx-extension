@@ -9,6 +9,22 @@
   user-select: none;
   cursor: move;
   transition: left 0.2s ease, right 0.2s ease;
+  min-height: 40px;
+  z-index: 9999;
+}
+
+.overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.overlay > *:not(.drag-handle) {
+  position: relative;
+  z-index: 0;
 }
 
 .overlay.dragging {

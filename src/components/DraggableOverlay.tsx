@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import DropZone from "./DropZone";
+import DragHandle from "./DragHandle";
 
 interface DraggableOverlayProps {
   children: React.ReactNode;
@@ -102,14 +103,17 @@ const DraggableOverlay: React.FC<DraggableOverlayProps> = ({ children }) => {
       />
       <div
         ref={overlayRef}
-        className="overlay"
+        className="overlay group relative"
         style={{
           top: verticalPosition,
           right: isOnRight ? 0 : "auto",
           left: isOnRight ? "auto" : 0,
         }}
       >
-        {children}
+        <div className="drag-handle">
+          <DragHandle side={isOnRight ? "right" : "left"} />
+        </div>
+        <div className="relative">{children}</div>
       </div>
     </>
   );
