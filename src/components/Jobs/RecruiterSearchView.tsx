@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { createCandidatesBulk } from "../../utils/apiUtils";
 import { useJobsState } from "../../hooks/useJobsState";
 import { useUrlWatcher } from "../../hooks/useUrlWatcher";
-import JobsContainer from "./JobsContainer";
+import JobsActionPanel from "./JobsActionPanel";
 import {
   scrollToBottom,
   nextPage,
@@ -186,7 +186,7 @@ const RecruiterSearchView: React.FC<RecruiterSearchViewProps> = ({
   };
 
   return (
-    <JobsContainer
+    <JobsActionPanel
       title="Add Candidates"
       jobs={jobs}
       loading={loading}

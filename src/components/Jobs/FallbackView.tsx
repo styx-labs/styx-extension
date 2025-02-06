@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useJobsState } from "../../hooks/useJobsState";
-import JobsContainer from "./JobsContainer";
+import JobsActionPanel from "./JobsActionPanel";
 import CandidatesList from "./CandidatesList";
 
 const FallbackView: React.FC = () => {
@@ -24,7 +24,7 @@ const FallbackView: React.FC = () => {
   };
 
   return (
-    <JobsContainer
+    <JobsActionPanel
       title="Add Candidate"
       jobs={jobs}
       loading={loading}

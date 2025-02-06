@@ -1,15 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useExtensionState } from "@/hooks/useExtensionState";
 import { Toaster } from "react-hot-toast";
 import SingleProfileView from "./components/Jobs/SingleProfileView";
 import SearchView from "./components/Jobs/SearchView";
 import RecruiterSearchView from "./components/Jobs/RecruiterSearchView";
 import CompanyView from "./components/Jobs/CompanyView";
 import FallbackView from "./components/Jobs/FallbackView";
-
-interface JobsListProps {
-  onSelectJob: (jobId: string, jobTitle: string) => void;
-}
 
 const PageLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <>

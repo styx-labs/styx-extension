@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { createCandidatesBulk } from "../../utils/apiUtils";
 import { useJobsState } from "../../hooks/useJobsState";
 import { useUrlWatcher } from "../../hooks/useUrlWatcher";
-import JobsContainer from "./JobsContainer";
+import JobsActionPanel from "./JobsActionPanel";
 
 interface SearchViewProps {
   enableAddPage?: boolean;
@@ -232,7 +232,7 @@ const SearchView: React.FC<SearchViewProps> = ({
   };
 
   return (
-    <JobsContainer
+    <JobsActionPanel
       title="Add Candidates"
       jobs={jobs}
       loading={loading}

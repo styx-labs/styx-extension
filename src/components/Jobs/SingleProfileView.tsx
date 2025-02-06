@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { createCandidate } from "../../utils/apiUtils";
 import { useJobsState } from "../../hooks/useJobsState";
 import { useUrlWatcher } from "../../hooks/useUrlWatcher";
-import JobsContainer from "./JobsContainer";
+import JobsActionPanel from "./JobsActionPanel";
 
 const SingleProfileView: React.FC = () => {
   const {
@@ -92,7 +92,7 @@ const SingleProfileView: React.FC = () => {
   };
 
   return (
-    <JobsContainer
+    <JobsActionPanel
       title="Add Candidate"
       jobs={jobs}
       loading={loading}
