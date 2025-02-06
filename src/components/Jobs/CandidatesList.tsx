@@ -351,7 +351,7 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
               </div>
             ) : filteredCandidates.length === 0 ? (
               <div className="p-6 text-center">
-                <p className="text-gray-500">
+                <p className="text-base text-gray-500">
                   No {statusFilter === "complete" ? "completed" : "processing"}{" "}
                   candidates found for this job.
                 </p>
