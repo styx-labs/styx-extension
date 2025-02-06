@@ -7,10 +7,21 @@ import CandidatesList from "./CandidatesList";
 import {
   scrollToBottom,
   scrollToTop,
-  getProfileURLs,
 } from "../../utils/linkedinRecruiterUtils";
 
-const CompanyPeopleJobsList: React.FC = () => {
+interface CompanyPeopleJobsListProps {
+  enableAddPage?: boolean;
+  enableAddNumber?: boolean;
+  enableAddSelected?: boolean;
+  maxPerPage?: number;
+}
+
+const CompanyPeopleJobsList: React.FC<CompanyPeopleJobsListProps> = ({
+  enableAddPage = false,
+  enableAddNumber = false,
+  enableAddSelected = false,
+  maxPerPage = 25,
+}) => {
   const {
     jobs,
     loading,
@@ -24,10 +35,12 @@ const CompanyPeopleJobsList: React.FC = () => {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [useSearchMode, setUseSearchMode] = useState(false);
-  const [numProfiles, setNumProfiles] = useState(25);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [selectedJobTitle, setSelectedJobTitle] = useState<string | null>(null);
-  const [useSelected, setUseSelected] = useState(false);
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>(
+    []
+  );
+
   const currentUrl = useUrlWatcher(() => {
     if (!isProcessing) {
       setAddedJobs(new Set());
@@ -35,82 +48,113 @@ const CompanyPeopleJobsList: React.FC = () => {
     }
   });
 
-  const handleAddNCandidates = async (jobId: string) => {
+  const getProfileUrls = () => {
+    // Find all profile cards
+    const profileCards = Array.from(
+      document.querySelectorAll(".org-people-profile-card__profile-info")
+    );
+
+    // Extract profile URLs from cards
+    const urls = profileCards
+      .map((card) => {
+        // Find the main profile link (the one with the person's name)
+        const profileLink = card.querySelector(
+          '.artdeco-entity-lockup__title a[href*="/in/"]'
+        );
+        const href = profileLink?.getAttribute("href");
+        if (!href) return null;
+
+        // Extract the profile path (/in/username) from the href
+        const match = href.match(/\/in\/([^/?]+)/);
+        if (!match) return null;
+
+        return `https://www.linkedin.com/in/${match[1]}`;
+      })
+      .filter((url): url is string => url !== null);
+
+    return [...new Set(urls)]; // Deduplicate URLs
+  };
+
+  const handleCreateCandidate = async (
+    jobId: string,
+    mode: "page" | "number" | "selected",
+    count?: number,
+    selectedIds?: string[]
+  ) => {
     try {
       setIsProcessing(true);
       setLoadingJobs((prev) => new Set([...prev, jobId]));
 
-      let urls: string[] = [];
+      switch (mode) {
+        case "number": {
+          if (!count) break;
+          let urls: string[] = [];
 
-      if (useSearchMode) {
-        await scrollToBottom();
-        urls = await getProfileURLs(false, numProfiles, true);
-      } else {
-        while (urls.length < numProfiles) {
-          await scrollToBottom();
-          const profileCards = Array.from(
-            document.querySelectorAll(".org-people-profile-card__profile-info")
-          );
+          while (urls.length < count) {
+            await scrollToBottom();
+            const pageUrls = getProfileUrls();
 
-          const newUrls = profileCards
-            .map((card) => {
-              const profileLink = card.querySelector('a[href*="/in/"]');
-              const href = profileLink?.getAttribute("href");
-              if (!href) return null;
+            // Add new unique URLs
+            const uniqueUrls = pageUrls.filter((url) => !urls.includes(url));
+            urls.push(...uniqueUrls);
 
-              const match = href.match(/\/in\/([^/?]+)/);
-              if (!match) return null;
-
-              return `https://www.linkedin.com/in/${match[1]}`;
-            })
-            .filter((url): url is string => url !== null);
-
-          // Add only new unique URLs
-          urls = [...new Set([...urls, ...newUrls])];
-
-          // If we haven't reached the target number and there's a "Show more" button, click it
-          if (urls.length < numProfiles) {
-            const showMoreButton = document.querySelector(
-              "button.scaffold-finite-scroll__load-button"
+            console.log(
+              `Found ${pageUrls.length} profiles (${urls.length}/${count} total)`
             );
-            if (!(showMoreButton instanceof HTMLElement)) {
-              break; // No more content to load
+
+            // If we haven't reached the target number and there's a "Show more" button, click it
+            if (urls.length < count) {
+              const showMoreButton = document.querySelector(
+                "button.scaffold-finite-scroll__load-button"
+              );
+              if (!(showMoreButton instanceof HTMLElement)) {
+                console.log("No more profiles to load");
+                break;
+              }
+              showMoreButton.click();
+              await new Promise((resolve) => setTimeout(resolve, 2000));
             }
-            showMoreButton.click();
-            await new Promise((resolve) => setTimeout(resolve, 2000));
           }
+
+          if (urls.length === 0) {
+            setError("Could not retrieve any public profile URLs");
+            return;
+          }
+
+          console.log(
+            `Successfully retrieved ${urls.length} public profile URLs`
+          );
+          const result = await createCandidatesBulk(
+            jobId,
+            urls.slice(0, count)
+          );
+          if (result === null) {
+            setError("not_authenticated");
+            return;
+          }
+
+          setAddedJobs((prev) => new Set([...prev, jobId]));
+          break;
         }
 
-        // Trim to exact number requested
-        urls = urls.slice(0, numProfiles);
+        default:
+          setError("Unsupported add mode for company people page");
+          return;
       }
 
-      if (urls.length === 0) {
-        setError("Could not retrieve any public profile URLs");
-        return;
-      }
-
-      console.log(`Successfully retrieved ${urls.length} public profile URLs`);
-
-      const result = await createCandidatesBulk(jobId, urls);
-      if (result === null) {
-        setError("not_authenticated");
-        return;
-      }
-
-      setAddedJobs((prev) => new Set([...prev, jobId]));
+      await scrollToTop();
     } catch (err) {
+      console.error("Error creating candidates:", err);
       setError(
         err instanceof Error ? err.message : "Failed to create candidates"
       );
     } finally {
+      setIsProcessing(false);
       setLoadingJobs((prev) => {
         const newSet = new Set(prev);
         newSet.delete(jobId);
         return newSet;
       });
-      setIsProcessing(false);
-      scrollToTop();
     }
   };
 
@@ -119,33 +163,29 @@ const CompanyPeopleJobsList: React.FC = () => {
     setSelectedJobTitle(jobTitle);
   };
 
-  if (
-    !currentUrl.includes("linkedin.com/company/") ||
-    !currentUrl.includes("/people")
-  )
-    return null;
-
-  return (
+  return selectedJobId ? (
+    <CandidatesList
+      jobId={selectedJobId}
+      jobTitle={selectedJobTitle || undefined}
+    />
+  ) : (
     <JobsContainer
-      title={
-        useSelected
-          ? "Add selected LinkedIn profiles to Styx"
-          : `Add First ${numProfiles} Company Employees to Styx`
-      }
-      onAddCandidate={handleAddNCandidates}
-      onViewCandidates={handleViewCandidates}
-      isAdded={(id: string) => addedJobs.has(id)}
-      isLoading={(id: string) => loadingJobs.has(id)}
+      title="Add Candidates"
       jobs={jobs}
       loading={loading}
       error={error}
-      onNumProfilesChange={setNumProfiles}
+      onAddCandidate={handleCreateCandidate}
+      onViewCandidates={handleViewCandidates}
+      isAdded={(jobId) => addedJobs.has(jobId)}
+      isLoading={(jobId) => loadingJobs.has(jobId)}
       isProcessing={isProcessing}
-      useSelected={useSelected}
-      onAddSelectedChange={setUseSelected}
-      selectedJobId={selectedJobId || undefined}
       useSearchMode={useSearchMode}
       onSearchModeChange={setUseSearchMode}
+      enableAddPage={enableAddPage}
+      enableAddNumber={enableAddNumber}
+      enableAddSelected={enableAddSelected}
+      maxPerPage={maxPerPage}
+      selectedCandidateIds={selectedCandidateIds}
     />
   );
 };

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useExtensionState } from "@/hooks/useExtensionState";
 import { Toaster } from "react-hot-toast";
 import JobsList from "./components/Jobs/JobsList";
-import { CandidatesList } from "./components/Jobs/CandidatesList";
 import BulkJobsList from "./components/Jobs/BulkJobsList";
 import RecruiterBulkJobsList from "./components/Jobs/RecruiterBulkJobsList";
 import CompanyPeopleJobsList from "./components/Jobs/CompanyPeopleJobsList";
@@ -77,7 +76,12 @@ const App: React.FC = () => {
   if (pathMatches(recruiterPaths)) {
     return (
       <PageLayout>
-        <RecruiterBulkJobsList />
+        <RecruiterBulkJobsList
+          enableAddPage={true}
+          enableAddNumber={true}
+          enableAddSelected={true}
+          maxPerPage={25}
+        />
       </PageLayout>
     );
   }
@@ -93,7 +97,12 @@ const App: React.FC = () => {
   if (pathMatches(["/search/results/people"])) {
     return (
       <PageLayout>
-        <BulkJobsList />
+        <BulkJobsList
+          enableAddPage={true}
+          enableAddNumber={true}
+          enableAddSelected={false}
+          maxPerPage={10}
+        />
       </PageLayout>
     );
   }
@@ -101,26 +110,20 @@ const App: React.FC = () => {
   if (pathMatches([/company\/[^/]+\/people/])) {
     return (
       <PageLayout>
-        <CompanyPeopleJobsList />
+        <CompanyPeopleJobsList
+          enableAddPage={false}
+          enableAddNumber={true}
+          enableAddSelected={false}
+          maxPerPage={0}
+        />
       </PageLayout>
     );
   }
 
   return (
-    <PageLayout>
-      <div
-        className={`fixed top-0 right-0 h-screen transition-all duration-300 ease-in-out ${
-          isExpanded ? "w-[600px]" : "w-20"
-        }`}
-      >
-        {selectedJobId && (
-          <CandidatesList
-            jobId={selectedJobId}
-            jobTitle={selectedJobTitle || undefined}
-          />
-        )}
-      </div>
-    </PageLayout>
+    <div>
+      <h1>Hello</h1>
+    </div>
   );
 };
 

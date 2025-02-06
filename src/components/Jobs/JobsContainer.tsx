@@ -13,10 +13,16 @@ import JobSelector from "./JobSelector";
 import CandidatesList from "./CandidatesList";
 
 type Mode = "add" | "view";
+type AddMode = "page" | "number" | "selected";
 
 interface JobsContainerProps {
   title: string;
-  onAddCandidate: (jobId: string) => void;
+  onAddCandidate: (
+    jobId: string,
+    mode: AddMode,
+    count?: number,
+    selectedIds?: string[]
+  ) => void;
   onViewCandidates: (jobId: string, jobTitle: string) => void;
   isAdded: (jobId: string) => boolean;
   isLoading: (jobId: string) => boolean;
@@ -32,6 +38,11 @@ interface JobsContainerProps {
   useSearchMode?: boolean;
   onSearchModeChange?: (value: boolean) => void;
   selectedJobId?: string;
+  enableAddPage?: boolean;
+  enableAddNumber?: boolean;
+  enableAddSelected?: boolean;
+  maxPerPage?: number;
+  selectedCandidateIds?: string[];
 }
 
 const BestFitToggle = ({
@@ -107,6 +118,11 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
   useSearchMode,
   onSearchModeChange,
   selectedJobId: externalSelectedJobId,
+  enableAddPage = false,
+  enableAddNumber = false,
+  enableAddSelected = false,
+  maxPerPage = 25,
+  selectedCandidateIds = [],
 }) => {
   const { mode, setMode } = useExtensionMode();
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>(() => {
@@ -119,11 +135,10 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
         : undefined)
     );
   });
-  const [addMode, setAddMode] = useState<"all" | "selected">("all");
-  const [numProfiles, setNumProfiles] = useState<number>(25);
+  const [addMode, setAddMode] = useState<AddMode>("page");
+  const [numProfiles, setNumProfiles] = useState<number>(maxPerPage);
 
   const selectedJob = jobs.find((job) => job.id === selectedJobId);
-  const width = mode === "view" && selectedJobId ? "650px" : "450px";
   const maxHeight =
     mode === "view" && selectedJobId ? "calc(100vh-50px)" : "calc(100vh-100px)";
 
@@ -141,12 +156,27 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
 
   const handleAdd = () => {
     if (selectedJobId && selectedJob) {
-      onAddCandidate(selectedJobId);
+      switch (addMode) {
+        case "page":
+          onAddCandidate(selectedJobId, "page");
+          break;
+        case "number":
+          onAddCandidate(selectedJobId, "number", numProfiles);
+          break;
+        case "selected":
+          onAddCandidate(
+            selectedJobId,
+            "selected",
+            undefined,
+            selectedCandidateIds
+          );
+          break;
+      }
     }
   };
 
   return (
-    <ExtensionContainer width={width} maxHeight={maxHeight}>
+    <ExtensionContainer maxHeight={maxHeight}>
       <div className="flex-1 min-h-0 overflow-y-auto">
         {loading ? (
           <LoadingState />
@@ -183,31 +213,47 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
                         Add Mode
                       </label>
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => setAddMode("all")}
-                          className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                            addMode === "all"
-                              ? "bg-purple-600 text-white"
-                              : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
-                          }`}
-                        >
-                          Add All
-                        </button>
-                        <button
-                          onClick={() => setAddMode("selected")}
-                          className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                            addMode === "selected"
-                              ? "bg-purple-600 text-white"
-                              : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
-                          }`}
-                        >
-                          Add Selected Number
-                        </button>
+                        {enableAddPage && (
+                          <button
+                            onClick={() => setAddMode("page")}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                              addMode === "page"
+                                ? "bg-purple-600 text-white"
+                                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                            }`}
+                          >
+                            Add Page
+                          </button>
+                        )}
+                        {enableAddNumber && (
+                          <button
+                            onClick={() => setAddMode("number")}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                              addMode === "number"
+                                ? "bg-purple-600 text-white"
+                                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                            }`}
+                          >
+                            Add Number
+                          </button>
+                        )}
+                        {enableAddSelected && (
+                          <button
+                            onClick={() => setAddMode("selected")}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                              addMode === "selected"
+                                ? "bg-purple-600 text-white"
+                                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                            }`}
+                          >
+                            Add Selected
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  {addMode === "selected" && (
+                  {addMode === "number" && (
                     <div className="flex items-center gap-2">
                       <label
                         htmlFor="numProfiles"
@@ -219,7 +265,7 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
                         id="numProfiles"
                         type="number"
                         min="1"
-                        max="100"
+                        max={100}
                         value={numProfiles}
                         onChange={(e) => {
                           const value = Math.min(
@@ -227,7 +273,6 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
                             100
                           );
                           setNumProfiles(value);
-                          onNumProfilesChange?.(value);
                         }}
                         className="w-20 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                       />
@@ -248,23 +293,16 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
                     {isProcessing ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
-                      <PlusCircle className="w-5 h-5" />
+                      <>
+                        {addMode === "page"
+                          ? `Add All on Page (${maxPerPage})`
+                          : addMode === "number"
+                          ? `Add ${numProfiles} Candidates`
+                          : `Add ${selectedCandidateIds.length} Selected`}
+                      </>
                     )}
-                    {isAdded(selectedJobId)
-                      ? "Added"
-                      : isProcessing
-                      ? "Processing..."
-                      : `Add ${
-                          addMode === "selected" ? numProfiles : "All"
-                        } Candidates`}
                   </button>
 
-                  {/* {mode === "add" && onBestFitChange && (
-                    <BestFitToggle
-                      enabled={showBestFit || false}
-                      onChange={onBestFitChange}
-                    />
-                  )} */}
                   {mode === "add" && onSearchModeChange && (
                     <div className="mt-4 flex items-center gap-3">
                       <span className="text-base text-gray-600">

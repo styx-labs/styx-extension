@@ -3,7 +3,6 @@ import { createCandidatesBulk } from "../../utils/apiUtils";
 import { useJobsState } from "../../hooks/useJobsState";
 import { useUrlWatcher } from "../../hooks/useUrlWatcher";
 import JobsContainer from "./JobsContainer";
-import CandidatesList from "./CandidatesList";
 import {
   scrollToBottom,
   nextPage,
@@ -11,7 +10,19 @@ import {
   scrollToTop,
 } from "../../utils/linkedinRecruiterUtils";
 
-const RecruiterBulkJobsList: React.FC = () => {
+interface RecruiterBulkJobsListProps {
+  enableAddPage?: boolean;
+  enableAddNumber?: boolean;
+  enableAddSelected?: boolean;
+  maxPerPage?: number;
+}
+
+const RecruiterBulkJobsList: React.FC<RecruiterBulkJobsListProps> = ({
+  enableAddPage = false,
+  enableAddNumber = false,
+  enableAddSelected = false,
+  maxPerPage = 25,
+}) => {
   const {
     jobs,
     loading,
@@ -24,11 +35,12 @@ const RecruiterBulkJobsList: React.FC = () => {
   } = useJobsState();
 
   const [isProcessing, setIsProcessing] = useState(false);
-  const [useSelected, setUseSelected] = useState(false);
   const [useSearchMode, setUseSearchMode] = useState(false);
-  const [numProfiles, setNumProfiles] = useState(25);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [selectedJobTitle, setSelectedJobTitle] = useState<string | null>(null);
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>(
+    []
+  );
 
   const currentUrl = useUrlWatcher(() => {
     if (!isProcessing) {
@@ -37,128 +49,134 @@ const RecruiterBulkJobsList: React.FC = () => {
     }
   });
 
-  const handleAddSelectedCandidates = async (jobId: string) => {
+  const handleCreateCandidate = async (
+    jobId: string,
+    mode: "page" | "number" | "selected",
+    count?: number,
+    selectedIds?: string[]
+  ) => {
     try {
       setLoadingJobs((prev) => new Set([...prev, jobId]));
       setIsProcessing(true);
 
-      // First scroll to load all results
-      await scrollToBottom();
+      switch (mode) {
+        case "page":
+          await scrollToBottom();
+          const pageUrls = await getProfileURLs(false, 0, useSearchMode);
+          if (pageUrls.length === 0) {
+            setError("No profiles found to add");
+            return;
+          }
+          console.log(
+            `Successfully retrieved ${pageUrls.length} public profile URLs`
+          );
+          const pageResult = await createCandidatesBulk(
+            jobId,
+            pageUrls.slice(0, maxPerPage)
+          );
+          if (pageResult === null) {
+            setError("not_authenticated");
+            return;
+          }
+          setAddedJobs((prev) => new Set([...prev, jobId]));
+          break;
 
-      // Get links of selected profiles
-      const publicUrls = await getProfileURLs(true, 0, useSearchMode);
+        case "number":
+          if (!count) break;
+          let totalProcessed = 0;
+          let failedAttempts = 0;
+          const MAX_FAILED_ATTEMPTS = 3;
 
-      if (publicUrls.length === 0) {
-        setError(
-          "No profiles selected. Please select profiles to add to Styx."
-        );
-        return;
+          while (
+            totalProcessed < count &&
+            failedAttempts < MAX_FAILED_ATTEMPTS
+          ) {
+            // Calculate remaining profiles needed
+            const remainingProfiles = count - totalProcessed;
+
+            // Get URLs from current page
+            await scrollToBottom();
+            const urls = await getProfileURLs(
+              false,
+              remainingProfiles,
+              useSearchMode
+            );
+
+            if (urls.length === 0) {
+              failedAttempts++;
+              continue;
+            }
+
+            // Reset failed attempts since we found profiles
+            failedAttempts = 0;
+
+            console.log(
+              `Processing ${urls.length} profiles from current page (${totalProcessed}/${count} total)`
+            );
+
+            // Send current batch
+            const result = await createCandidatesBulk(jobId, urls);
+            if (result === null) {
+              setError("not_authenticated");
+              return;
+            }
+
+            totalProcessed += urls.length;
+            setAddedJobs((prev) => new Set([...prev, jobId]));
+
+            // If we haven't reached our target, go to next page
+            if (totalProcessed < count) {
+              nextPage();
+              // Wait for page transition
+              await new Promise((resolve) => setTimeout(resolve, 3000));
+            }
+          }
+
+          if (totalProcessed === 0) {
+            setError("Could not retrieve any public profile URLs");
+            return;
+          }
+
+          console.log(
+            `Successfully processed ${totalProcessed} profiles out of ${count} requested`
+          );
+          break;
+
+        case "selected":
+          await scrollToBottom();
+          const selectedUrls = await getProfileURLs(true, 0, useSearchMode);
+          if (selectedUrls.length === 0) {
+            setError("No selected profiles found to add");
+            return;
+          }
+          console.log(
+            `Successfully retrieved ${selectedUrls.length} selected public profile URLs`
+          );
+          const selectedResult = await createCandidatesBulk(
+            jobId,
+            selectedUrls
+          );
+          if (selectedResult === null) {
+            setError("not_authenticated");
+            return;
+          }
+          setAddedJobs((prev) => new Set([...prev, jobId]));
+          break;
       }
 
-      console.log(
-        `Successfully retrieved ${publicUrls.length} public profile URLs out of ${publicUrls.length} selected profiles`
-      );
-
-      // Send all URLs in one request
-      const result = await createCandidatesBulk(jobId, publicUrls);
-      if (result === null) {
-        setError("not_authenticated");
-        return;
-      }
-
-      setAddedJobs((prev) => new Set([...prev, jobId]));
+      await scrollToTop();
     } catch (err) {
+      console.error("Error creating candidates:", err);
       setError(
         err instanceof Error ? err.message : "Failed to create candidates"
       );
     } finally {
+      setIsProcessing(false);
       setLoadingJobs((prev) => {
         const newSet = new Set(prev);
         newSet.delete(jobId);
         return newSet;
       });
-      setIsProcessing(false);
-      // Scroll back to the top after processing
-      scrollToTop();
-    }
-  };
-
-  const handleAddNCandidates = async (jobId: string) => {
-    try {
-      setIsProcessing(true);
-      setLoadingJobs((prev) => new Set([...prev, jobId]));
-
-      let totalProcessed = 0;
-      let failedAttempts = 0;
-      const MAX_FAILED_ATTEMPTS = 3;
-
-      while (
-        totalProcessed < numProfiles &&
-        failedAttempts < MAX_FAILED_ATTEMPTS
-      ) {
-        // Calculate how many more profiles we need
-        const remainingProfiles = numProfiles - totalProcessed;
-
-        // Get URLs from current page, limiting to remaining needed profiles
-        const urls = await getProfileURLs(
-          useSelected,
-          remainingProfiles,
-          useSearchMode
-        );
-
-        if (urls.length === 0) {
-          failedAttempts++;
-          continue;
-        }
-
-        // Reset failed attempts since we found profiles
-        failedAttempts = 0;
-
-        console.log(
-          `Processing ${urls.length} profiles from current page (${totalProcessed}/${numProfiles} total)`
-        );
-
-        // Send current batch of URLs
-        const result = await createCandidatesBulk(jobId, urls);
-        if (result === null) {
-          setError("not_authenticated");
-          return;
-        }
-
-        totalProcessed += urls.length;
-
-        // Update added jobs set
-        setAddedJobs((prev) => new Set([...prev, jobId]));
-
-        // If we haven't reached our target, go to next page
-        if (totalProcessed < numProfiles) {
-          nextPage();
-          // Wait for page transition
-          await new Promise((resolve) => setTimeout(resolve, 3000));
-        }
-      }
-
-      if (totalProcessed === 0) {
-        setError("Could not retrieve any public profile URLs");
-        return;
-      }
-
-      console.log(
-        `Successfully processed ${totalProcessed} profiles out of ${numProfiles} requested`
-      );
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to create candidates"
-      );
-    } finally {
-      setLoadingJobs((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(jobId);
-        return newSet;
-      });
-      setIsProcessing(false);
-      // Scroll back to the top after processing
-      scrollToTop();
     }
   };
 
@@ -169,27 +187,22 @@ const RecruiterBulkJobsList: React.FC = () => {
 
   return (
     <JobsContainer
-      title={
-        useSelected
-          ? "Add selected LinkedIn profiles to Styx"
-          : `Add First ${numProfiles} LinkedIn profiles to Styx`
-      }
-      onAddCandidate={
-        useSelected ? handleAddSelectedCandidates : handleAddNCandidates
-      }
-      onViewCandidates={handleViewCandidates}
-      isAdded={(id: string) => addedJobs.has(id)}
-      isLoading={(id: string) => loadingJobs.has(id)}
+      title="Add Candidates"
       jobs={jobs}
       loading={loading}
       error={error}
-      useSelected={useSelected}
-      onAddSelectedChange={setUseSelected}
-      onNumProfilesChange={setNumProfiles}
+      onAddCandidate={handleCreateCandidate}
+      onViewCandidates={handleViewCandidates}
+      isAdded={(jobId) => addedJobs.has(jobId)}
+      isLoading={(jobId) => loadingJobs.has(jobId)}
       isProcessing={isProcessing}
       useSearchMode={useSearchMode}
       onSearchModeChange={setUseSearchMode}
-      selectedJobId={selectedJobId || undefined}
+      enableAddPage={enableAddPage}
+      enableAddNumber={enableAddNumber}
+      enableAddSelected={enableAddSelected}
+      maxPerPage={maxPerPage}
+      selectedCandidateIds={selectedCandidateIds}
     />
   );
 };
