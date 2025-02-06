@@ -5,6 +5,7 @@ import JobsList from "./components/Jobs/JobsList";
 import { CandidatesList } from "./components/Jobs/CandidatesList";
 import BulkJobsList from "./components/Jobs/BulkJobsList";
 import RecruiterBulkJobsList from "./components/Jobs/RecruiterBulkJobsList";
+import CompanyPeopleJobsList from "./components/Jobs/CompanyPeopleJobsList";
 
 interface JobsListProps {
   onSelectJob: (jobId: string, jobTitle: string) => void;
@@ -93,6 +94,14 @@ const App: React.FC = () => {
     return (
       <PageLayout>
         <BulkJobsList />
+      </PageLayout>
+    );
+  }
+
+  if (pathMatches([/company\/[^/]+\/people/])) {
+    return (
+      <PageLayout>
+        <CompanyPeopleJobsList />
       </PageLayout>
     );
   }
