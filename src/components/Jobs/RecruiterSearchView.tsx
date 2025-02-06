@@ -10,14 +10,14 @@ import {
   scrollToTop,
 } from "../../utils/linkedinRecruiterUtils";
 
-interface RecruiterBulkJobsListProps {
+interface RecruiterSearchViewProps {
   enableAddPage?: boolean;
   enableAddNumber?: boolean;
   enableAddSelected?: boolean;
   maxPerPage?: number;
 }
 
-const RecruiterBulkJobsList: React.FC<RecruiterBulkJobsListProps> = ({
+const RecruiterSearchView: React.FC<RecruiterSearchViewProps> = ({
   enableAddPage = false,
   enableAddNumber = false,
   enableAddSelected = false,
@@ -207,4 +207,4 @@ const RecruiterBulkJobsList: React.FC<RecruiterBulkJobsListProps> = ({
   );
 };
 
-export default RecruiterBulkJobsList;
+export default RecruiterSearchView;

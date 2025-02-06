@@ -3,9 +3,8 @@ import { createCandidate } from "../../utils/apiUtils";
 import { useJobsState } from "../../hooks/useJobsState";
 import { useUrlWatcher } from "../../hooks/useUrlWatcher";
 import JobsContainer from "./JobsContainer";
-import CandidatesList from "./CandidatesList";
 
-const JobsList: React.FC = () => {
+const SingleProfileView: React.FC = () => {
   const {
     jobs,
     loading,
@@ -92,12 +91,7 @@ const JobsList: React.FC = () => {
     setSelectedJobTitle(jobTitle);
   };
 
-  return selectedJobId ? (
-    <CandidatesList
-      jobId={selectedJobId}
-      jobTitle={selectedJobTitle || undefined}
-    />
-  ) : (
+  return (
     <JobsContainer
       title="Add Candidate"
       jobs={jobs}
@@ -119,4 +113,4 @@ const JobsList: React.FC = () => {
   );
 };
 
-export default JobsList;
+export default SingleProfileView;

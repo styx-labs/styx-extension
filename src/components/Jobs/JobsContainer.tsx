@@ -44,6 +44,7 @@ interface JobsContainerProps {
   maxPerPage?: number;
   selectedCandidateIds?: string[];
   isSingleMode?: boolean;
+  customAddMessage?: string;
 }
 
 const BestFitToggle = ({
@@ -125,6 +126,7 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
   maxPerPage = 25,
   selectedCandidateIds = [],
   isSingleMode = false,
+  customAddMessage,
 }) => {
   const { mode, setMode } = useExtensionMode();
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>(() => {
@@ -137,7 +139,12 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
         : undefined)
     );
   });
-  const [addMode, setAddMode] = useState<AddMode>("page");
+  const [addMode, setAddMode] = useState<AddMode>(() => {
+    if (enableAddPage) return "page";
+    if (enableAddNumber) return "number";
+    if (enableAddSelected) return "selected";
+    return "page"; // fallback to page as default
+  });
   const [numProfiles, setNumProfiles] = useState<number>(maxPerPage);
 
   const selectedJob = jobs.find((job) => job.id === selectedJobId);
@@ -215,137 +222,152 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
               selectedJob &&
               selectedJobId && (
                 <div className="p-6 space-y-4">
-                  {!isSingleMode && (
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Add Mode
-                        </label>
-                        <div className="flex gap-2">
-                          {enableAddPage && (
-                            <button
-                              onClick={() => setAddMode("page")}
-                              className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                                addMode === "page"
-                                  ? "bg-purple-600 text-white"
-                                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
-                              }`}
-                            >
-                              Add Page
-                            </button>
-                          )}
-                          {enableAddNumber && (
-                            <button
-                              onClick={() => setAddMode("number")}
-                              className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                                addMode === "number"
-                                  ? "bg-purple-600 text-white"
-                                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
-                              }`}
-                            >
-                              Add Number
-                            </button>
-                          )}
-                          {enableAddSelected && (
-                            <button
-                              onClick={() => setAddMode("selected")}
-                              className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                                addMode === "selected"
-                                  ? "bg-purple-600 text-white"
-                                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
-                              }`}
-                            >
-                              Add Selected
-                            </button>
-                          )}
+                  {customAddMessage ? (
+                    <div className="text-gray-600 text-center p-4 bg-gray-50 rounded-lg">
+                      {customAddMessage}
+                    </div>
+                  ) : (
+                    <>
+                      {!isSingleMode && (
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Add Mode
+                            </label>
+                            <div className="flex gap-2">
+                              {enableAddPage && (
+                                <button
+                                  onClick={() => setAddMode("page")}
+                                  className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                                    addMode === "page"
+                                      ? "bg-purple-600 text-white"
+                                      : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                                  }`}
+                                >
+                                  Add Page
+                                </button>
+                              )}
+                              {enableAddNumber && (
+                                <button
+                                  onClick={() => setAddMode("number")}
+                                  className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                                    addMode === "number"
+                                      ? "bg-purple-600 text-white"
+                                      : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                                  }`}
+                                >
+                                  Add Number
+                                </button>
+                              )}
+                              {enableAddSelected && (
+                                <button
+                                  onClick={() => setAddMode("selected")}
+                                  className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                                    addMode === "selected"
+                                      ? "bg-purple-600 text-white"
+                                      : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                                  }`}
+                                >
+                                  Add Selected
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  )}
+                      )}
 
-                  {!isSingleMode && addMode === "number" && (
-                    <div className="flex items-center gap-2">
-                      <label
-                        htmlFor="numProfiles"
-                        className="block text-sm font-medium text-gray-700 whitespace-nowrap"
-                      >
-                        Number of candidates:
-                      </label>
-                      <input
-                        id="numProfiles"
-                        type="number"
-                        min="1"
-                        max={maxPerPage}
-                        value={numProfiles}
-                        onChange={(e) => {
-                          const value = Math.min(
-                            Math.max(parseInt(e.target.value) || 1, 1),
-                            maxPerPage
-                          );
-                          setNumProfiles(value);
-                        }}
-                        className="w-20 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                      />
-                    </div>
-                  )}
+                      {!isSingleMode && addMode === "number" && (
+                        <div className="flex items-center gap-2">
+                          <label
+                            htmlFor="numProfiles"
+                            className="block text-sm font-medium text-gray-700 whitespace-nowrap"
+                          >
+                            Number of candidates:
+                          </label>
+                          <input
+                            id="numProfiles"
+                            type="number"
+                            min="1"
+                            max={maxPerPage}
+                            value={numProfiles}
+                            onChange={(e) => {
+                              const value = Math.min(
+                                Math.max(parseInt(e.target.value) || 1, 1),
+                                maxPerPage
+                              );
+                              setNumProfiles(value);
+                            }}
+                            className="w-20 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                          />
+                        </div>
+                      )}
 
-                  <button
-                    onClick={handleAdd}
-                    disabled={isProcessing || isAdded(selectedJobId)}
-                    className={`w-full px-4 py-2 rounded-lg text-base font-medium flex items-center justify-center gap-2 ${
-                      isAdded(selectedJobId)
-                        ? "bg-green-100 text-green-700 cursor-default"
-                        : isProcessing
-                        ? "bg-gray-100 text-gray-400 cursor-wait"
-                        : "bg-purple-600 text-white hover:bg-purple-700"
-                    }`}
-                  >
-                    {isProcessing ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                        {isSingleMode
-                          ? "Add Candidate"
-                          : addMode === "page"
-                          ? `Add All on Page (${maxPerPage})`
-                          : addMode === "number"
-                          ? `Add ${numProfiles} Candidates`
-                          : `Add ${selectedCandidateIds.length} Selected`}
-                      </>
-                    )}
-                  </button>
-
-                  {onSearchModeChange && (
-                    <div className="mt-4 flex items-center gap-3">
-                      <span className="text-base text-gray-600">
-                        Search Mode
-                      </span>
                       <button
-                        role="switch"
-                        aria-checked={useSearchMode}
-                        onClick={() =>
-                          !isProcessing && onSearchModeChange(!useSearchMode)
-                        }
-                        disabled={isProcessing}
-                        className={`
-                          relative inline-flex h-5 w-9 items-center rounded-full transition-colors 
-                          focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-1
-                          ${useSearchMode ? "bg-purple-600" : "bg-gray-200"} 
-                          ${
-                            isProcessing
-                              ? "opacity-50 cursor-not-allowed"
-                              : "cursor-pointer"
-                          }
-                        `}
+                        onClick={handleAdd}
+                        disabled={isProcessing || isAdded(selectedJobId)}
+                        className={`w-full px-4 py-2 rounded-lg text-base font-medium flex items-center justify-center gap-2 ${
+                          isAdded(selectedJobId)
+                            ? "bg-green-100 text-green-700 cursor-default"
+                            : isProcessing
+                            ? "bg-gray-100 text-gray-400 cursor-wait"
+                            : "bg-purple-600 text-white hover:bg-purple-700"
+                        }`}
                       >
-                        <span
-                          className={`
-                            inline-block h-4 w-4 transform rounded-full bg-white transition-transform 
-                            ${useSearchMode ? "translate-x-5" : "translate-x-1"}
-                          `}
-                        />
+                        {isProcessing ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <>
+                            {isSingleMode
+                              ? "Add Candidate"
+                              : addMode === "page"
+                              ? `Add All on Page`
+                              : addMode === "number"
+                              ? `Add ${numProfiles} Candidates`
+                              : `Add Selected`}
+                          </>
+                        )}
                       </button>
-                    </div>
+
+                      {onSearchModeChange && (
+                        <div className="mt-4 flex items-center gap-3">
+                          <span className="text-base text-gray-600">
+                            Search Mode
+                          </span>
+                          <button
+                            role="switch"
+                            aria-checked={useSearchMode}
+                            onClick={() =>
+                              !isProcessing &&
+                              onSearchModeChange(!useSearchMode)
+                            }
+                            disabled={isProcessing}
+                            className={`
+                              relative inline-flex h-5 w-9 items-center rounded-full transition-colors 
+                              focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-1
+                              ${
+                                useSearchMode ? "bg-purple-600" : "bg-gray-200"
+                              } 
+                              ${
+                                isProcessing
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : "cursor-pointer"
+                              }
+                            `}
+                          >
+                            <span
+                              className={`
+                                inline-block h-4 w-4 transform rounded-full bg-white transition-transform 
+                                ${
+                                  useSearchMode
+                                    ? "translate-x-5"
+                                    : "translate-x-1"
+                                }
+                              `}
+                            />
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )

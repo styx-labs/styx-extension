@@ -9,14 +9,14 @@ import {
   scrollToTop,
 } from "../../utils/linkedinRecruiterUtils";
 
-interface CompanyPeopleJobsListProps {
+interface CompanyViewProps {
   enableAddPage?: boolean;
   enableAddNumber?: boolean;
   enableAddSelected?: boolean;
   maxPerPage?: number;
 }
 
-const CompanyPeopleJobsList: React.FC<CompanyPeopleJobsListProps> = ({
+const CompanyView: React.FC<CompanyViewProps> = ({
   enableAddPage = false,
   enableAddNumber = false,
   enableAddSelected = false,
@@ -190,4 +190,4 @@ const CompanyPeopleJobsList: React.FC<CompanyPeopleJobsListProps> = ({
   );
 };
 
-export default CompanyPeopleJobsList;
+export default CompanyView;

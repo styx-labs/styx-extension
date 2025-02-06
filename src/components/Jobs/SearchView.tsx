@@ -4,14 +4,14 @@ import { useJobsState } from "../../hooks/useJobsState";
 import { useUrlWatcher } from "../../hooks/useUrlWatcher";
 import JobsContainer from "./JobsContainer";
 
-interface BulkJobsListProps {
+interface SearchViewProps {
   enableAddPage?: boolean;
   enableAddNumber?: boolean;
   enableAddSelected?: boolean;
   maxPerPage?: number;
 }
 
-const BulkJobsList: React.FC<BulkJobsListProps> = ({
+const SearchView: React.FC<SearchViewProps> = ({
   enableAddPage = true,
   enableAddNumber = true,
   enableAddSelected = false,
@@ -29,6 +29,7 @@ const BulkJobsList: React.FC<BulkJobsListProps> = ({
   } = useJobsState();
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [useSearchMode, setUseSearchMode] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [selectedJobTitle, setSelectedJobTitle] = useState<string | null>(null);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>(
@@ -101,7 +102,8 @@ const BulkJobsList: React.FC<BulkJobsListProps> = ({
           );
           const result = await createCandidatesBulk(
             jobId,
-            urls.slice(0, maxPerPage)
+            urls.slice(0, maxPerPage),
+            useSearchMode
           );
           if (result === null) {
             setError("not_authenticated");
@@ -145,7 +147,11 @@ const BulkJobsList: React.FC<BulkJobsListProps> = ({
             );
 
             // Send current batch
-            const result = await createCandidatesBulk(jobId, urlsToProcess);
+            const result = await createCandidatesBulk(
+              jobId,
+              urlsToProcess,
+              useSearchMode
+            );
             if (result === null) {
               setError("not_authenticated");
               return;
@@ -193,7 +199,7 @@ const BulkJobsList: React.FC<BulkJobsListProps> = ({
           console.log(
             `Successfully retrieved ${urls.length} selected public profile URLs`
           );
-          const result = await createCandidatesBulk(jobId, urls);
+          const result = await createCandidatesBulk(jobId, urls, useSearchMode);
           if (result === null) {
             setError("not_authenticated");
             return;
@@ -236,6 +242,8 @@ const BulkJobsList: React.FC<BulkJobsListProps> = ({
       isAdded={(jobId) => addedJobs.has(jobId)}
       isLoading={(jobId) => loadingJobs.has(jobId)}
       isProcessing={isProcessing}
+      useSearchMode={useSearchMode}
+      onSearchModeChange={setUseSearchMode}
       enableAddPage={enableAddPage}
       enableAddNumber={enableAddNumber}
       enableAddSelected={enableAddSelected}
@@ -245,4 +253,4 @@ const BulkJobsList: React.FC<BulkJobsListProps> = ({
   );
 };
 
-export default BulkJobsList;
+export default SearchView;

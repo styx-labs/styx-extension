@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useExtensionState } from "@/hooks/useExtensionState";
 import { Toaster } from "react-hot-toast";
-import JobsList from "./components/Jobs/JobsList";
-import BulkJobsList from "./components/Jobs/BulkJobsList";
-import RecruiterBulkJobsList from "./components/Jobs/RecruiterBulkJobsList";
-import CompanyPeopleJobsList from "./components/Jobs/CompanyPeopleJobsList";
+import SingleProfileView from "./components/Jobs/SingleProfileView";
+import SearchView from "./components/Jobs/SearchView";
+import RecruiterSearchView from "./components/Jobs/RecruiterSearchView";
+import CompanyView from "./components/Jobs/CompanyView";
+import FallbackView from "./components/Jobs/FallbackView";
 
 interface JobsListProps {
   onSelectJob: (jobId: string, jobTitle: string) => void;
@@ -18,12 +19,9 @@ const PageLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 const App: React.FC = () => {
-  const { isExpanded } = useExtensionState();
   const [currentPath, setCurrentPath] = useState<string>(
     window.location.pathname
   );
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
-  const [selectedJobTitle, setSelectedJobTitle] = useState<string | null>(null);
 
   useEffect(() => {
     // Update path immediately when component mounts
@@ -76,7 +74,7 @@ const App: React.FC = () => {
   if (pathMatches(recruiterPaths)) {
     return (
       <PageLayout>
-        <RecruiterBulkJobsList
+        <RecruiterSearchView
           enableAddPage={true}
           enableAddNumber={true}
           enableAddSelected={true}
@@ -89,7 +87,7 @@ const App: React.FC = () => {
   if (pathMatches(["/in"])) {
     return (
       <PageLayout>
-        <JobsList />
+        <SingleProfileView />
       </PageLayout>
     );
   }
@@ -97,7 +95,7 @@ const App: React.FC = () => {
   if (pathMatches(["/search/results/people"])) {
     return (
       <PageLayout>
-        <BulkJobsList
+        <SearchView
           enableAddPage={true}
           enableAddNumber={true}
           enableAddSelected={false}
@@ -110,7 +108,7 @@ const App: React.FC = () => {
   if (pathMatches([/company\/[^/]+\/people/])) {
     return (
       <PageLayout>
-        <CompanyPeopleJobsList
+        <CompanyView
           enableAddPage={false}
           enableAddNumber={true}
           enableAddSelected={false}
@@ -121,9 +119,9 @@ const App: React.FC = () => {
   }
 
   return (
-    <div>
-      <h1>Hello</h1>
-    </div>
+    <PageLayout>
+      <FallbackView />
+    </PageLayout>
   );
 };
 
