@@ -116,7 +116,6 @@ const App: React.FC = () => {
         {selectedJobId && (
           <CandidatesList
             jobId={selectedJobId}
-            onBack={() => setSelectedJobId(null)}
             jobTitle={selectedJobTitle || undefined}
           />
         )}

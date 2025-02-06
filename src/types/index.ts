@@ -18,47 +18,41 @@ export interface EvaluationResponse {
 
 export interface Job {
   id: string;
-  job_description: string;
-  key_traits: string[];
-  company_name: string;
   job_title: string;
+  company_name: string;
+  job_description?: string;
+  key_traits?: string[];
+  num_candidates?: number;
 }
 
 export interface LinkedinContext {
-  name: string;
   context: string;
+  name: string;
   public_identifier: string;
 }
 
 export interface Candidate {
-  id?: string;
-  name?: string;
-  context?: string;
-  status?: "processing" | "complete";
-  url?: string;
-  summary?: string;
+  id: string;
+  name: string;
+  url: string;
+  status: string;
   sections?: TraitEvaluation[];
-  citations?: Citation[];
-  profile?: Profile;
-  created_at?: string;
-  search_mode?: boolean;
+  summary?: string;
+  fit?: number;
   required_met?: number;
   optional_met?: number;
-  fit?: number;
-  traits?: string[];
-  evaluation?: {
-    score: number;
-    traits_met: number;
-    total_traits: number;
-    trait_scores: number[];
-  };
+  profile?: Profile;
+  citations?: Array<{
+    url: string;
+    confidence: number;
+    distilled_content: string;
+  }>;
 }
 
 export interface TraitEvaluation {
   section: string;
+  value: boolean;
   content: string;
-  value: boolean | number | string;
-  normalized_score: number;
   required: boolean;
 }
 

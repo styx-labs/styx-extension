@@ -72,19 +72,6 @@ const JobsList: React.FC = () => {
 
   if (!currentUrl.includes("linkedin.com/in/")) return null;
 
-  if (selectedJobId) {
-    return (
-      <CandidatesList
-        jobId={selectedJobId}
-        jobTitle={selectedJobTitle || undefined}
-        onBack={() => {
-          setSelectedJobId(null);
-          setSelectedJobTitle(null);
-        }}
-      />
-    );
-  }
-
   return (
     <JobsContainer
       title="Add this candidate to Styx"
@@ -103,5 +90,3 @@ const JobsList: React.FC = () => {
 };
 
 export default JobsList;
-
-

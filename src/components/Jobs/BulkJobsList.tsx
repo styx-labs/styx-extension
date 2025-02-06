@@ -84,19 +84,6 @@ const BulkJobsList: React.FC = () => {
     setSelectedJobTitle(jobTitle);
   };
 
-  if (selectedJobId) {
-    return (
-      <CandidatesList
-        jobId={selectedJobId}
-        jobTitle={selectedJobTitle || undefined}
-        onBack={() => {
-          setSelectedJobId(null);
-          setSelectedJobTitle(null);
-        }}
-      />
-    );
-  }
-
   return (
     <JobsContainer
       title="Add all search result profiles to Styx"

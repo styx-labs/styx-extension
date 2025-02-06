@@ -167,19 +167,6 @@ const RecruiterBulkJobsList: React.FC = () => {
     setSelectedJobTitle(jobTitle);
   };
 
-  if (selectedJobId) {
-    return (
-      <CandidatesList
-        jobId={selectedJobId}
-        jobTitle={selectedJobTitle || undefined}
-        onBack={() => {
-          setSelectedJobId(null);
-          setSelectedJobTitle(null);
-        }}
-      />
-    );
-  }
-
   return (
     <JobsContainer
       title={

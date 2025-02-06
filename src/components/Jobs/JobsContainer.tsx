@@ -1,21 +1,16 @@
-import React from "react";
-import {
-  ChevronRight,
-  Sparkles,
-  RefreshCw,
-  PlusCircle,
-  Eye,
-} from "lucide-react";
-import { useExtensionState } from "../../hooks/useExtensionState";
+import React, { useState } from "react";
+import { Sparkles, PlusCircle, Eye, Loader2 } from "lucide-react";
 import { useExtensionMode } from "../../hooks/useExtensionMode";
 import type { Job } from "../../types";
-import JobCard from "./shared/JobCard";
 import {
   LoadingState,
   ErrorState,
   NoJobsState,
   NotLoggedInState,
 } from "./shared/JobStates";
+import ExtensionContainer from "@/components/ExtensionContainer";
+import JobSelector from "./JobSelector";
+import CandidatesList from "./CandidatesList";
 
 type Mode = "add" | "view";
 
@@ -38,69 +33,6 @@ interface JobsContainerProps {
   onSearchModeChange?: (value: boolean) => void;
   selectedJobId?: string;
 }
-
-const JobHeader = ({
-  isExpanded,
-  onToggle,
-}: {
-  isExpanded: boolean;
-  onToggle: () => void;
-}) => (
-  <div
-    className={`flex items-center p-4 border-b border-gray-100 bg-white max-content ${
-      isExpanded ? "justify-between" : "justify-center"
-    }`}
-  >
-    <div className="flex items-center gap-2">
-      {isExpanded && (
-        <a
-          href="https://styxlabs.co/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-gray-900 hover:text-purple-600 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <img
-              src={chrome.runtime.getURL("../../icon/128.png")}
-              alt="Styx Logo"
-              className="w-6 h-6"
-            />
-            <h1 className="text-xl font-semibold text-gray-900">Styx</h1>
-          </div>
-        </a>
-      )}
-    </div>
-    <div className="flex items-center gap-2">
-      {isExpanded && (
-        <button
-          onClick={() => {
-            chrome.runtime.sendMessage({ type: "RELOAD_EXTENSION" });
-            window.location.reload();
-          }}
-          className="w-10 h-10 flex items-center justify-center text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors border border-purple-200 hover:border-purple-300"
-          aria-label="Reload extension"
-        >
-          <RefreshCw className="w-5 h-5" strokeWidth={2} />
-        </button>
-      )}
-      <button
-        onClick={onToggle}
-        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-        aria-label={isExpanded ? "Minimize" : "Expand"}
-      >
-        {isExpanded ? (
-          <ChevronRight className="w-6 h-6" strokeWidth={2} stroke="#9333ea" />
-        ) : (
-          <img
-            src={chrome?.runtime?.getURL("icon/128.png")}
-            alt="Styx Logo"
-            className="w-6 h-6 object-contain"
-          />
-        )}
-      </button>
-    </div>
-  </div>
-);
 
 const BestFitToggle = ({
   enabled,
@@ -129,7 +61,7 @@ const ModeTabs = ({
   mode: Mode;
   onChange: (mode: Mode) => void;
 }) => (
-  <div className="flex items-center justify-center gap-2 p-4 border-t border-gray-200">
+  <div className="flex items-center justify-center gap-2 p-4 border-t border-gray-200 text-sm font-medium">
     <button
       onClick={() => onChange("add")}
       className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
@@ -143,7 +75,7 @@ const ModeTabs = ({
     </button>
     <button
       onClick={() => onChange("view")}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
         mode === "view"
           ? "bg-purple-600 text-white"
           : "text-gray-600 hover:bg-gray-100"
@@ -155,59 +87,7 @@ const ModeTabs = ({
   </div>
 );
 
-const AddSelectedToggle = ({
-  enabled,
-  onChange,
-  onNumProfilesChange,
-}: {
-  enabled: boolean;
-  onChange: (enabled: boolean) => void;
-  onNumProfilesChange?: (numProfiles: number) => void;
-}) => (
-  <div className="mt-2 mb-4 space-y-2">
-    <button onClick={() => onChange(!enabled)} className="w-full">
-      <div className="relative inline-flex items-center w-full max-w-[200px]">
-        <input
-          type="checkbox"
-          className="sr-only peer"
-          checked={enabled}
-          readOnly
-        />
-        <div className="w-full h-10 bg-gray-100 rounded-full peer peer-checked:after:translate-x-[100%] after:content-[''] after:absolute after:top-0 after:left-0 after:bg-white after:border after:border-gray-300 after:rounded-full after:h-10 after:w-[50%] after:transition-all"></div>
-        <div className="absolute inset-0 flex items-center justify-between px-4 text-large font-large">
-          <span className={"text-gray-600"}>Add #</span>
-          <span className={"text-gray-600"}>Add Selected</span>
-        </div>
-      </div>
-    </button>
-    {!enabled && onNumProfilesChange && (
-      <div className="flex items-center gap-2 max-w-[300px]">
-        <label
-          htmlFor="numProfiles"
-          className="text-xl text-gray-600 whitespace-nowrap"
-        >
-          Number of candidates:
-        </label>
-        <input
-          id="numProfiles"
-          type="number"
-          min="1"
-          max="100"
-          defaultValue="25"
-          onChange={(e) => {
-            const value =
-              e.target.value === ""
-                ? ""
-                : Math.min(parseInt(e.target.value) || 1, 100);
-            e.target.value = value.toString();
-            onNumProfilesChange(value === "" ? 1 : value);
-          }}
-          className="w-[80px] px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-        />
-      </div>
-    )}
-  </div>
-);
+const SELECTED_JOB_KEY = "styx-selected-job-id";
 
 const JobsContainer: React.FC<JobsContainerProps> = ({
   title,
@@ -226,54 +106,165 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
   isProcessing = false,
   useSearchMode,
   onSearchModeChange,
-  selectedJobId,
+  selectedJobId: externalSelectedJobId,
 }) => {
-  const { isExpanded, toggleExpansion } = useExtensionState();
   const { mode, setMode } = useExtensionMode();
+  const [selectedJobId, setSelectedJobId] = useState<string | undefined>(() => {
+    // Initialize with either external ID, saved ID, or undefined
+    const savedJobId = localStorage.getItem(SELECTED_JOB_KEY);
+    return (
+      externalSelectedJobId ||
+      (savedJobId && jobs.some((job) => job.id === savedJobId)
+        ? savedJobId
+        : undefined)
+    );
+  });
+  const [addMode, setAddMode] = useState<"all" | "selected">("all");
+  const [numProfiles, setNumProfiles] = useState<number>(25);
+
+  const selectedJob = jobs.find((job) => job.id === selectedJobId);
+  const width = mode === "view" && selectedJobId ? "650px" : "450px";
+  const maxHeight =
+    mode === "view" && selectedJobId ? "calc(100vh-50px)" : "calc(100vh-100px)";
+
+  const handleJobChange = (jobId: string) => {
+    setSelectedJobId(jobId);
+    localStorage.setItem(SELECTED_JOB_KEY, jobId);
+
+    if (mode === "view") {
+      const job = jobs.find((j) => j.id === jobId);
+      if (job) {
+        onViewCandidates(jobId, job.job_title);
+      }
+    }
+  };
+
+  const handleAdd = () => {
+    if (selectedJobId && selectedJob) {
+      onAddCandidate(selectedJobId);
+    }
+  };
 
   return (
-    <div
-      className={`extension-container bg-white rounded-l-lg shadow-lg flex flex-col ${
-        !isExpanded
-          ? "w-20"
-          : mode === "view" && selectedJobId
-          ? "w-[650px] max-h-[calc(100vh-50px)]"
-          : "w-[450px] max-h-[calc(100vh-100px)]"
-      }`}
-    >
-      <JobHeader isExpanded={isExpanded} onToggle={toggleExpansion} />
-      {isExpanded && (
-        <>
-          <div className="flex-1 min-h-0 overflow-y-auto">
-            {loading ? (
-              <LoadingState />
-            ) : error === "not_authenticated" ? (
-              <NotLoggedInState />
-            ) : error ? (
-              <ErrorState message={error} />
-            ) : jobs.length === 0 ? (
-              <NoJobsState />
+    <ExtensionContainer width={width} maxHeight={maxHeight}>
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        {loading ? (
+          <LoadingState />
+        ) : error === "not_authenticated" ? (
+          <NotLoggedInState />
+        ) : error ? (
+          <ErrorState message={error} />
+        ) : jobs.length === 0 ? (
+          <NoJobsState />
+        ) : (
+          <div className="flex flex-col h-full">
+            <div className="flex-shrink-0 p-6 space-y-4">
+              <JobSelector
+                jobs={jobs}
+                selectedJob={selectedJob || null}
+                onJobChange={handleJobChange}
+                className="w-full text-base"
+              />
+            </div>
+
+            {mode === "view" && selectedJob && selectedJobId ? (
+              <CandidatesList
+                jobId={selectedJobId}
+                jobTitle={selectedJob.job_title}
+              />
             ) : (
-              <div className="flex flex-col">
-                <div className="flex-shrink-0 p-6">
-                  {mode === "add" && onAddSelectedChange && (
-                    <AddSelectedToggle
-                      enabled={useSelected || false}
-                      onChange={onAddSelectedChange}
-                      onNumProfilesChange={onNumProfilesChange}
-                    />
-                  )}
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold text-gray-900">
-                      {mode === "add" ? title : "Your Jobs"}
-                    </h2>
+              mode === "add" &&
+              selectedJob &&
+              selectedJobId && (
+                <div className="p-6 space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Add Mode
+                      </label>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setAddMode("all")}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                            addMode === "all"
+                              ? "bg-purple-600 text-white"
+                              : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                          }`}
+                        >
+                          Add All
+                        </button>
+                        <button
+                          onClick={() => setAddMode("selected")}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                            addMode === "selected"
+                              ? "bg-purple-600 text-white"
+                              : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                          }`}
+                        >
+                          Add Selected Number
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  {mode === "add" && onBestFitChange && (
+
+                  {addMode === "selected" && (
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor="numProfiles"
+                        className="block text-sm font-medium text-gray-700 whitespace-nowrap"
+                      >
+                        Number of candidates:
+                      </label>
+                      <input
+                        id="numProfiles"
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={numProfiles}
+                        onChange={(e) => {
+                          const value = Math.min(
+                            Math.max(parseInt(e.target.value) || 1, 1),
+                            100
+                          );
+                          setNumProfiles(value);
+                          onNumProfilesChange?.(value);
+                        }}
+                        className="w-20 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                      />
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleAdd}
+                    disabled={isProcessing || isAdded(selectedJobId)}
+                    className={`w-full px-4 py-2 rounded-lg text-base font-medium flex items-center justify-center gap-2 ${
+                      isAdded(selectedJobId)
+                        ? "bg-green-100 text-green-700 cursor-default"
+                        : isProcessing
+                        ? "bg-gray-100 text-gray-400 cursor-wait"
+                        : "bg-purple-600 text-white hover:bg-purple-700"
+                    }`}
+                  >
+                    {isProcessing ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <PlusCircle className="w-5 h-5" />
+                    )}
+                    {isAdded(selectedJobId)
+                      ? "Added"
+                      : isProcessing
+                      ? "Processing..."
+                      : `Add ${
+                          addMode === "selected" ? numProfiles : "All"
+                        } Candidates`}
+                  </button>
+
+                  {/* {mode === "add" && onBestFitChange && (
                     <BestFitToggle
                       enabled={showBestFit || false}
                       onChange={onBestFitChange}
                     />
-                  )}
+                  )} */}
                   {mode === "add" && onSearchModeChange && (
                     <div className="mt-4 flex items-center gap-3">
                       <span className="text-base text-gray-600">
@@ -307,27 +298,13 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
                     </div>
                   )}
                 </div>
-                <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4">
-                  {jobs.map((job) => (
-                    <JobCard
-                      key={job.id}
-                      job={job}
-                      onAddCandidate={onAddCandidate}
-                      onViewCandidates={onViewCandidates}
-                      isAdded={isAdded(job.id)}
-                      isLoading={isLoading(job.id)}
-                      isProcessing={isProcessing}
-                      mode={mode}
-                    />
-                  ))}
-                </div>
-              </div>
+              )
             )}
           </div>
-          <ModeTabs mode={mode} onChange={setMode} />
-        </>
-      )}
-    </div>
+        )}
+      </div>
+      <ModeTabs mode={mode} onChange={setMode} />
+    </ExtensionContainer>
   );
 };
 
