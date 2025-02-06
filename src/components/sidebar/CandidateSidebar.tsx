@@ -29,6 +29,9 @@ import {
 } from "@/utils/apiUtils";
 import toast from "react-hot-toast";
 import { connectAndMessage } from "@/utils/linkedinUtils";
+import { cn } from "@/utils/cn";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 // Date formatting utilities
 const formatDate = (dateStr: string | null) => {
@@ -163,6 +166,39 @@ const getCareerTagStyle = (tag: string): string => {
     default:
       return "bg-gray-50 text-gray-700 border-gray-200";
   }
+};
+
+// Helper functions for trait calculations
+const getRequiredTraitsMet = (candidate: Candidate): number => {
+  return (
+    candidate.sections?.filter((section) => section.required && section.value)
+      .length || 0
+  );
+};
+
+const getOptionalTraitsMet = (candidate: Candidate): number => {
+  return (
+    candidate.sections?.filter((section) => !section.required && section.value)
+      .length || 0
+  );
+};
+
+const getTotalRequiredTraits = (candidate: Candidate): number => {
+  return candidate.sections?.filter((section) => section.required).length || 0;
+};
+
+const getTotalOptionalTraits = (candidate: Candidate): number => {
+  return candidate.sections?.filter((section) => !section.required).length || 0;
+};
+
+const getFitLabel = (
+  fit: number | undefined
+): { label: string; variant: "default" | "secondary" | "outline" } => {
+  if (fit === undefined) return { label: "N/A", variant: "outline" };
+  if (fit >= 4) return { label: "Ideal Fit", variant: "default" };
+  if (fit >= 3) return { label: "Good Fit", variant: "secondary" };
+  if (fit >= 2) return { label: "Potential Fit", variant: "outline" };
+  return { label: "Not a Fit", variant: "outline" };
 };
 
 export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
@@ -315,6 +351,24 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
     <div className="fixed inset-y-0 right-0 w-[450px] bg-white shadow-xl border-l border-gray-200 z-[9999] flex flex-col">
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onPrevious}
+              disabled={!hasPrevious}
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-gray-500"
+              title="Previous candidate"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={onNext}
+              disabled={!hasNext}
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-gray-500"
+              title="Next candidate"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
           <h2 className="text-xl font-semibold text-gray-900">
             {candidate.name}
           </h2>
@@ -382,44 +436,84 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
       </div>
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 space-y-8">
-          {candidate.sections && candidate.sections.length > 0 && (
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                Trait Evaluation
+          {/* Trait Evaluation Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-purple-900">
+                Trait Match
               </h3>
-              <div className="space-y-4">
-                {candidate.sections.map((section, index) => (
-                  <TraitEvaluationItem key={index} evaluation={section} />
-                ))}
+              <div className="flex items-center gap-2">
+                {getTotalRequiredTraits(candidate) > 0 && (
+                  <Badge
+                    variant={
+                      getRequiredTraitsMet(candidate) ===
+                      getTotalRequiredTraits(candidate)
+                        ? "secondary"
+                        : "outline"
+                    }
+                    className={cn(
+                      "bg-purple-100 hover:bg-purple-100 text-lg",
+                      getRequiredTraitsMet(candidate) ===
+                        getTotalRequiredTraits(candidate)
+                        ? "text-purple-700 border-purple-200"
+                        : "text-purple-600 border-purple-200"
+                    )}
+                  >
+                    {getRequiredTraitsMet(candidate)}/
+                    {getTotalRequiredTraits(candidate)} Required
+                  </Badge>
+                )}
+                {getTotalOptionalTraits(candidate) > 0 && (
+                  <Badge
+                    variant="outline"
+                    className="text-purple-600 border-purple-200 text-lg"
+                  >
+                    {getOptionalTraitsMet(candidate)}/
+                    {getTotalOptionalTraits(candidate)} Optional
+                  </Badge>
+                )}
               </div>
             </div>
-          )}
+            {candidate.sections?.map((section, index) => (
+              <TraitEvaluationItem key={index} evaluation={section} />
+            ))}
+          </div>
 
-          {(candidate.summary || candidate.evaluation?.score !== undefined) && (
-            <div className="bg-gray-50 p-6 rounded-xl">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xl font-semibold text-gray-900">Summary</h3>
-                {candidate.evaluation?.score !== undefined && (
+          {/* Summary Section */}
+          {(candidate.summary || candidate.sections) && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-purple-900">
+                  Summary
+                </h3>
+                {candidate.sections && (
                   <div className="flex items-center gap-2">
-                    <span className="text-base text-gray-600">Fit Score:</span>
-                    <span
-                      className={`text-lg font-semibold px-3 py-1 rounded-full ${
-                        candidate.evaluation.score >= 0.8
-                          ? "bg-green-50 text-green-700"
-                          : candidate.evaluation.score >= 0.6
-                          ? "bg-blue-50 text-blue-700"
-                          : "bg-amber-50 text-amber-700"
-                      }`}
+                    <Badge
+                      variant={getFitLabel(candidate.fit).variant}
+                      className={cn(
+                        "font-medium hover:bg-inherit text-lg",
+                        candidate.fit && candidate.fit >= 0.8
+                          ? "bg-green-100 text-green-700 hover:bg-green-100 border-green-200"
+                          : candidate.fit && candidate.fit >= 0.6
+                          ? "bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200"
+                          : candidate.fit && candidate.fit >= 0.4
+                          ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-200"
+                          : "bg-red-100 text-red-700 hover:bg-red-100 border-red-200"
+                      )}
                     >
-                      {Math.round(candidate.evaluation.score * 100)}%
-                    </span>
+                      {getFitLabel(candidate.fit).label}
+                    </Badge>
                   </div>
                 )}
               </div>
               {candidate.summary && (
-                <p className="text-lg text-gray-600 leading-relaxed">
-                  {candidate.summary}
-                </p>
+                <Card className="border-purple-100/50">
+                  <div className="p-4">
+                    <p className="text-base text-muted-foreground leading-relaxed">
+                      {candidate.summary}
+                    </p>
+                  </div>
+                </Card>
               )}
             </div>
           )}

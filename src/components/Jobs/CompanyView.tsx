@@ -163,12 +163,7 @@ const CompanyView: React.FC<CompanyViewProps> = ({
     setSelectedJobTitle(jobTitle);
   };
 
-  return selectedJobId ? (
-    <CandidatesList
-      jobId={selectedJobId}
-      jobTitle={selectedJobTitle || undefined}
-    />
-  ) : (
+  return (
     <JobsActionPanel
       title="Add Candidates"
       jobs={jobs}
