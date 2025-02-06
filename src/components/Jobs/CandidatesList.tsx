@@ -288,7 +288,7 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
             <div className="flex items-center bg-gray-100 rounded-lg p-1 w-fit">
               <button
                 onClick={() => setStatusFilter("complete")}
-                className={`px-3 py-1.5 text-sm font-medium rounded transition-colors ${
+                className={`px-3 py-1.5 text-base font-medium rounded transition-colors ${
                   statusFilter === "complete"
                     ? "bg-white shadow-sm text-purple-700"
                     : "text-gray-600 hover:bg-purple-100 hover:text-purple-700"
@@ -298,7 +298,7 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
               </button>
               <button
                 onClick={() => setStatusFilter("processing")}
-                className={`px-3 py-1.5 text-sm font-medium rounded transition-colors ${
+                className={`px-3 py-1.5 text-base font-medium rounded transition-colors ${
                   statusFilter === "processing"
                     ? "bg-white shadow-sm text-purple-700"
                     : "text-gray-600 hover:bg-purple-100 hover:text-purple-700"
@@ -320,7 +320,7 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
                 "_blank"
               )
             }
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors border border-purple-200 hover:border-purple-300"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-base font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors border border-purple-200 hover:border-purple-300"
           >
             <Pencil className="w-4 h-4" />
             Edit Job
@@ -364,19 +364,19 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
                       <tr>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-6 py-3 text-left text-base font-medium text-gray-500 uppercase tracking-wider"
                         >
                           Name
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-6 py-3 text-center text-base font-medium text-gray-500 uppercase tracking-wider"
                         >
                           Fit
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-6 py-3 text-center text-base font-medium text-gray-500 uppercase tracking-wider"
                         >
                           Requirements
                         </th>

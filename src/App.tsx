@@ -107,7 +107,7 @@ const App: React.FC = () => {
           enableAddPage={false}
           enableAddNumber={true}
           enableAddSelected={false}
-          maxPerPage={0}
+          maxPerPage={10}
         />
       </PageLayout>
     );
