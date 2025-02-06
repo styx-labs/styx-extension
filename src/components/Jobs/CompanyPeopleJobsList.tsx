@@ -46,40 +46,43 @@ const CompanyPeopleJobsList: React.FC = () => {
         await scrollToBottom();
         urls = await getProfileURLs(false, numProfiles, true);
       } else {
-        await scrollToBottom();
-        const profileCards = Array.from(
-          document.querySelectorAll(".org-people-profile-card__profile-info")
-        );
-
-        urls = profileCards
-          .slice(0, numProfiles)
-          .map((card) => {
-            const profileLink = card.querySelector('a[href*="/in/"]');
-            const href = profileLink?.getAttribute("href");
-            if (!href) return null;
-
-            const match = href.match(/\/in\/([^/?]+)/);
-            if (!match) return null;
-
-            return `https://www.linkedin.com/in/${match[1]}`;
-          })
-          .filter((url): url is string => url !== null);
-
-        if (urls.length < numProfiles) {
-          const showMoreButton = document.querySelector(
-            "button.scaffold-finite-scroll__load-button"
+        while (urls.length < numProfiles) {
+          await scrollToBottom();
+          const profileCards = Array.from(
+            document.querySelectorAll(".org-people-profile-card__profile-info")
           );
-          if (showMoreButton instanceof HTMLElement) {
+
+          const newUrls = profileCards
+            .map((card) => {
+              const profileLink = card.querySelector('a[href*="/in/"]');
+              const href = profileLink?.getAttribute("href");
+              if (!href) return null;
+
+              const match = href.match(/\/in\/([^/?]+)/);
+              if (!match) return null;
+
+              return `https://www.linkedin.com/in/${match[1]}`;
+            })
+            .filter((url): url is string => url !== null);
+
+          // Add only new unique URLs
+          urls = [...new Set([...urls, ...newUrls])];
+
+          // If we haven't reached the target number and there's a "Show more" button, click it
+          if (urls.length < numProfiles) {
+            const showMoreButton = document.querySelector(
+              "button.scaffold-finite-scroll__load-button"
+            );
+            if (!(showMoreButton instanceof HTMLElement)) {
+              break; // No more content to load
+            }
             showMoreButton.click();
             await new Promise((resolve) => setTimeout(resolve, 2000));
-            const moreUrls = await getProfileURLs(
-              false,
-              numProfiles - urls.length,
-              false
-            );
-            urls.push(...moreUrls);
           }
         }
+
+        // Trim to exact number requested
+        urls = urls.slice(0, numProfiles);
       }
 
       if (urls.length === 0) {
