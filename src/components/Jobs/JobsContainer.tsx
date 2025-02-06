@@ -43,6 +43,7 @@ interface JobsContainerProps {
   enableAddSelected?: boolean;
   maxPerPage?: number;
   selectedCandidateIds?: string[];
+  isSingleMode?: boolean;
 }
 
 const BestFitToggle = ({
@@ -123,6 +124,7 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
   enableAddSelected = false,
   maxPerPage = 25,
   selectedCandidateIds = [],
+  isSingleMode = false,
 }) => {
   const { mode, setMode } = useExtensionMode();
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>(() => {
@@ -156,21 +158,25 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
 
   const handleAdd = () => {
     if (selectedJobId && selectedJob) {
-      switch (addMode) {
-        case "page":
-          onAddCandidate(selectedJobId, "page");
-          break;
-        case "number":
-          onAddCandidate(selectedJobId, "number", numProfiles);
-          break;
-        case "selected":
-          onAddCandidate(
-            selectedJobId,
-            "selected",
-            undefined,
-            selectedCandidateIds
-          );
-          break;
+      if (isSingleMode) {
+        onAddCandidate(selectedJobId, "page");
+      } else {
+        switch (addMode) {
+          case "page":
+            onAddCandidate(selectedJobId, "page");
+            break;
+          case "number":
+            onAddCandidate(selectedJobId, "number", numProfiles);
+            break;
+          case "selected":
+            onAddCandidate(
+              selectedJobId,
+              "selected",
+              undefined,
+              selectedCandidateIds
+            );
+            break;
+        }
       }
     }
   };
@@ -198,62 +204,66 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
             </div>
 
             {mode === "view" && selectedJob && selectedJobId ? (
-              <CandidatesList
-                jobId={selectedJobId}
-                jobTitle={selectedJob.job_title}
-              />
+              <div className="flex-1 bg-white">
+                <CandidatesList
+                  jobId={selectedJobId}
+                  jobTitle={selectedJob.job_title}
+                />
+              </div>
             ) : (
               mode === "add" &&
               selectedJob &&
               selectedJobId && (
                 <div className="p-6 space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Add Mode
-                      </label>
-                      <div className="flex gap-2">
-                        {enableAddPage && (
-                          <button
-                            onClick={() => setAddMode("page")}
-                            className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                              addMode === "page"
-                                ? "bg-purple-600 text-white"
-                                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
-                            }`}
-                          >
-                            Add Page
-                          </button>
-                        )}
-                        {enableAddNumber && (
-                          <button
-                            onClick={() => setAddMode("number")}
-                            className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                              addMode === "number"
-                                ? "bg-purple-600 text-white"
-                                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
-                            }`}
-                          >
-                            Add Number
-                          </button>
-                        )}
-                        {enableAddSelected && (
-                          <button
-                            onClick={() => setAddMode("selected")}
-                            className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                              addMode === "selected"
-                                ? "bg-purple-600 text-white"
-                                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
-                            }`}
-                          >
-                            Add Selected
-                          </button>
-                        )}
+                  {!isSingleMode && (
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Add Mode
+                        </label>
+                        <div className="flex gap-2">
+                          {enableAddPage && (
+                            <button
+                              onClick={() => setAddMode("page")}
+                              className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                                addMode === "page"
+                                  ? "bg-purple-600 text-white"
+                                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                              }`}
+                            >
+                              Add Page
+                            </button>
+                          )}
+                          {enableAddNumber && (
+                            <button
+                              onClick={() => setAddMode("number")}
+                              className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                                addMode === "number"
+                                  ? "bg-purple-600 text-white"
+                                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                              }`}
+                            >
+                              Add Number
+                            </button>
+                          )}
+                          {enableAddSelected && (
+                            <button
+                              onClick={() => setAddMode("selected")}
+                              className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                                addMode === "selected"
+                                  ? "bg-purple-600 text-white"
+                                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                              }`}
+                            >
+                              Add Selected
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
 
-                  {addMode === "number" && (
+                  {!isSingleMode && addMode === "number" && (
                     <div className="flex items-center gap-2">
                       <label
                         htmlFor="numProfiles"
@@ -265,12 +275,12 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
                         id="numProfiles"
                         type="number"
                         min="1"
-                        max={100}
+                        max={maxPerPage}
                         value={numProfiles}
                         onChange={(e) => {
                           const value = Math.min(
                             Math.max(parseInt(e.target.value) || 1, 1),
-                            100
+                            maxPerPage
                           );
                           setNumProfiles(value);
                         }}
@@ -294,7 +304,9 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
                       <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
                       <>
-                        {addMode === "page"
+                        {isSingleMode
+                          ? "Add Candidate"
+                          : addMode === "page"
                           ? `Add All on Page (${maxPerPage})`
                           : addMode === "number"
                           ? `Add ${numProfiles} Candidates`
@@ -303,7 +315,7 @@ const JobsContainer: React.FC<JobsContainerProps> = ({
                     )}
                   </button>
 
-                  {mode === "add" && onSearchModeChange && (
+                  {onSearchModeChange && (
                     <div className="mt-4 flex items-center gap-3">
                       <span className="text-base text-gray-600">
                         Search Mode

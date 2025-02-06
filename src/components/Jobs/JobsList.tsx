@@ -12,16 +12,13 @@ const JobsList: React.FC = () => {
     error,
     addedJobs,
     loadingJobs,
-    showBestFit,
-    linkedinContext,
-    name,
-    publicIdentifier,
     setError,
     setAddedJobs,
     setLoadingJobs,
-    setShowBestFit,
   } = useJobsState();
 
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [useSearchMode, setUseSearchMode] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [selectedJobTitle, setSelectedJobTitle] = useState<string | null>(null);
 
@@ -30,33 +27,58 @@ const JobsList: React.FC = () => {
     setLoadingJobs(new Set());
   });
 
-  const handleCreateCandidate = async (jobId: string) => {
+  const getProfileUrl = () => {
+    // For search mode, look for any profile link
+    if (useSearchMode) {
+      const profileLink = document.querySelector('a[href*="linkedin.com/in/"]');
+      const href = profileLink?.getAttribute("href");
+      if (!href) return null;
+
+      const match = href.match(/\/in\/([^/?]+)/);
+      if (!match) return null;
+
+      return `https://www.linkedin.com/in/${match[1]}`;
+    }
+
+    // For profile page mode, get the current URL
+    const path = window.location.pathname;
+    const match = path.match(/\/in\/([^/?]+)/);
+    if (!match) return null;
+
+    return `https://www.linkedin.com/in/${match[1]}`;
+  };
+
+  const handleCreateCandidate = async (
+    jobId: string,
+    mode: "page" | "number" | "selected",
+    count?: number,
+    selectedIds?: string[]
+  ) => {
     try {
       setLoadingJobs((prev) => new Set([...prev, jobId]));
-      let response;
-      if (name && linkedinContext && publicIdentifier) {
-        console.log("name");
-        response = await createCandidate(
-          jobId,
-          currentUrl,
-          name,
-          linkedinContext,
-          publicIdentifier
-        );
-      } else {
-        console.log("url");
-        response = await createCandidate(jobId, currentUrl);
+      setIsProcessing(true);
+
+      const profileUrl = getProfileUrl();
+      if (!profileUrl) {
+        setError("Could not find a valid LinkedIn profile URL");
+        return;
       }
-      if (response === null) {
+
+      console.log(`Adding profile: ${profileUrl}`);
+      const result = await createCandidate(jobId, profileUrl);
+      if (result === null) {
         setError("not_authenticated");
         return;
       }
+
       setAddedJobs((prev) => new Set([...prev, jobId]));
     } catch (err) {
+      console.error("Error creating candidate:", err);
       setError(
         err instanceof Error ? err.message : "Failed to create candidate"
       );
     } finally {
+      setIsProcessing(false);
       setLoadingJobs((prev) => {
         const newSet = new Set(prev);
         newSet.delete(jobId);
@@ -70,21 +92,29 @@ const JobsList: React.FC = () => {
     setSelectedJobTitle(jobTitle);
   };
 
-  if (!currentUrl.includes("linkedin.com/in/")) return null;
-
-  return (
+  return selectedJobId ? (
+    <CandidatesList
+      jobId={selectedJobId}
+      jobTitle={selectedJobTitle || undefined}
+    />
+  ) : (
     <JobsContainer
-      title="Add this candidate to Styx"
-      onAddCandidate={handleCreateCandidate}
-      onViewCandidates={handleViewCandidates}
-      isAdded={(id: string) => addedJobs.has(id)}
-      isLoading={(id: string) => loadingJobs.has(id)}
+      title="Add Candidate"
       jobs={jobs}
       loading={loading}
       error={error}
-      showBestFit={showBestFit}
-      onBestFitChange={setShowBestFit}
-      selectedJobId={selectedJobId || undefined}
+      onAddCandidate={handleCreateCandidate}
+      onViewCandidates={handleViewCandidates}
+      isAdded={(jobId) => addedJobs.has(jobId)}
+      isLoading={(jobId) => loadingJobs.has(jobId)}
+      isProcessing={isProcessing}
+      useSearchMode={useSearchMode}
+      onSearchModeChange={setUseSearchMode}
+      enableAddPage={false}
+      enableAddNumber={false}
+      enableAddSelected={false}
+      maxPerPage={1}
+      isSingleMode={true}
     />
   );
 };
