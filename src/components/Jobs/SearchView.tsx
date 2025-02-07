@@ -3,6 +3,7 @@ import { createCandidatesBulk } from "../../utils/apiUtils";
 import { useJobsState } from "../../hooks/useJobsState";
 import { useUrlWatcher } from "../../hooks/useUrlWatcher";
 import JobsActionPanel from "./JobsActionPanel";
+import { scrollToBottom } from "../../utils/linkedinRecruiterUtils";
 
 interface SearchViewProps {
   enableAddPage?: boolean;
@@ -63,6 +64,7 @@ const SearchView: React.FC<SearchViewProps> = ({
   };
 
   const goToNextPage = async () => {
+    await scrollToBottom();
     const nextButton = document.querySelector(
       "button.artdeco-pagination__button--next"
     );
