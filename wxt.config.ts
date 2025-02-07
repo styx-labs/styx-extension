@@ -9,9 +9,9 @@ export default defineConfig({
     host_permissions: [
       "https://app.styxlabs.co/*",
       "http://localhost:3000/*",
-      "https://www.linkedin.com/*"
+      "https://www.linkedin.com/*",
     ],
-    version: "1.1.2",
+    version: "1.2.0",
     web_accessible_resources: [
       {
         matches: ["<all_urls>"],
