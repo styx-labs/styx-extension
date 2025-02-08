@@ -47,6 +47,7 @@ export interface Candidate {
     confidence: number;
     distilled_content: string;
   }>;
+  is_loading_indicator?: boolean;
 }
 
 export interface TraitEvaluation {

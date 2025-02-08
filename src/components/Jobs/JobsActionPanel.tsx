@@ -63,7 +63,7 @@ const ModeTabs: React.FC<{ mode: Mode; setMode: (mode: Mode) => void }> = ({
         className="text-base"
       >
         <PlusCircle className="w-4 h-4 mr-2" />
-        Add
+        Add Candidates
       </Button>
       <Button
         variant={mode === "view" ? "default" : "outline"}
@@ -71,7 +71,7 @@ const ModeTabs: React.FC<{ mode: Mode; setMode: (mode: Mode) => void }> = ({
         className="text-base"
       >
         <Eye className="w-4 h-4 mr-2" />
-        View
+        View Candidates
       </Button>
     </div>
   </div>

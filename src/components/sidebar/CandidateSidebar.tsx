@@ -355,7 +355,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
       <motion.div
-        className="flex items-center justify-between p-4 border-b border-gray-200"
+        className="flex items-center justify-between p-4 border-b border-gray-200 relative z-10"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
@@ -365,22 +365,26 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
             <motion.button
               onClick={onPrevious}
               disabled={!hasPrevious}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-gray-500"
-              title="Previous candidate"
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-gray-500 relative group/tooltip"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               <ChevronLeft className="h-5 w-5" />
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                Previous candidate
+              </div>
             </motion.button>
             <motion.button
               onClick={onNext}
               disabled={!hasNext}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-gray-500"
-              title="Next candidate"
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-gray-500 relative group/tooltip"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               <ChevronRight className="h-5 w-5" />
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                Next candidate
+              </div>
             </motion.button>
           </motion.div>
           <motion.h2
@@ -401,27 +405,33 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
           <div className="flex items-center gap-2 mr-4">
             <motion.button
               disabled={!candidate.url}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50"
+              className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
               onClick={() =>
                 candidate.url && window.open(candidate.url, "_blank")
               }
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <LinkedinIcon className="h-5 w-5 text-[#0A66C2]" />
+              <LinkedinIcon className="h-6 w-6 text-[#0A66C2]" />
+              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                View LinkedIn Profile
+              </div>
             </motion.button>
             <motion.button
               disabled={!candidate.url}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50"
+              className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
               onClick={handleConnectClick}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <UserPlus className="h-5 w-5" />
+              <UserPlus className="h-6 w-6" />
+              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                Send LinkedIn Connection Request
+              </div>
             </motion.button>
             <motion.button
               disabled={!candidate.url || !candidate.id}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50"
+              className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
               onClick={handleEmailClick}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -433,15 +443,18 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                 >
-                  <Loader2 className="h-5 w-5" />
+                  <Loader2 className="h-6 w-6" />
                 </motion.div>
               ) : (
-                <Mail className="h-5 w-5" />
+                <Mail className="h-6 w-6" />
               )}
+              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                Get Email Address
+              </div>
             </motion.button>
             <div className="relative inline-block">
               <motion.button
-                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50"
+                className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
                 onClick={handleReachoutClick}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -457,26 +470,35 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                       ease: "linear",
                     }}
                   >
-                    <Loader2 className="h-5 w-5" />
+                    <Loader2 className="h-6 w-6" />
                   </motion.div>
                 ) : (
-                  <MessageSquarePlus className="h-5 w-5" />
+                  <MessageSquarePlus className="h-6 w-6" />
                 )}
+                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                  Generate LinkedIn Message
+                </div>
               </motion.button>
             </div>
             <button
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all"
+              className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all relative group/tooltip"
               onClick={(e) => handleDelete(e, candidate.id)}
               disabled={!candidate.id}
             >
-              <Trash2 className="h-5 w-5 text-red-500" />
+              <Trash2 className="h-6 w-6 text-red-500" />
+              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                Remove Candidate
+              </div>
             </button>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all"
+            className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all relative group/tooltip"
           >
             <X className="w-6 h-6" />
+            <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+              Close Sidebar
+            </div>
           </button>
         </motion.div>
       </motion.div>

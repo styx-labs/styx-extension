@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import type { Candidate, Job } from "@/types";
 import { CandidateRow } from "./CandidateRow";
 import { CandidateSidebar } from "../sidebar/CandidateSidebar";
 import { getCandidates, deleteCandidate } from "../../utils/apiUtils";
 import { Loader2, Pencil, Star, Filter, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface CandidatesListProps {
   jobId: string;
@@ -170,6 +171,57 @@ const TraitFilter: React.FC<TraitFilterProps> = ({ job, onFilterChange }) => {
   );
 };
 
+const ProcessingCandidateRow: React.FC<{
+  candidate: Candidate;
+}> = ({ candidate }) => (
+  <tr className="cursor-pointer hover:bg-gray-50 border-b border-gray-200 last:border-b-0">
+    <td className="px-6 py-4 whitespace-nowrap max-w-[200px]">
+      <div className="flex flex-col">
+        <div className="text-lg font-medium text-gray-900 truncate">
+          {candidate.name}
+        </div>
+        <div className="text-base text-gray-500 truncate">
+          <Skeleton className="h-4 w-[140px]" />
+        </div>
+      </div>
+    </td>
+    <td className="px-6 py-4 whitespace-nowrap text-center max-w-[60px] min-w-[60px]">
+      <Skeleton className="h-8 w-[60px] mx-auto rounded-full" />
+    </td>
+    <td className="px-6 py-4 whitespace-nowrap text-center min-w-[100px]">
+      <div className="flex flex-col items-center gap-2 text-base">
+        <Skeleton className="h-5 w-[100px]" />
+        <Skeleton className="h-5 w-[80px]" />
+      </div>
+    </td>
+  </tr>
+);
+
+const LoadingIndicatorCard: React.FC<{
+  loadingCandidates: Candidate[];
+}> = ({ loadingCandidates }) => {
+  if (loadingCandidates.length === 0) return null;
+
+  const totalCandidatesLoading = loadingCandidates.reduce((sum, candidate) => {
+    const match = candidate.name?.match(/Loading (\d+) candidates/);
+    return sum + (match ? parseInt(match[1], 10) : 0);
+  }, 0);
+
+  return (
+    <div className="mx-6 mb-4 rounded-lg bg-purple-100 border border-purple-200 shadow-sm">
+      <div className="px-4 py-3">
+        <div className="flex items-center gap-2 text-base text-purple-700">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>
+            Processing {totalCandidatesLoading} new candidate
+            {totalCandidatesLoading !== 1 ? "s" : ""}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const CandidatesList: React.FC<CandidatesListProps> = ({
   jobId,
   filterTraits,
@@ -188,27 +240,44 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
   );
   const [job, setJob] = useState<Job | null>(null);
 
-  useEffect(() => {
-    const fetchCandidates = async () => {
-      try {
+  const fetchCandidates = async (isPolling = false) => {
+    try {
+      if (!isPolling) {
         setLoading(true);
-        const response = await getCandidates(jobId, selectedTraits);
-        if (response === null) {
-          setError("not_authenticated");
-          return;
-        }
-        setCandidates(response.candidates);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to fetch candidates"
-        );
-      } finally {
+      }
+      const response = await getCandidates(jobId, selectedTraits);
+      if (response === null) {
+        setError("not_authenticated");
+        return;
+      }
+      setCandidates(response.candidates);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch candidates"
+      );
+    } finally {
+      if (!isPolling) {
         setLoading(false);
       }
-    };
+    }
+  };
 
-    fetchCandidates();
+  // Initial fetch
+  useEffect(() => {
+    fetchCandidates(false);
   }, [jobId, selectedTraits]);
+
+  // Polling when there are processing candidates
+  useEffect(() => {
+    const hasProcessingCandidates = candidates.some(
+      (candidate) => candidate.status === "processing"
+    );
+
+    if (hasProcessingCandidates) {
+      const interval = setInterval(() => fetchCandidates(true), 2000);
+      return () => clearInterval(interval);
+    }
+  }, [candidates, jobId, selectedTraits]);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -275,8 +344,28 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
     }
   };
 
+  const { loadingIndicators, regularCandidates } = useMemo(() => {
+    return candidates.reduce(
+      (acc, candidate) => {
+        if (
+          candidate.status === "processing" &&
+          candidate.is_loading_indicator
+        ) {
+          acc.loadingIndicators.push(candidate);
+        } else {
+          acc.regularCandidates.push(candidate);
+        }
+        return acc;
+      },
+      {
+        loadingIndicators: [] as Candidate[],
+        regularCandidates: [] as Candidate[],
+      }
+    );
+  }, [candidates]);
+
   // Filter candidates based on status
-  const filteredCandidates = candidates.filter(
+  const filteredCandidates = regularCandidates.filter(
     (candidate) => candidate.status === statusFilter
   );
 
@@ -329,6 +418,7 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto">
+        <LoadingIndicatorCard loadingCandidates={loadingIndicators} />
         <AnimatePresence mode="wait">
           <motion.div
             key={statusFilter}
@@ -383,13 +473,20 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredCandidates.map((candidate, index) => (
-                        <CandidateRow
-                          key={candidate.id}
-                          candidate={candidate}
-                          onClick={() => setSelectedIndex(index)}
-                        />
-                      ))}
+                      {filteredCandidates.map((candidate, index) =>
+                        candidate.status === "processing" ? (
+                          <ProcessingCandidateRow
+                            key={candidate.id}
+                            candidate={candidate}
+                          />
+                        ) : (
+                          <CandidateRow
+                            key={candidate.id}
+                            candidate={candidate}
+                            onClick={() => setSelectedIndex(index)}
+                          />
+                        )
+                      )}
                     </tbody>
                   </table>
                 </div>
