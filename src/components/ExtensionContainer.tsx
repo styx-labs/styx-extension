@@ -74,7 +74,7 @@ const ExtensionHeader = ({
 
 export const ExtensionContainer: React.FC<ExtensionContainerProps> = ({
   children,
-  maxHeight = "calc(100vh-100px)",
+  maxHeight = "600px",
   className = "",
 }) => {
   const { isExpanded, toggleExpansion } = useExtensionState();
@@ -84,7 +84,6 @@ export const ExtensionContainer: React.FC<ExtensionContainerProps> = ({
       className={`extension-container bg-white rounded-l-lg shadow-lg flex flex-col ${
         !isExpanded ? "w-20" : "w-[450px]"
       } ${className}`}
-      style={{ maxHeight: isExpanded ? maxHeight : "none" }}
     >
       <ExtensionHeader isExpanded={isExpanded} onToggle={toggleExpansion} />
       {isExpanded && children}
