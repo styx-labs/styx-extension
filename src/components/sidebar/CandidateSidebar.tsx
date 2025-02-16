@@ -20,6 +20,8 @@ import {
   Trash2,
   Link,
   UserPlus,
+  Star,
+  ChevronDown,
 } from "lucide-react";
 import type { Candidate, TraitEvaluation } from "@/types";
 import { getEmail, getCandidateReachout } from "@/utils/apiUtils";
@@ -28,6 +30,11 @@ import { connectAndMessage } from "@/utils/linkedinUtils";
 import { cn } from "@/utils/cn";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Date formatting utilities
@@ -74,41 +81,44 @@ const TraitEvaluationItem: React.FC<{ evaluation: TraitEvaluation }> = ({
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
-    <div className="p-4 border border-purple-200 rounded-lg hover:border-purple-300 transition-all">
-      <div
-        className="flex items-center justify-between cursor-pointer"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <h4 className="text-lg font-medium text-purple-900">
-          {evaluation.section}
-        </h4>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
-          <span
-            className={`px-3 py-1.5 rounded-full text-base font-medium ${
+          <div
+            className={cn(
+              "px-2 py-1 rounded-md text-base font-medium flex items-center gap-1.5",
               evaluation.value === true
-                ? "bg-green-50 text-green-700"
-                : "bg-red-50 text-red-700"
-            }`}
+                ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-red-50 text-red-700 border border-red-200",
+              evaluation.required ? "shadow-sm" : "opacity-75"
+            )}
           >
             {evaluation.value === true ? (
-              <Check className="w-5 h-5" />
+              <Check className="h-3 w-3" />
             ) : (
-              <X className="w-5 h-5" />
+              <X className="h-3 w-3" />
             )}
-          </span>
-          <ChevronRight
-            className={`w-5 h-5 transition-transform ${
-              isOpen ? "rotate-90" : ""
-            }`}
-          />
+            <span className="flex items-center gap-1">
+              {evaluation.section}
+              {evaluation.required ? (
+                <Star className="h-3 w-3 fill-current opacity-75" />
+              ) : null}
+            </span>
+          </div>
         </div>
-      </div>
-      {isOpen && (
-        <div className="text-base text-muted-foreground mt-3 pl-3 border-l-2 border-purple-200">
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 text-muted-foreground transition-transform duration-200",
+            isOpen ? "rotate-180" : ""
+          )}
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="overflow-hidden transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+        <div className="px-4 py-3 mt-1.5 text-base text-muted-foreground bg-muted/50 rounded-md border border-muted">
           {evaluation.content}
         </div>
-      )}
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 };
 
@@ -507,7 +517,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
           {/* Trait Evaluation Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-purple-900">
+              <h3 className="text-xl font-medium text-purple-900">
                 Trait Match
               </h3>
               <div className="flex items-center gap-2">
@@ -542,9 +552,13 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                 )}
               </div>
             </div>
-            {candidate.sections?.map((section, index) => (
-              <TraitEvaluationItem key={index} evaluation={section} />
-            ))}
+            <Card className="border-purple-100/50">
+              <div className="p-4 space-y-3">
+                {candidate.sections?.map((section, index) => (
+                  <TraitEvaluationItem key={index} evaluation={section} />
+                ))}
+              </div>
+            </Card>
           </div>
 
           {/* Summary Section */}

@@ -310,6 +310,10 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
                   jobTitle={selectedJob.job_title}
                 />
               </div>
+            ) : mode === "view" ? (
+              <div className="text-gray-600 text-base text-center p-4">
+                Select a job to start viewing candidates
+              </div>
             ) : mode === "add" ? (
               selectedJob && selectedJobId ? (
                 <div className="p-6 space-y-4">
@@ -371,7 +375,11 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
           </div>
         )}
       </div>
-      <ModeTabs mode={mode} setMode={setMode} />
+      {/* Only show ModeTabs when not in NotLoggedInState or NoJobsState */}
+      {!loading &&
+        error !== "not_authenticated" &&
+        !error &&
+        jobs.length > 0 && <ModeTabs mode={mode} setMode={setMode} />}
     </ExtensionContainer>
   );
 };

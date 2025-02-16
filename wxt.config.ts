@@ -11,7 +11,7 @@ export default defineConfig({
       "http://localhost:3000/*",
       "https://www.linkedin.com/*",
     ],
-    version: "1.2.0",
+    version: "1.2.1",
     web_accessible_resources: [
       {
         matches: ["<all_urls>"],
