@@ -23,7 +23,7 @@ import {
   Star,
   ChevronDown,
 } from "lucide-react";
-import type { Candidate, TraitEvaluation } from "@/types";
+import type { Candidate, TraitEvaluation, ProfileExperience } from "@/types";
 import { getEmail, getCandidateReachout } from "@/utils/apiUtils";
 import toast from "react-hot-toast";
 import { connectAndMessage } from "@/utils/linkedinUtils";
@@ -74,6 +74,70 @@ interface CandidateSidebarProps {
   handleDelete: (e: React.MouseEvent, id: string) => Promise<void>;
   jobId?: string;
 }
+
+interface GroupedExperience {
+  company: string;
+  company_linkedin_profile_url?: string;
+  roles: Array<ProfileExperience>;
+  overall_start: string;
+  overall_end?: string;
+  funding_stages_during_tenure?: string[];
+}
+
+const groupExperiences = (
+  experiences: ProfileExperience[]
+): GroupedExperience[] => {
+  const sortedExperiences = [...experiences].sort(
+    (a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime()
+  );
+
+  const grouped: GroupedExperience[] = [];
+  let currentGroup: GroupedExperience | null = null;
+
+  sortedExperiences.forEach((exp) => {
+    if (!currentGroup || currentGroup.company !== exp.company) {
+      if (currentGroup) {
+        grouped.push(currentGroup);
+      }
+      currentGroup = {
+        company: exp.company,
+        company_linkedin_profile_url: exp.company_linkedin_profile_url,
+        roles: [exp],
+        overall_start: exp.starts_at,
+        overall_end: exp.ends_at,
+        funding_stages_during_tenure: exp.funding_stages_during_tenure,
+      };
+    } else {
+      currentGroup.roles.push(exp);
+      // Update overall dates
+      if (new Date(exp.starts_at) < new Date(currentGroup.overall_start)) {
+        currentGroup.overall_start = exp.starts_at;
+      }
+      if (
+        !currentGroup.overall_end ||
+        (exp.ends_at &&
+          new Date(exp.ends_at) > new Date(currentGroup.overall_end))
+      ) {
+        currentGroup.overall_end = exp.ends_at;
+      }
+      // Merge funding stages
+      if (exp.funding_stages_during_tenure) {
+        currentGroup.funding_stages_during_tenure = [
+          ...new Set([
+            ...(currentGroup.funding_stages_during_tenure || []),
+            ...exp.funding_stages_during_tenure,
+          ]),
+        ];
+      }
+    }
+  });
+
+  if (currentGroup) {
+    grouped.push(currentGroup);
+  }
+
+  return grouped;
+};
 
 const TraitEvaluationItem: React.FC<{ evaluation: TraitEvaluation }> = ({
   evaluation,
@@ -756,144 +820,327 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
 
           {candidate.profile?.experiences && (
             <div className="space-y-4">
-              <h4 className="text-xl font-semibold text-purple-900 flex items-center gap-2">
+              <h4 className="text-lg font-medium text-purple-800/90 flex items-center gap-2">
                 <BriefcaseIcon className="h-4 w-4" />
                 Experience
               </h4>
               <div className="space-y-4">
-                {candidate.profile.experiences.map((exp, index) => (
-                  <Card key={index} className="border-purple-100/50">
-                    <div className="p-4 space-y-3">
-                      {/* Single role experience */}
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="font-medium text-xl text-purple-900">
-                            {exp.title}
-                          </p>
-                          <Badge
-                            variant="outline"
-                            className="text-lg text-purple-600 border-purple-200"
-                          >
-                            {calculateTenure(
-                              exp.starts_at,
-                              exp.ends_at || null
+                {groupExperiences(candidate.profile.experiences).map(
+                  (exp, index) => (
+                    <Card key={index} className="border-purple-100/50">
+                      <div className="p-4 space-y-3">
+                        {exp.roles.length === 1 ? (
+                          // Single role experience
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="font-medium text-xl text-purple-900">
+                                {exp.roles[0].title}
+                              </p>
+                              <Badge
+                                variant="outline"
+                                className="text-lg text-purple-600 border-purple-200"
+                              >
+                                {calculateTenure(
+                                  exp.roles[0].starts_at,
+                                  exp.roles[0].ends_at || null
+                                )}
+                              </Badge>
+                            </div>
+                            {exp.company_linkedin_profile_url ? (
+                              <a
+                                href={exp.company_linkedin_profile_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-lg text-purple-700/90 hover:text-purple-900 hover:underline inline-flex items-center gap-1"
+                              >
+                                {exp.company}
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            ) : (
+                              <p className="text-lg text-purple-700/90">
+                                {exp.company}
+                              </p>
                             )}
-                          </Badge>
-                        </div>
-                        {exp.company_linkedin_profile_url ? (
-                          <a
-                            href={exp.company_linkedin_profile_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-lg text-purple-700/90 hover:text-purple-900 hover:underline inline-flex items-center gap-1"
-                          >
-                            {exp.company}
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        ) : (
-                          <p className="text-lg text-purple-700/90">
-                            {exp.company}
-                          </p>
-                        )}
-                        <p className="text-base text-purple-600/75">
-                          {formatDate(exp.starts_at)} -{" "}
-                          {exp.ends_at ? formatDate(exp.ends_at) : "Present"}
-                        </p>
-                        {exp.funding_stages_during_tenure &&
-                          formatFundingStages(
-                            exp.funding_stages_during_tenure
-                          ) && (
-                            <Badge
-                              variant="secondary"
-                              className="text-base bg-emerald-50 text-emerald-700 border-emerald-200 mt-1"
-                            >
-                              {formatFundingStages(
+                            <p className="text-base text-purple-600/75">
+                              {formatDate(exp.roles[0].starts_at)} -{" "}
+                              {exp.roles[0].ends_at
+                                ? formatDate(exp.roles[0].ends_at)
+                                : "Present"}
+                            </p>
+                            {exp.funding_stages_during_tenure &&
+                              formatFundingStages(
                                 exp.funding_stages_during_tenure
+                              ) && (
+                                <Badge
+                                  variant="secondary"
+                                  className="text-base bg-emerald-50 text-emerald-700 border-emerald-200 mt-1"
+                                >
+                                  {formatFundingStages(
+                                    exp.funding_stages_during_tenure
+                                  )}
+                                </Badge>
                               )}
-                            </Badge>
-                          )}
-                        {exp.description && (
-                          <div className="space-y-3 pt-2 border-t border-purple-100/50">
-                            <p className="text-lg text-muted-foreground">
-                              {exp.description}
-                            </p>
-                          </div>
-                        )}
-                        {exp.summarized_job_description && (
-                          <div className="mt-3 p-3 bg-purple-50 rounded-md">
-                            <p className="text-xl text-gray-700 font-medium">
-                              Generated Job Description
-                            </p>
-                            <div className="space-y-4">
-                              <div>
-                                <h4 className="font-medium text-lg">
-                                  Role Summary:
-                                </h4>
-                                <p className="text-gray-600 text-base">
-                                  {exp.summarized_job_description.role_summary}
+                            {exp.roles[0].description && (
+                              <div className="space-y-3 pt-2 border-t border-purple-100/50">
+                                <p className="text-lg text-muted-foreground">
+                                  {exp.roles[0].description}
                                 </p>
                               </div>
-
-                              {exp.summarized_job_description.skills && (
-                                <div>
-                                  <h4 className="font-medium text-lg">
-                                    Skills:
-                                  </h4>
-                                  <ul className="list-disc list-inside text-gray-600 text-base pl-2 space-y-1">
-                                    {exp.summarized_job_description.skills.map(
-                                      (skill, idx) => (
-                                        <li key={idx}>{skill}</li>
-                                      )
-                                    )}
-                                  </ul>
-                                </div>
-                              )}
-
-                              {exp.summarized_job_description.requirements && (
-                                <div>
-                                  <h4 className="font-medium text-lg">
-                                    Requirements:
-                                  </h4>
-                                  <ul className="list-disc list-inside text-gray-600 text-base pl-2 space-y-1">
-                                    {exp.summarized_job_description.requirements.map(
-                                      (req, idx) => (
-                                        <li key={idx}>{req}</li>
-                                      )
-                                    )}
-                                  </ul>
-                                </div>
-                              )}
-                            </div>
-                            {exp.summarized_job_description.sources &&
-                              exp.summarized_job_description.sources.length >
-                                0 && (
-                                <div className="mt-2 pt-2 border-t border-purple-100">
-                                  <p className="text-lg text-gray-500">
-                                    Sources:
-                                  </p>
-                                  <div className="mt-1 space-y-1">
-                                    {exp.summarized_job_description.sources.map(
-                                      (source, idx) => (
-                                        <a
-                                          key={idx}
-                                          href={source}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="block text-base text-purple-600 hover:text-purple-800 hover:underline truncate text-nowrap w-full"
-                                        >
-                                          {source}
-                                        </a>
-                                      )
-                                    )}
+                            )}
+                            {exp.roles[0].summarized_job_description && (
+                              <div className="mt-3 p-3 bg-purple-50 rounded-md">
+                                <p className="text-xl text-gray-700 font-medium">
+                                  Generated Job Description
+                                </p>
+                                <div className="space-y-4">
+                                  <div>
+                                    <h4 className="font-medium text-lg">
+                                      Role Summary:
+                                    </h4>
+                                    <p className="text-gray-600 text-base">
+                                      {
+                                        exp.roles[0].summarized_job_description
+                                          .role_summary
+                                      }
+                                    </p>
                                   </div>
+
+                                  {exp.roles[0].summarized_job_description
+                                    .skills && (
+                                    <div>
+                                      <h4 className="font-medium text-lg">
+                                        Skills:
+                                      </h4>
+                                      <ul className="list-disc list-inside text-gray-600 text-base pl-2 space-y-1">
+                                        {exp.roles[0].summarized_job_description.skills.map(
+                                          (skill: string, idx: number) => (
+                                            <li key={idx}>{skill}</li>
+                                          )
+                                        )}
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                  {exp.roles[0].summarized_job_description
+                                    .requirements && (
+                                    <div>
+                                      <h4 className="font-medium text-lg">
+                                        Requirements:
+                                      </h4>
+                                      <ul className="list-disc list-inside text-gray-600 text-base pl-2 space-y-1">
+                                        {exp.roles[0].summarized_job_description.requirements.map(
+                                          (req: string, idx: number) => (
+                                            <li key={idx}>{req}</li>
+                                          )
+                                        )}
+                                      </ul>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
+                                {exp.roles[0].summarized_job_description
+                                  .sources &&
+                                  exp.roles[0].summarized_job_description
+                                    .sources.length > 0 && (
+                                    <div className="mt-2 pt-2 border-t border-purple-100">
+                                      <p className="text-lg text-gray-500">
+                                        Sources:
+                                      </p>
+                                      <div className="mt-1 space-y-1">
+                                        {exp.roles[0].summarized_job_description.sources.map(
+                                          (source: string, idx: number) => (
+                                            <a
+                                              key={idx}
+                                              href={source}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="block text-base text-purple-600 hover:text-purple-800 hover:underline truncate text-nowrap w-full"
+                                            >
+                                              {source}
+                                            </a>
+                                          )
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                              </div>
+                            )}
                           </div>
+                        ) : (
+                          // Multiple roles experience
+                          <>
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <div>
+                                  {exp.company_linkedin_profile_url ? (
+                                    <a
+                                      href={exp.company_linkedin_profile_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xl font-medium text-purple-900 hover:text-purple-900 hover:underline inline-flex items-center gap-1"
+                                    >
+                                      {exp.company}
+                                      <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                  ) : (
+                                    <p className="text-xl font-medium text-purple-900">
+                                      {exp.company}
+                                    </p>
+                                  )}
+                                </div>
+                                <Badge
+                                  variant="outline"
+                                  className="text-lg text-purple-600 border-purple-200"
+                                >
+                                  {calculateTenure(
+                                    exp.overall_start,
+                                    exp.overall_end || null
+                                  )}
+                                </Badge>
+                              </div>
+                              {exp.funding_stages_during_tenure &&
+                                formatFundingStages(
+                                  exp.funding_stages_during_tenure
+                                ) && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-base bg-emerald-50 text-emerald-700 border-emerald-200 mt-1"
+                                  >
+                                    {formatFundingStages(
+                                      exp.funding_stages_during_tenure
+                                    )}
+                                  </Badge>
+                                )}
+                            </div>
+
+                            <div className="space-y-4 pt-2">
+                              {exp.roles.map((role, roleIndex) => (
+                                <div
+                                  key={roleIndex}
+                                  className={`${
+                                    roleIndex !== 0
+                                      ? "border-t border-purple-100/50 pt-4"
+                                      : ""
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between mb-1">
+                                    <p className="font-medium text-lg text-purple-800">
+                                      {role.title}
+                                    </p>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-base text-purple-600/75 border-purple-200/75"
+                                    >
+                                      {calculateTenure(
+                                        role.starts_at,
+                                        role.ends_at || null
+                                      )}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-base text-purple-600/75">
+                                    {formatDate(role.starts_at)} -{" "}
+                                    {role.ends_at
+                                      ? formatDate(role.ends_at)
+                                      : "Present"}
+                                  </p>
+                                  {role.description && (
+                                    <div className="mt-2">
+                                      <p className="text-lg text-muted-foreground">
+                                        {role.description}
+                                      </p>
+                                    </div>
+                                  )}
+                                  {role.summarized_job_description && (
+                                    <div className="mt-3 p-3 bg-purple-50 rounded-md">
+                                      <p className="text-lg text-gray-700 font-medium">
+                                        Generated Job Description
+                                      </p>
+                                      <div className="space-y-4">
+                                        <div>
+                                          <h4 className="font-medium text-base">
+                                            Role Summary:
+                                          </h4>
+                                          <p className="text-gray-600 text-base">
+                                            {
+                                              role.summarized_job_description
+                                                .role_summary
+                                            }
+                                          </p>
+                                        </div>
+
+                                        {role.summarized_job_description
+                                          .skills && (
+                                          <div>
+                                            <h4 className="font-medium text-base">
+                                              Skills:
+                                            </h4>
+                                            <ul className="list-disc list-inside text-gray-600 text-base pl-2 space-y-1">
+                                              {role.summarized_job_description.skills.map(
+                                                (
+                                                  skill: string,
+                                                  idx: number
+                                                ) => (
+                                                  <li key={idx}>{skill}</li>
+                                                )
+                                              )}
+                                            </ul>
+                                          </div>
+                                        )}
+
+                                        {role.summarized_job_description
+                                          .requirements && (
+                                          <div>
+                                            <h4 className="font-medium text-base">
+                                              Requirements:
+                                            </h4>
+                                            <ul className="list-disc list-inside text-gray-600 text-base pl-2 space-y-1">
+                                              {role.summarized_job_description.requirements.map(
+                                                (req: string, idx: number) => (
+                                                  <li key={idx}>{req}</li>
+                                                )
+                                              )}
+                                            </ul>
+                                          </div>
+                                        )}
+                                      </div>
+                                      {role.summarized_job_description
+                                        .sources &&
+                                        role.summarized_job_description.sources
+                                          .length > 0 && (
+                                          <div className="mt-2 pt-2 border-t border-purple-100">
+                                            <p className="text-base text-gray-500">
+                                              Sources:
+                                            </p>
+                                            <div className="mt-1 space-y-1">
+                                              {role.summarized_job_description.sources.map(
+                                                (
+                                                  source: string,
+                                                  idx: number
+                                                ) => (
+                                                  <a
+                                                    key={idx}
+                                                    href={source}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="block text-base text-purple-600 hover:text-purple-800 hover:underline truncate text-nowrap w-full"
+                                                  >
+                                                    {source}
+                                                  </a>
+                                                )
+                                              )}
+                                            </div>
+                                          </div>
+                                        )}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </>
                         )}
                       </div>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  )
+                )}
               </div>
             </div>
           )}
