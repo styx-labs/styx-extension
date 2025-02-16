@@ -42,11 +42,7 @@ export interface Candidate {
   required_met?: number;
   optional_met?: number;
   profile?: Profile;
-  citations?: Array<{
-    url: string;
-    confidence: number;
-    distilled_content: string;
-  }>;
+  citations?: Citation[];
   is_loading_indicator?: boolean;
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   X,
   ChevronLeft,
@@ -29,7 +29,7 @@ import toast from "react-hot-toast";
 import { connectAndMessage } from "@/utils/linkedinUtils";
 import { cn } from "@/utils/cn";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
@@ -219,6 +219,8 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
   handleDelete,
   jobId,
 }) => {
+  const citationRefs = useRef<{ [key: number]: HTMLDivElement }>({});
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -803,7 +805,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                           ) && (
                             <Badge
                               variant="secondary"
-                              className="text-sm bg-emerald-50 text-emerald-700 border-emerald-200 mt-1"
+                              className="text-base bg-emerald-50 text-emerald-700 border-emerald-200 mt-1"
                             >
                               {formatFundingStages(
                                 exp.funding_stages_during_tenure
@@ -812,7 +814,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                           )}
                         {exp.description && (
                           <div className="space-y-3 pt-2 border-t border-purple-100/50">
-                            <p className="text-base text-muted-foreground">
+                            <p className="text-lg text-muted-foreground">
                               {exp.description}
                             </p>
                           </div>
@@ -898,42 +900,44 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
 
           {candidate.profile?.education &&
             candidate.profile.education.length > 0 && (
-              <div>
-                <h3 className="text-xl font-semibold text-purple-900 mb-4 flex items-center gap-2">
-                  <GraduationCap className="w-5 h-5" />
+              <div className="space-y-4">
+                <h4 className="text-lg font-medium text-purple-800/90 flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4" />
                   Education
-                </h3>
+                </h4>
                 <div className="space-y-4">
                   {candidate.profile.education.map((edu, index) => (
-                    <div
-                      key={index}
-                      className="p-5 border bg-card text-card-foreground shadow border-purple-100/50 rounded-lg transition-all"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-lg font-medium text-purple-900">
-                          {edu.school}
+                    <Card key={index} className="border-purple-100/50">
+                      <div className="p-4 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-medium text-purple-900 text-lg">
+                            {edu.school}
+                          </p>
+                          {edu.university_tier &&
+                            edu.university_tier !== "other" && (
+                              <Badge
+                                variant="secondary"
+                                className="text-sm bg-blue-50 text-blue-700 border-blue-200"
+                              >
+                                {edu.university_tier
+                                  .replace("_", " ")
+                                  .toUpperCase()}
+                              </Badge>
+                            )}
+                        </div>
+                        <p className="text-base text-purple-700/90">
+                          {edu.degree_name && edu.field_of_study
+                            ? `${edu.degree_name} in ${edu.field_of_study}`
+                            : edu.degree_name || edu.field_of_study}
                         </p>
-                        {edu.university_tier &&
-                          edu.university_tier !== "other" && (
-                            <span className="text-base bg-blue-50 text-blue-700 px-3 py-1 rounded-full">
-                              {edu.university_tier
-                                .replace("_", " ")
-                                .toUpperCase()}
-                            </span>
-                          )}
+                        {edu.starts_at && edu.ends_at && (
+                          <p className="text-sm text-purple-600/75">
+                            {formatDate(edu.starts_at)} -{" "}
+                            {formatDate(edu.ends_at)}
+                          </p>
+                        )}
                       </div>
-                      <p className="text-base text-purple-700 mt-1">
-                        {edu.degree_name && edu.field_of_study
-                          ? `${edu.degree_name} in ${edu.field_of_study}`
-                          : edu.degree_name || edu.field_of_study}
-                      </p>
-                      {edu.starts_at && edu.ends_at && (
-                        <p className="text-base text-purple-600 mt-1">
-                          {formatDate(edu.starts_at)} -{" "}
-                          {formatDate(edu.ends_at)}
-                        </p>
-                      )}
-                    </div>
+                    </Card>
                   ))}
                 </div>
               </div>
@@ -941,35 +945,64 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
 
           {candidate.citations && candidate.citations.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-purple-900 mb-4 flex items-center gap-2">
-                <Link className="w-5 h-5" />
-                Sources
-              </h3>
+              <h3 className="text-lg font-medium text-purple-900">Sources</h3>
               <div className="space-y-4">
-                {candidate.citations.map((citation, index) => (
-                  <div
-                    key={index}
-                    className="p-5 border bg-card text-card-foreground shadow border-purple-100/50 rounded-lg transition-all"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <a
-                        href={citation.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-base text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
-                      >
-                        {new URL(citation.url).hostname}
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                      <span className="text-base text-purple-600">
-                        Confidence: {Math.round(citation.confidence * 100)}%
-                      </span>
-                    </div>
-                    <p className="text-base text-purple-600">
-                      {citation.distilled_content}
-                    </p>
-                  </div>
-                ))}
+                {candidate.citations.map((citation, index) => {
+                  const citationWithIndex = { ...citation, index: index + 1 };
+                  return (
+                    <Card
+                      key={index}
+                      ref={(el) => {
+                        if (el)
+                          citationRefs.current[citationWithIndex.index] = el;
+                      }}
+                      className="overflow-hidden transition-all duration-300 hover:shadow-lg scroll-mt-6"
+                    >
+                      <CardHeader className="bg-gradient-to-r from-purple-100 to-purple-50 p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-200 text-purple-700 font-semibold text-lg">
+                              {citationWithIndex.index}
+                            </div>
+                            <div>
+                              <CardTitle className="text-lg font-medium text-purple-900">
+                                {new URL(citationWithIndex.url).hostname}
+                              </CardTitle>
+                              <a
+                                href={citationWithIndex.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-base text-purple-600 hover:text-purple-800 transition-colors flex items-center mt-1"
+                              >
+                                <ExternalLink className="h-3 w-3 mr-1" />
+                                Visit source
+                              </a>
+                            </div>
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "px-2 py-1 text-base font-medium",
+                              citationWithIndex.confidence >= 0.8
+                                ? "bg-green-100 text-green-800 border-green-200"
+                                : citationWithIndex.confidence >= 0.6
+                                ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                : "bg-red-100 text-red-800 border-red-200"
+                            )}
+                          >
+                            {Math.round(citationWithIndex.confidence * 100)}%
+                            confidence
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-4">
+                        <p className="text-lg text-gray-600 leading-relaxed">
+                          {citationWithIndex.distilled_content}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           )}
