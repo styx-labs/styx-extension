@@ -21,27 +21,41 @@ export const AddModeCandidateSidebar: React.FC<
     try {
       const response = await getCandidates(jobId);
       if (response) {
-        response.candidates.forEach((candidate) => {
-          if (candidate.id === candidateId) {
-            setCandidate(candidate);
+        const foundCandidate = response.candidates.find(
+          (candidate) => candidate.id === candidateId
+        );
+        if (foundCandidate) {
+          setCandidate(foundCandidate);
+          // If the candidate is complete, stop loading
+          if (foundCandidate.status === "complete") {
+            setLoading(false);
+            return true; // Signal to stop polling
           }
-        });
+        }
       }
+      return false; // Continue polling
     } catch (error) {
       console.error("Error polling candidate:", error);
       setLoading(false);
+      return true; // Stop polling on error
     }
   };
 
   useEffect(() => {
     let pollInterval: NodeJS.Timeout;
 
-    const startPolling = () => {
+    const startPolling = async () => {
       // Initial fetch
-      pollCandidate();
+      const shouldStop = await pollCandidate();
+      if (shouldStop) return;
 
-      // Poll every 5 seconds
-      pollInterval = setInterval(pollCandidate, 5000);
+      // Poll every 5 seconds if not complete
+      pollInterval = setInterval(async () => {
+        const shouldStop = await pollCandidate();
+        if (shouldStop && pollInterval) {
+          clearInterval(pollInterval);
+        }
+      }, 5000);
     };
 
     startPolling();
