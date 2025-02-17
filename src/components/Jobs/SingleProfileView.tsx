@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { createCandidate } from "../../utils/apiUtils";
+import { createCandidate, getCandidates } from "../../utils/apiUtils";
 import { useJobsState } from "../../hooks/useJobsState";
 import { useUrlWatcher } from "../../hooks/useUrlWatcher";
 import JobsActionPanel from "./JobsActionPanel";
@@ -79,14 +79,66 @@ const SingleProfileView: React.FC = () => {
         return;
       }
 
-      setAddingCandidateId(getProfileId());
-      setAddedJobs((prev) => new Set([...prev, jobId]));
+      // Get the profile ID that we're adding
+      const profileId = getProfileId();
+      if (!profileId) {
+        setError("Could not determine profile ID");
+        return;
+      }
+
+      // Start polling for the candidate
+      let attempts = 0;
+      const maxAttempts = 30; // 30 attempts * 2 seconds = 60 seconds max
+      const pollInterval = setInterval(async () => {
+        try {
+          attempts++;
+          const response = await getCandidates(jobId);
+
+          if (response === null) {
+            clearInterval(pollInterval);
+            setError("not_authenticated");
+            return;
+          }
+
+          const candidate = response.candidates.find((c) => c.id === profileId);
+
+          if (candidate && candidate.status === "complete") {
+            clearInterval(pollInterval);
+            setAddingCandidateId(profileId);
+            setAddedJobs((prev) => new Set([...prev, jobId]));
+            setIsProcessing(false);
+            setLoadingJobs((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(jobId);
+              return newSet;
+            });
+          } else if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            setError("Timed out waiting for candidate to be processed");
+            setIsProcessing(false);
+            setLoadingJobs((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(jobId);
+              return newSet;
+            });
+          }
+        } catch (err) {
+          clearInterval(pollInterval);
+          console.error("Error polling for candidate:", err);
+          setError("Failed to check candidate status");
+          setIsProcessing(false);
+          setLoadingJobs((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(jobId);
+            return newSet;
+          });
+        }
+      }, 2000);
     } catch (err) {
       console.error("Error creating candidate:", err);
       setError(
         err instanceof Error ? err.message : "Failed to create candidate"
       );
-    } finally {
       setIsProcessing(false);
       setLoadingJobs((prev) => {
         const newSet = new Set(prev);

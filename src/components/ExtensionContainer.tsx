@@ -36,7 +36,7 @@ const ExtensionHeader = ({
       <div className="flex items-center gap-2">
         {isExpanded && (
           <a
-            href="https://styxlabs.co/"
+            href="https://app.styxlabs.co/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-900 hover:text-purple-600 transition-colors"
