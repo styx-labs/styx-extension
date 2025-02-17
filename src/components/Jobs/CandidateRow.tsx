@@ -63,7 +63,7 @@ export const CandidateRow: React.FC<CandidateRowProps> = ({
           </Badge>
         )}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-center min-w-[100px]">
+      <td className="px-2 py-4 whitespace-nowrap text-center min-w-[100px]">
         <div className="flex flex-col items-center gap-2 text-xs">
           <span
             className={`flex items-center gap-2 ${

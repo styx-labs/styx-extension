@@ -1,6 +1,7 @@
 import React from "react";
-import { ChevronRight, RefreshCw } from "lucide-react";
+import { ChevronRight, ChevronLeft, RefreshCw } from "lucide-react";
 import { useExtensionState } from "../hooks/useExtensionState";
+import { usePosition } from "../contexts/PositionContext";
 
 interface ExtensionContainerProps {
   children: React.ReactNode;
@@ -12,9 +13,11 @@ interface ExtensionContainerProps {
 const ExtensionHeader = ({
   isExpanded,
   onToggle,
+  isOnRight = true,
 }: {
   isExpanded: boolean;
   onToggle: () => void;
+  isOnRight?: boolean;
 }) => (
   <div
     className={`flex items-center py-2 border-b border-gray-100 bg-white max-content ${
@@ -62,7 +65,11 @@ const ExtensionHeader = ({
         aria-label={isExpanded ? "Minimize" : "Expand"}
       >
         {isExpanded ? (
-          <ChevronRight className="w-4 h-4" strokeWidth={2} stroke="#9333ea" />
+          isOnRight ? (
+            <ChevronRight className="w-4 h-4" strokeWidth={2} stroke="#9333ea" />
+          ) : (
+            <ChevronLeft className="w-4 h-4" strokeWidth={2} stroke="#9333ea" />
+          )
         ) : (
           <img
             src={chrome?.runtime?.getURL("icon/128.png")}
@@ -82,14 +89,17 @@ export const ExtensionContainer: React.FC<ExtensionContainerProps> = ({
   className = "",
 }) => {
   const { isExpanded, toggleExpansion } = useExtensionState();
+  const { isOnRight } = usePosition();
 
   return (
     <div
-      className={`extension-container bg-white rounded-l-lg shadow-lg flex flex-col ${
+      className={`extension-container bg-white ${
+        isOnRight ? "rounded-l-lg" : "rounded-r-lg"
+      } shadow-lg flex flex-col ${
         !isExpanded ? "w-16" : "w-[450px]"
       } ${className}`}
     >
-      <ExtensionHeader isExpanded={isExpanded} onToggle={toggleExpansion} />
+      <ExtensionHeader isExpanded={isExpanded} onToggle={toggleExpansion} isOnRight={isOnRight} />
       {isExpanded && children}
     </div>
   );

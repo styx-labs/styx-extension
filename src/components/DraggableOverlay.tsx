@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import DropZone from "./DropZone";
 import DragHandle from "./DragHandle";
+import { PositionContext } from "../contexts/PositionContext";
 
 interface DraggableOverlayProps {
   children: React.ReactNode;
@@ -90,7 +91,7 @@ const DraggableOverlay: React.FC<DraggableOverlayProps> = ({ children }) => {
   }, [isDragging, isMouseDown, verticalPosition, hoveredSide]);
 
   return (
-    <>
+    <PositionContext.Provider value={{ isOnRight }}>
       <DropZone
         side="left"
         isActive={isDragging}
@@ -103,19 +104,16 @@ const DraggableOverlay: React.FC<DraggableOverlayProps> = ({ children }) => {
       />
       <div
         ref={overlayRef}
-        className="overlay group relative"
+        className={`fixed ${isOnRight ? "right-0" : "left-0"}`}
         style={{
           top: verticalPosition,
-          right: isOnRight ? 0 : "auto",
-          left: isOnRight ? "auto" : 0,
+          transition: isDragging ? "none" : "all 0.3s ease",
         }}
       >
-        <div className="drag-handle">
-          <DragHandle side={isOnRight ? "right" : "left"} />
-        </div>
-        <div className="relative">{children}</div>
+        <DragHandle />
+        {children}
       </div>
-    </>
+    </PositionContext.Provider>
   );
 };
 
