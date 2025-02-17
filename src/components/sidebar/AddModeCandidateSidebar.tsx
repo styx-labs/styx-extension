@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import type { Candidate } from "@/types";
 import { CandidateSidebar } from "./CandidateSidebar";
-import { getCandidates } from "@/utils/apiUtils";
+import { getCandidates, deleteCandidate } from "@/utils/apiUtils";
 
 interface AddModeCandidateSidebarProps {
   candidateId: string;
@@ -69,8 +69,14 @@ export const AddModeCandidateSidebar: React.FC<
   }, [candidateId, jobId]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
-    // Implement delete logic if needed for add mode
-    console.log("Delete not implemented in add mode");
+    e.stopPropagation();
+    if (!candidateId || !jobId) return;
+    try {
+      await deleteCandidate(jobId, candidateId);
+      setCandidate(null);
+    } catch (error) {
+      console.error("Error deleting candidate:", error);
+    }
   };
 
   if (!candidate) {

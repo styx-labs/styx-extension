@@ -329,7 +329,7 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
                 </div>
               ) : mode === "add" ? (
                 selectedJob && selectedJobId ? (
-                  <div className="p-4 space-y-4">
+                  <div className="p-4 space-y-4 bg-white">
                     {customAddMessage ? (
                       <div className="text-gray-600 text-xs text-center p-4">
                         {customAddMessage}

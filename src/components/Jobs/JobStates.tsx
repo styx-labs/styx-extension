@@ -38,11 +38,6 @@ export const NoJobsState = () => (
 
 export const NotLoggedInState = () => (
   <div className="flex flex-col items-center justify-center h-full p-4 space-y-4 gap-2">
-    <h1 className="text-base font-semibold text-purple-600">Login Required</h1>
-    <p className="text-xs text-center text-gray-600">
-      Please log in to Styx to view and manage jobs. After logging in, you will
-      need to refresh the page to see the jobs.
-    </p>
     <Button onClick={openLogin} className="w-full">
       <Plus className="mr-2 h-5 w-5" />
       Login to Styx

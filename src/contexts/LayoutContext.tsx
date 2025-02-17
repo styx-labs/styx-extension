@@ -52,11 +52,6 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
   const handleSetHeightExpanded = (expanded: boolean) => {
     setHeightExpanded(expanded);
     localStorage.setItem("sidebarHeightExpanded", JSON.stringify(expanded));
-
-    // If expanding, scroll to top of the page
-    if (expanded) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
   };
 
   const handleSetSidebarExpanded = (expanded: boolean) => {
