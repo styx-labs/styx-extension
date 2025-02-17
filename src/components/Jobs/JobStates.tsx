@@ -6,17 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const LoadingState = () => (
   <div className="flex flex-col items-center justify-center h-full p-6 space-y-4">
     <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
-    <div className="w-full space-y-4">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="flex items-center space-x-4">
-          <Skeleton className="h-12 w-12 rounded-full" />
-          <div className="space-y-2 flex-1">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-2/3" />
-          </div>
-        </div>
-      ))}
-    </div>
   </div>
 );
 

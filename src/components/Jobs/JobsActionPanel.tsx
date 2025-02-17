@@ -14,6 +14,15 @@ import CandidatesList from "./CandidatesList";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipProvider,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { Label } from "@/components/ui/label";
+
 type Mode = "add" | "view";
 type AddMode = "page" | "number" | "selected";
 
@@ -55,26 +64,28 @@ const ModeTabs: React.FC<{ mode: Mode; setMode: (mode: Mode) => void }> = ({
   mode,
   setMode,
 }) => (
-  <div className="border-t p-4">
-    <div className="flex justify-center gap-2">
-      <Button
-        variant={mode === "add" ? "default" : "outline"}
-        onClick={() => setMode("add")}
-        className="text-xs"
+  <Tabs
+    value={mode}
+    onValueChange={(value) => setMode(value as Mode)}
+    className="w-full"
+  >
+    <TabsList className="grid w-full grid-cols-2 bg-transparent">
+      <TabsTrigger
+        value="add"
+        className="flex items-center justify-center data-[state=active]:text-purple-600"
       >
         <PlusCircle className="w-4 h-4 mr-2" />
-        Add Candidates
-      </Button>
-      <Button
-        variant={mode === "view" ? "default" : "outline"}
-        onClick={() => setMode("view")}
-        className="text-xs"
+        Add
+      </TabsTrigger>
+      <TabsTrigger
+        value="view"
+        className="flex items-center justify-center data-[state=active]:text-purple-600"
       >
         <Eye className="w-4 h-4 mr-2" />
-        View Candidates
-      </Button>
-    </div>
-  </div>
+        View
+      </TabsTrigger>
+    </TabsList>
+  </Tabs>
 );
 
 const AddModeSelector: React.FC<{
@@ -132,7 +143,7 @@ const ProfileCountInput: React.FC<{
   maxPerPage: number;
 }> = ({ numProfiles, setNumProfiles, maxPerPage }) => (
   <div className="flex items-center gap-2">
-    <label htmlFor="numProfiles" className="text-xs font-medium text-gray-700">
+    <label htmlFor="numProfiles" className="text-sm font-medium text-gray-700">
       Number of candidates:
     </label>
     <Input
@@ -278,6 +289,12 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
     }
   };
 
+  const enabledModesCount = [
+    enableAddPage,
+    enableAddNumber,
+    enableAddSelected,
+  ].filter(Boolean).length;
+
   return (
     <ExtensionContainer maxHeight={maxHeight}>
       <div className="flex-1 min-h-0 overflow-y-auto">
@@ -291,7 +308,7 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
           <NoJobsState />
         ) : (
           <div className="flex flex-col h-full">
-            <div className="flex-shrink-0 p-6 space-y-4">
+            <div className="flex-shrink-0 p-4 space-y-4">
               <JobSelector
                 jobs={jobs}
                 selectedJob={selectedJob || null}
@@ -317,7 +334,7 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
                     </div>
                   ) : (
                     <>
-                      {!isSingleMode && (
+                      {!isSingleMode && enabledModesCount >= 2 && (
                         <AddModeSelector
                           addMode={addMode}
                           setAddMode={setAddMode}
@@ -336,16 +353,25 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
                       )}
 
                       {onSearchModeChange && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-gray-700">
-                            Search Mode
-                          </span>
-                          <Switch
-                            checked={useSearchMode || false}
-                            onCheckedChange={onSearchModeChange}
-                            disabled={isProcessing}
-                          />
-                        </div>
+                        <TooltipProvider delayDuration={100}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center space-x-2">
+                                <Switch
+                                  id="search-mode"
+                                  checked={!!useSearchMode}
+                                  onCheckedChange={onSearchModeChange}
+                                />
+                                <Label htmlFor="search-mode">Search Mode</Label>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              When enabled, searches through candidate profiles
+                              and their previous jobs for better matches, but
+                              takes longer to process
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
 
                       <AddButton

@@ -7,6 +7,7 @@ import { Loader2, Pencil, Star, Filter, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UnifiedFilterMenu } from "./UnifiedFilterMenu";
+import { Button } from "@/components/ui/button";
 
 interface CandidatesListProps {
   selectedJob: Job;
@@ -217,7 +218,8 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
                 Processing
               </button>
             </div>
-            <button
+            <Button
+              variant="outline"
               onClick={() =>
                 window.open(
                   `${import.meta.env.VITE_FRONTEND_URL}/jobs/${
@@ -229,8 +231,8 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors border border-purple-200 hover:border-purple-300"
             >
               <Pencil className="w-4 h-4" />
-              Edit Job
-            </button>
+              Edit
+            </Button>
           </div>
         </div>
       </div>
@@ -265,26 +267,26 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
                 </p>
               </div>
             ) : (
-              <div className="p-6">
+              <div className="p-4">
                 <div className="overflow-x-auto rounded-lg border border-gray-200">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           Name
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           Fit
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           Requirements
                         </th>
