@@ -131,7 +131,7 @@ export function UnifiedFilterMenu({
             variant="outline"
             size="sm"
             className={cn(
-              "h-9 border-dashed transition-colors duration-200",
+              "h-9 border-dashed transition-colors duration-200 text-xs",
               hasFilters
                 ? "border-purple-600 bg-purple-50 text-purple-600 hover:bg-purple-100"
                 : "hover:border-gray-400 hover:bg-gray-50"

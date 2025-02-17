@@ -22,6 +22,8 @@ import {
   UserPlus,
   Star,
   ChevronDown,
+  Expand,
+  Shrink,
 } from "lucide-react";
 import type { Candidate, TraitEvaluation, ProfileExperience } from "@/types";
 import { getEmail, getCandidateReachout } from "@/utils/apiUtils";
@@ -38,6 +40,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useLayout } from "@/contexts/LayoutContext";
 
 // Date formatting utilities
 const formatDate = (dateStr: string | null) => {
@@ -303,6 +306,8 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
   jobId,
 }) => {
   const citationRefs = useRef<{ [key: number]: HTMLDivElement }>({});
+  const { isHeightExpanded, setHeightExpanded, containerMaxHeight } =
+    useLayout();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -443,7 +448,12 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
 
   return (
     <motion.div
-      className="fixed inset-y-0 right-0 w-[450px] bg-white shadow-xl border-l border-gray-200 z-[9999] flex flex-col"
+      className={cn(
+        "fixed inset-y-0 right-0 bg-white shadow-xl border-l border-gray-200 z-[9999] flex flex-col w-full"
+      )}
+      style={{
+        maxHeight: containerMaxHeight,
+      }}
       initial={{ x: "100%" }}
       animate={{ x: 0 }}
       exit={{ x: "100%" }}
@@ -459,14 +469,28 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
           <h2 className="text-xl font-semibold text-purple-950">
             {candidate.name}
           </h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-8 w-8 hover:bg-red-100 hover:text-red-600 transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setHeightExpanded(!isHeightExpanded)}
+              className="h-8 w-8 hover:bg-purple-100 hover:text-purple-600 transition-colors"
+            >
+              {isHeightExpanded ? (
+                <Shrink className="h-4 w-4" />
+              ) : (
+                <Expand className="h-4 w-4" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-8 w-8 hover:bg-red-100 hover:text-red-600 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         <p className="text-base text-purple-700/90">
           {candidate.profile?.occupation}
@@ -601,7 +625,12 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
           </div>
         </div>
       </motion.div>
-      <div className="flex-1 overflow-y-auto">
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{
+          maxHeight: `calc(${containerMaxHeight} - 80px)`,
+        }}
+      >
         <div className="p-4 space-y-8">
           {/* Trait Evaluation Section */}
           <div className="space-y-4">
@@ -661,11 +690,11 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                       variant={getFitLabel(candidate.fit).variant}
                       className={cn(
                         "font-medium hover:bg-inherit",
-                        candidate.fit && candidate.fit >= 0.8
+                        candidate.fit && candidate.fit >= 4
                           ? "bg-green-100 text-green-700 hover:bg-green-100 border-green-200"
-                          : candidate.fit && candidate.fit >= 0.6
+                          : candidate.fit && candidate.fit >= 3
                           ? "bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200"
-                          : candidate.fit && candidate.fit >= 0.4
+                          : candidate.fit && candidate.fit >= 2
                           ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-200"
                           : "bg-red-100 text-red-700 hover:bg-red-100 border-red-200"
                       )}
@@ -1176,40 +1205,38 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                     >
                       <CardHeader className="bg-gradient-to-r from-purple-100 to-purple-50 p-4">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-200 text-purple-700 font-semibold text-sm">
-                              {citationWithIndex.index}
-                            </div>
-                            <div>
-                              <CardTitle className="text-sm font-medium text-purple-900">
-                                {new URL(citationWithIndex.url).hostname}
-                              </CardTitle>
-                              <a
-                                href={citationWithIndex.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-purple-600 hover:text-purple-800 transition-colors flex items-center mt-1"
-                              >
-                                <ExternalLink className="h-3 w-3 mr-1" />
-                                Visit source
-                              </a>
-                            </div>
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-200 text-purple-700 font-semibold text-sm">
+                            {citationWithIndex.index}
                           </div>
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "px-2 py-1 text-xs font-medium",
-                              citationWithIndex.confidence >= 0.8
-                                ? "bg-green-100 text-green-800 border-green-200"
-                                : citationWithIndex.confidence >= 0.6
-                                ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                                : "bg-red-100 text-red-800 border-red-200"
-                            )}
-                          >
-                            {Math.round(citationWithIndex.confidence * 100)}%
-                            confidence
-                          </Badge>
+                          <div>
+                            <CardTitle className="text-sm font-medium text-purple-900">
+                              {new URL(citationWithIndex.url).hostname}
+                            </CardTitle>
+                            <a
+                              href={citationWithIndex.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-purple-600 hover:text-purple-800 transition-colors flex items-center mt-1"
+                            >
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              Visit source
+                            </a>
+                          </div>
                         </div>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "px-2 py-1 text-xs font-medium",
+                            citationWithIndex.confidence >= 0.8
+                              ? "bg-green-100 text-green-800 border-green-200"
+                              : citationWithIndex.confidence >= 0.6
+                              ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                              : "bg-red-100 text-red-800 border-red-200"
+                          )}
+                        >
+                          {Math.round(citationWithIndex.confidence * 100)}%
+                          confidence
+                        </Badge>
                       </CardHeader>
                       <CardContent className="p-4">
                         <p className="text-sm text-gray-600 leading-relaxed">

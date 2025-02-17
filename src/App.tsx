@@ -5,12 +5,13 @@ import SearchView from "./components/Jobs/SearchView";
 import RecruiterSearchView from "./components/Jobs/RecruiterSearchView";
 import CompanyView from "./components/Jobs/CompanyView";
 import FallbackView from "./components/Jobs/FallbackView";
+import { LayoutProvider } from "./contexts/LayoutContext";
 
 const PageLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <>
+  <LayoutProvider>
     {children}
     <Toaster position="bottom-right" />
-  </>
+  </LayoutProvider>
 );
 
 const App: React.FC = () => {

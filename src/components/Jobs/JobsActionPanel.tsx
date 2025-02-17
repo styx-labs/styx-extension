@@ -297,109 +297,115 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
 
   return (
     <ExtensionContainer maxHeight={maxHeight}>
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        {loading ? (
-          <LoadingState />
-        ) : error === "not_authenticated" ? (
-          <NotLoggedInState />
-        ) : error ? (
-          <ErrorState message={error} />
-        ) : jobs.length === 0 ? (
-          <NoJobsState />
-        ) : (
-          <div className="flex flex-col h-full">
-            <div className="flex-shrink-0 p-4 space-y-4 bg-white">
-              <JobSelector
-                jobs={jobs}
-                selectedJob={selectedJob || null}
-                onJobChange={handleJobChange}
-                className="w-full text-xs"
-              />
-            </div>
-
-            {mode === "view" && selectedJob ? (
-              <div className="flex-1 bg-white">
-                <CandidatesList selectedJob={selectedJob} filterTraits={[]} />
+      <div className="flex flex-col h-full">
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {loading ? (
+            <LoadingState />
+          ) : error === "not_authenticated" ? (
+            <NotLoggedInState />
+          ) : error ? (
+            <ErrorState message={error} />
+          ) : jobs.length === 0 ? (
+            <NoJobsState />
+          ) : (
+            <div className="flex flex-col h-full">
+              <div className="flex-shrink-0 p-4 space-y-4 bg-white">
+                <JobSelector
+                  jobs={jobs}
+                  selectedJob={selectedJob || null}
+                  onJobChange={handleJobChange}
+                  className="w-full text-xs"
+                />
               </div>
-            ) : mode === "view" ? (
-              <div className="text-gray-600 text-xs text-center p-4">
-                Select a job to start viewing candidates
-              </div>
-            ) : mode === "add" ? (
-              selectedJob && selectedJobId ? (
-                <div className="p-4 space-y-4">
-                  {customAddMessage ? (
-                    <div className="text-gray-600 text-xs text-center p-4">
-                      {customAddMessage}
-                    </div>
-                  ) : (
-                    <>
-                      {!isSingleMode && enabledModesCount >= 2 && (
-                        <AddModeSelector
-                          addMode={addMode}
-                          setAddMode={setAddMode}
-                          enableAddPage={enableAddPage}
-                          enableAddNumber={enableAddNumber}
-                          enableAddSelected={enableAddSelected}
-                        />
-                      )}
 
-                      {!isSingleMode && addMode === "number" && (
-                        <ProfileCountInput
-                          numProfiles={numProfiles}
-                          setNumProfiles={setNumProfiles}
-                          maxPerPage={maxPerPage}
-                        />
-                      )}
-
-                      {onSearchModeChange && (
-                        <TooltipProvider delayDuration={100}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex items-center space-x-2">
-                                <Switch
-                                  id="search-mode"
-                                  checked={!!useSearchMode}
-                                  onCheckedChange={onSearchModeChange}
-                                />
-                                <Label htmlFor="search-mode">Search Mode</Label>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              When enabled, searches through candidate profiles
-                              and their previous jobs for better matches, but
-                              takes longer to process
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-
-                      <AddButton
-                        onClick={handleAdd}
-                        disabled={isProcessing || isAdded(selectedJobId)}
-                        isProcessing={isProcessing}
-                        isSingleMode={isSingleMode}
-                        addMode={addMode}
-                        numProfiles={numProfiles}
-                        isAdded={isAdded(selectedJobId)}
-                      />
-                    </>
-                  )}
+              {mode === "view" && selectedJob ? (
+                <div className="flex-1 bg-white">
+                  <CandidatesList selectedJob={selectedJob} filterTraits={[]} />
                 </div>
-              ) : (
+              ) : mode === "view" ? (
                 <div className="text-gray-600 text-xs text-center p-4">
-                  Select a job to start adding candidates
+                  Select a job to start viewing candidates
                 </div>
-              )
-            ) : null}
-          </div>
+              ) : mode === "add" ? (
+                selectedJob && selectedJobId ? (
+                  <div className="p-4 space-y-4">
+                    {customAddMessage ? (
+                      <div className="text-gray-600 text-xs text-center p-4">
+                        {customAddMessage}
+                      </div>
+                    ) : (
+                      <>
+                        {!isSingleMode && enabledModesCount >= 2 && (
+                          <AddModeSelector
+                            addMode={addMode}
+                            setAddMode={setAddMode}
+                            enableAddPage={enableAddPage}
+                            enableAddNumber={enableAddNumber}
+                            enableAddSelected={enableAddSelected}
+                          />
+                        )}
+
+                        {!isSingleMode && addMode === "number" && (
+                          <ProfileCountInput
+                            numProfiles={numProfiles}
+                            setNumProfiles={setNumProfiles}
+                            maxPerPage={maxPerPage}
+                          />
+                        )}
+
+                        {onSearchModeChange && (
+                          <TooltipProvider delayDuration={100}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center space-x-2">
+                                  <Switch
+                                    id="search-mode"
+                                    checked={!!useSearchMode}
+                                    onCheckedChange={onSearchModeChange}
+                                  />
+                                  <Label htmlFor="search-mode">Search Mode</Label>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                When enabled, searches through candidate profiles
+                                and their previous jobs for better matches, but
+                                takes longer to process
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+
+                        <AddButton
+                          onClick={handleAdd}
+                          disabled={isProcessing || isAdded(selectedJobId)}
+                          isProcessing={isProcessing}
+                          isSingleMode={isSingleMode}
+                          addMode={addMode}
+                          numProfiles={numProfiles}
+                          isAdded={isAdded(selectedJobId)}
+                        />
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-gray-600 text-xs text-center p-4">
+                    Select a job to start adding candidates
+                  </div>
+                )
+              ) : null}
+            </div>
+          )}
+        </div>
+        {/* ModeTabs moved outside of scrollable area and made sticky */}
+        {!loading &&
+          error !== "not_authenticated" &&
+          !error &&
+          jobs.length > 0 && (
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-2">
+              <ModeTabs mode={mode} setMode={setMode} />
+            </div>
         )}
       </div>
-      {/* Only show ModeTabs when not in NotLoggedInState or NoJobsState */}
-      {!loading &&
-        error !== "not_authenticated" &&
-        !error &&
-        jobs.length > 0 && <ModeTabs mode={mode} setMode={setMode} />}
     </ExtensionContainer>
   );
 };
