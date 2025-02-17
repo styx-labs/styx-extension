@@ -22,6 +22,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
+import { AddModeCandidateSidebar } from "../sidebar/AddModeCandidateSidebar";
 
 type Mode = "add" | "view";
 type AddMode = "page" | "number" | "selected";
@@ -34,7 +35,7 @@ interface JobsActionPanelProps {
     count?: number,
     selectedIds?: string[]
   ) => void;
-  onViewCandidates: (jobId: string, jobTitle: string) => void;
+  onViewCandidates: (jobId: string) => void;
   isAdded: (jobId: string) => boolean;
   isLoading: (jobId: string) => boolean;
   jobs: Job[];
@@ -56,6 +57,7 @@ interface JobsActionPanelProps {
   selectedCandidateIds?: string[];
   isSingleMode?: boolean;
   customAddMessage?: string;
+  addingCandidateId?: string | null;
 }
 
 const SELECTED_JOB_KEY = "styx-selected-job-id";
@@ -228,6 +230,7 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
   selectedCandidateIds = [],
   isSingleMode = false,
   customAddMessage,
+  addingCandidateId,
 }) => {
   const { mode, setMode } = useExtensionMode();
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>(() => {
@@ -249,8 +252,6 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
   const [numProfiles, setNumProfiles] = useState<number>(maxPerPage);
 
   const selectedJob = jobs.find((job) => job.id === selectedJobId);
-  const maxHeight =
-    mode === "view" && selectedJobId ? "calc(100vh-50px)" : "calc(100vh-100px)";
 
   const handleJobChange = (jobId: string) => {
     setSelectedJobId(jobId);
@@ -259,7 +260,7 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
     if (mode === "view") {
       const job = jobs.find((j) => j.id === jobId);
       if (job) {
-        onViewCandidates(jobId, job.job_title);
+        onViewCandidates(jobId);
       }
     }
   };
@@ -296,7 +297,7 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
   ].filter(Boolean).length;
 
   return (
-    <ExtensionContainer maxHeight={maxHeight}>
+    <ExtensionContainer>
       <div className="flex flex-col h-full">
         <div className="flex-1 min-h-0 overflow-y-auto">
           {loading ? (
@@ -363,13 +364,15 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
                                     checked={!!useSearchMode}
                                     onCheckedChange={onSearchModeChange}
                                   />
-                                  <Label htmlFor="search-mode">Search Mode</Label>
+                                  <Label htmlFor="search-mode">
+                                    Search Mode
+                                  </Label>
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent>
-                                When enabled, searches through candidate profiles
-                                and their previous jobs for better matches, but
-                                takes longer to process
+                                When enabled, searches through candidate
+                                profiles and their previous jobs for better
+                                matches, but takes longer to process
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -396,7 +399,6 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
             </div>
           )}
         </div>
-        {/* ModeTabs moved outside of scrollable area and made sticky */}
         {!loading &&
           error !== "not_authenticated" &&
           !error &&
@@ -404,8 +406,14 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
             <div className="sticky bottom-0 bg-white border-t border-gray-200 p-2">
               <ModeTabs mode={mode} setMode={setMode} />
             </div>
-        )}
+          )}
       </div>
+      {addingCandidateId && selectedJobId && (
+        <AddModeCandidateSidebar
+          candidateId={addingCandidateId}
+          jobId={selectedJobId}
+        />
+      )}
     </ExtensionContainer>
   );
 };

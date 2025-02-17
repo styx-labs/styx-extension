@@ -122,7 +122,12 @@ export const ExtensionContainer: React.FC<ExtensionContainerProps> = ({
 }) => {
   const { isExpanded, toggleExpansion } = useExtensionState();
   const { isOnRight } = usePosition();
-  const { containerMaxHeight, containerWidth, isHeightExpanded } = useLayout();
+  const {
+    containerMaxHeight,
+    containerWidth,
+    isHeightExpanded,
+    containerHeight,
+  } = useLayout();
 
   return (
     <div
@@ -136,6 +141,7 @@ export const ExtensionContainer: React.FC<ExtensionContainerProps> = ({
       style={{
         maxHeight: containerMaxHeight,
         width: isExpanded ? containerWidth : "6rem",
+        height: containerHeight,
       }}
     >
       <ExtensionHeader

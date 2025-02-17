@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { createCandidate } from "../../utils/apiUtils";
 import { useJobsState } from "../../hooks/useJobsState";
-import { useUrlWatcher } from "../../hooks/useUrlWatcher";
 import JobsActionPanel from "./JobsActionPanel";
 
 const SingleProfileView: React.FC = () => {
@@ -19,15 +18,11 @@ const SingleProfileView: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [useSearchMode, setUseSearchMode] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
-  const [selectedJobTitle, setSelectedJobTitle] = useState<string | null>(null);
-
-  const currentUrl = useUrlWatcher(() => {
-    setAddedJobs(new Set());
-    setLoadingJobs(new Set());
-  });
+  const [addingCandidateId, setAddingCandidateId] = useState<string | null>(
+    null
+  );
 
   const getProfileUrl = () => {
-    // For search mode, look for any profile link
     if (useSearchMode) {
       const profileLink = document.querySelector('a[href*="linkedin.com/in/"]');
       const href = profileLink?.getAttribute("href");
@@ -39,7 +34,6 @@ const SingleProfileView: React.FC = () => {
       return `https://www.linkedin.com/in/${match[1]}`;
     }
 
-    // For profile page mode, get the current URL
     const path = window.location.pathname;
     const match = path.match(/\/in\/([^/?]+)/);
     if (!match) return null;
@@ -47,12 +41,18 @@ const SingleProfileView: React.FC = () => {
     return `https://www.linkedin.com/in/${match[1]}`;
   };
 
-  const handleCreateCandidate = async (
-    jobId: string,
-    mode: "page" | "number" | "selected",
-    count?: number,
-    selectedIds?: string[]
-  ) => {
+  const getProfileId = () => {
+    const profileLink = document.querySelector('a[href*="linkedin.com/in/"]');
+    const href = profileLink?.getAttribute("href");
+    if (!href) return null;
+
+    const match = href.match(/\/in\/([^/?]+)/);
+    if (!match) return null;
+
+    return match[1];
+  };
+
+  const handleCreateCandidate = async (jobId: string) => {
     try {
       setLoadingJobs((prev) => new Set([...prev, jobId]));
       setIsProcessing(true);
@@ -63,13 +63,13 @@ const SingleProfileView: React.FC = () => {
         return;
       }
 
-      console.log(`Adding profile: ${profileUrl}`);
       const result = await createCandidate(jobId, profileUrl);
       if (result === null) {
         setError("not_authenticated");
         return;
       }
 
+      setAddingCandidateId(getProfileId());
       setAddedJobs((prev) => new Set([...prev, jobId]));
     } catch (err) {
       console.error("Error creating candidate:", err);
@@ -86,9 +86,8 @@ const SingleProfileView: React.FC = () => {
     }
   };
 
-  const handleViewCandidates = (jobId: string, jobTitle: string) => {
+  const handleViewCandidates = (jobId: string) => {
     setSelectedJobId(jobId);
-    setSelectedJobTitle(jobTitle);
   };
 
   return (
@@ -109,6 +108,7 @@ const SingleProfileView: React.FC = () => {
       enableAddSelected={false}
       maxPerPage={1}
       isSingleMode={true}
+      addingCandidateId={addingCandidateId}
     />
   );
 };

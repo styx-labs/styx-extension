@@ -306,8 +306,13 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
   jobId,
 }) => {
   const citationRefs = useRef<{ [key: number]: HTMLDivElement }>({});
-  const { isHeightExpanded, setHeightExpanded, containerMaxHeight } =
+  const { isHeightExpanded, setHeightExpanded, setSidebarExpanded } =
     useLayout();
+
+  useEffect(() => {
+    setSidebarExpanded(true);
+    return () => setSidebarExpanded(false);
+  }, [setSidebarExpanded]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -451,9 +456,6 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
       className={cn(
         "fixed inset-y-0 right-0 bg-white shadow-xl border-l border-gray-200 z-[9999] flex flex-col w-full"
       )}
-      style={{
-        maxHeight: containerMaxHeight,
-      }}
       initial={{ x: "100%" }}
       animate={{ x: 0 }}
       exit={{ x: "100%" }}
@@ -625,12 +627,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
           </div>
         </div>
       </motion.div>
-      <div
-        className="flex-1 overflow-y-auto"
-        style={{
-          maxHeight: `calc(${containerMaxHeight} - 80px)`,
-        }}
-      >
+      <div className="flex-1 overflow-y-auto">
         <div className="p-4 space-y-8">
           {/* Trait Evaluation Section */}
           <div className="space-y-4">
