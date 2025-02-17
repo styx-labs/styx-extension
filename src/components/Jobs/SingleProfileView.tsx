@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { createCandidate } from "../../utils/apiUtils";
 import { useJobsState } from "../../hooks/useJobsState";
+import { useUrlWatcher } from "../../hooks/useUrlWatcher";
 import JobsActionPanel from "./JobsActionPanel";
 
 const SingleProfileView: React.FC = () => {
@@ -21,6 +22,15 @@ const SingleProfileView: React.FC = () => {
   const [addingCandidateId, setAddingCandidateId] = useState<string | null>(
     null
   );
+
+  // Add URL watcher to reset state when profile changes
+  useUrlWatcher(() => {
+    if (!isProcessing) {
+      setAddedJobs(new Set());
+      setLoadingJobs(new Set());
+      setAddingCandidateId(null);
+    }
+  });
 
   const getProfileUrl = () => {
     if (useSearchMode) {
