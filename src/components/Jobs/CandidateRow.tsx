@@ -32,11 +32,11 @@ export const CandidateRow: React.FC<CandidateRowProps> = ({
     >
       <td className="px-6 py-4 whitespace-nowrap max-w-[200px]">
         <div className="flex flex-col">
-          <div className="text-lg font-medium text-gray-900 truncate">
+          <div className="text-sm font-medium text-gray-900 truncate">
             {candidate.name}
           </div>
           {candidate.profile?.occupation && (
-            <div className="text-base text-gray-500 truncate">
+            <div className="text-xs text-gray-500 truncate">
               {candidate.profile.occupation}
             </div>
           )}
@@ -45,7 +45,7 @@ export const CandidateRow: React.FC<CandidateRowProps> = ({
       <td className="px-6 py-4 whitespace-nowrap text-center max-w-[60px] min-w-[60px]">
         {candidate.sections && (
           <span
-            className={`px-3 py-1.5 rounded-full text-lg font-medium ${
+            className={`px-3 py-1.5 rounded-full text-sm font-medium ${
               candidate.fit === 4
                 ? "bg-green-100 text-green-700"
                 : candidate.fit === 3
@@ -60,7 +60,7 @@ export const CandidateRow: React.FC<CandidateRowProps> = ({
         )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-center min-w-[100px]">
-        <div className="flex flex-col items-center gap-2 text-base">
+        <div className="flex flex-col items-center gap-2 text-xs">
           <span
             className={`flex items-center gap-2 ${
               candidate.required_met === totalRequired

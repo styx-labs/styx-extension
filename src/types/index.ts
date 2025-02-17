@@ -21,7 +21,11 @@ export interface Job {
   job_title: string;
   company_name: string;
   job_description?: string;
-  key_traits?: string[];
+  key_traits: {
+    trait: string;
+    required: boolean;
+    description: string;
+  }[];
   num_candidates?: number;
 }
 
@@ -44,6 +48,7 @@ export interface Candidate {
   profile?: Profile;
   citations?: Citation[];
   is_loading_indicator?: boolean;
+  is_favorite?: boolean;
 }
 
 export interface TraitEvaluation {

@@ -219,7 +219,7 @@ export const getCandidates = async (
   try {
     const queryParams = new URLSearchParams();
     if (filterTraits && filterTraits.length > 0) {
-      queryParams.append("traits", filterTraits.join(","));
+      queryParams.append("filter_traits", filterTraits.join(","));
     }
     queryParams.append("status", status);
 

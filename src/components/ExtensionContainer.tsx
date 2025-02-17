@@ -35,7 +35,7 @@ const ExtensionHeader = ({
               alt="Styx Logo"
               className="w-6 h-6"
             />
-            <h1 className="text-xl font-semibold text-gray-900">Styx</h1>
+            <h1 className="text-base font-semibold text-gray-900">Styx</h1>
           </div>
         </a>
       )}

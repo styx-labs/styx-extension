@@ -150,7 +150,7 @@ const TraitEvaluationItem: React.FC<{ evaluation: TraitEvaluation }> = ({
         <div className="flex items-center gap-2">
           <div
             className={cn(
-              "px-2 py-1 rounded-md text-lg font-medium flex items-center gap-1.5",
+              "px-2 py-1 rounded-md text-sm font-medium flex items-center gap-1.5",
               evaluation.value === true
                 ? "bg-green-50 text-green-700 border border-green-200"
                 : "bg-red-50 text-red-700 border border-red-200",
@@ -178,7 +178,7 @@ const TraitEvaluationItem: React.FC<{ evaluation: TraitEvaluation }> = ({
         />
       </CollapsibleTrigger>
       <CollapsibleContent className="overflow-hidden transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
-        <div className="px-4 py-3 mt-1.5 text-lg text-muted-foreground bg-muted/50 rounded-md border border-muted">
+        <div className="px-4 py-3 mt-1.5 text-sm text-muted-foreground bg-muted/50 rounded-md border border-muted">
           {evaluation.content}
         </div>
       </CollapsibleContent>
@@ -446,7 +446,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
               whileTap={{ scale: 0.95 }}
             >
               <ChevronLeft className="h-5 w-5" />
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
                 Previous candidate
               </div>
             </motion.button>
@@ -458,13 +458,13 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
               whileTap={{ scale: 0.95 }}
             >
               <ChevronRight className="h-5 w-5" />
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
                 Next candidate
               </div>
             </motion.button>
           </motion.div>
           <motion.h2
-            className="text-xl font-semibold text-gray-900"
+            className="text-base font-semibold text-gray-900"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
@@ -489,7 +489,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
               whileTap={{ scale: 0.95 }}
             >
               <LinkedinIcon className="h-6 w-6 text-[#0A66C2]" />
-              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
                 View LinkedIn Profile
               </div>
             </motion.button>
@@ -501,7 +501,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
               whileTap={{ scale: 0.95 }}
             >
               <UserPlus className="h-6 w-6" />
-              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
                 Send LinkedIn Connection Request
               </div>
             </motion.button>
@@ -524,7 +524,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
               ) : (
                 <Mail className="h-6 w-6" />
               )}
-              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
                 Get Email Address
               </div>
             </motion.button>
@@ -551,7 +551,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                 ) : (
                   <MessageSquarePlus className="h-6 w-6" />
                 )}
-                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
                   Generate LinkedIn Message
                 </div>
               </motion.button>
@@ -562,7 +562,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
               disabled={!candidate.id}
             >
               <Trash2 className="h-6 w-6 text-red-500" />
-              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
                 Remove Candidate
               </div>
             </button>
@@ -572,7 +572,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
             className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all relative group/tooltip"
           >
             <X className="w-6 h-6" />
-            <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+            <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
               Close Sidebar
             </div>
           </button>
@@ -583,7 +583,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
           {/* Trait Evaluation Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-medium text-purple-900">
+              <h3 className="text-base font-medium text-purple-900">
                 Trait Match
               </h3>
               <div className="flex items-center gap-2">
@@ -596,7 +596,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                         : "outline"
                     }
                     className={cn(
-                      "bg-purple-100 hover:bg-purple-100 text-lg",
+                      "bg-purple-100 hover:bg-purple-100 text-sm",
                       getRequiredTraitsMet(candidate) ===
                         getTotalRequiredTraits(candidate)
                         ? "text-purple-700 border-purple-200"
@@ -610,7 +610,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                 {getTotalOptionalTraits(candidate) > 0 && (
                   <Badge
                     variant="outline"
-                    className="text-purple-600 border-purple-200 text-lg"
+                    className="text-purple-600 border-purple-200 text-sm"
                   >
                     {getOptionalTraitsMet(candidate)}/
                     {getTotalOptionalTraits(candidate)} Optional
@@ -631,7 +631,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
           {(candidate.summary || candidate.sections) && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-purple-900">
+                <h3 className="text-base font-semibold text-purple-900">
                   Summary
                 </h3>
                 {candidate.sections && (
@@ -639,7 +639,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                     <Badge
                       variant={getFitLabel(candidate.fit).variant}
                       className={cn(
-                        "font-medium hover:bg-inherit text-lg",
+                        "font-medium hover:bg-inherit text-sm",
                         candidate.fit && candidate.fit >= 0.8
                           ? "bg-green-100 text-green-700 hover:bg-green-100 border-green-200"
                           : candidate.fit && candidate.fit >= 0.6
@@ -657,7 +657,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
               {candidate.summary && (
                 <Card className="text-card-foreground shadow border-purple-100/50">
                   <div className="p-4">
-                    <p className="text-lg leading-relaxed">
+                    <p className="text-sm leading-relaxed">
                       {candidate.summary}
                     </p>
                   </div>
@@ -668,7 +668,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
 
           {candidate.profile?.career_metrics && (
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-purple-900 mb-4 flex items-center gap-2">
+              <h3 className="text-base font-semibold text-purple-900 mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
                 Career Metrics
               </h3>
@@ -678,7 +678,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                   {candidate.profile.career_metrics.career_tags &&
                     candidate.profile.career_metrics.career_tags.length > 0 && (
                       <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-lg text-purple-800">
+                        <div className="flex items-center gap-2 text-sm text-purple-800">
                           <Tags className="h-5 w-5" />
                           <span>Career Insights</span>
                         </div>
@@ -687,7 +687,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                             (tag, index) => (
                               <span
                                 key={index}
-                                className={`px-3 py-1.5 rounded-full text-lg font-medium ${getCareerTagStyle(
+                                className={`px-3 py-1.5 rounded-full text-sm font-medium ${getCareerTagStyle(
                                   tag
                                 )}`}
                               >
@@ -703,7 +703,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                     candidate.profile.career_metrics.experience_tags.length >
                       0 && (
                       <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-lg text-purple-800">
+                        <div className="flex items-center gap-2 text-sm text-purple-800">
                           <Tags className="h-5 w-5" />
                           <span>Experience Insights</span>
                         </div>
@@ -712,7 +712,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                             (tag, index) => (
                               <span
                                 key={index}
-                                className={`px-3 py-1.5 rounded-full text-lg font-medium ${getCareerTagStyle(
+                                className={`px-3 py-1.5 rounded-full text-sm font-medium ${getCareerTagStyle(
                                   tag
                                 )}`}
                               >
@@ -727,11 +727,11 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                   {/* Key Metrics */}
                   <div className="grid grid-cols-3 gap-6">
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-lg text-purple-800">
+                      <div className="flex items-center gap-2 text-sm text-purple-800">
                         <Timer className="h-5 w-5" />
                         <span>Total Experience</span>
                       </div>
-                      <p className="text-xl font-semibold text-purple-900">
+                      <p className="text-base font-semibold text-purple-900">
                         {calculateTenure(
                           new Date(
                             Date.now() -
@@ -748,11 +748,11 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-lg text-purple-800">
+                      <div className="flex items-center gap-2 text-sm text-purple-800">
                         <Building2 className="h-5 w-5" />
                         <span>Avg. Tenure</span>
                       </div>
-                      <p className="text-xl font-semibold text-purple-900">
+                      <p className="text-base font-semibold text-purple-900">
                         {calculateTenure(
                           new Date(
                             Date.now() -
@@ -769,11 +769,11 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-lg text-purple-800">
+                      <div className="flex items-center gap-2 text-sm text-purple-800">
                         <Timer className="h-5 w-5" />
                         <span>Current Tenure</span>
                       </div>
-                      <p className="text-xl font-semibold text-purple-900">
+                      <p className="text-base font-semibold text-purple-900">
                         {calculateTenure(
                           new Date(
                             Date.now() -
@@ -795,7 +795,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                   {candidate.profile.career_metrics.tech_stacks &&
                     candidate.profile.career_metrics.tech_stacks.length > 0 && (
                       <div className="space-y-3 pt-4 border-t border-purple-200">
-                        <div className="flex items-center gap-2 text-base text-purple-800">
+                        <div className="flex items-center gap-2 text-xs text-purple-800">
                           <Code2 className="h-5 w-5" />
                           <span>Tech Stacks</span>
                         </div>
@@ -804,7 +804,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                             (stack, index) => (
                               <span
                                 key={index}
-                                className="px-3 py-1.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-base"
+                                className="px-3 py-1.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-xs"
                               >
                                 {stack}
                               </span>
@@ -820,7 +820,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
 
           {candidate.profile?.experiences && (
             <div className="space-y-4">
-              <h4 className="text-lg font-medium text-purple-800/90 flex items-center gap-2">
+              <h4 className="text-sm font-medium text-purple-800/90 flex items-center gap-2">
                 <BriefcaseIcon className="h-4 w-4" />
                 Experience
               </h4>
@@ -833,12 +833,12 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                           // Single role experience
                           <div>
                             <div className="flex items-center justify-between mb-1">
-                              <p className="font-medium text-xl text-purple-900">
+                              <p className="font-medium text-base text-purple-900">
                                 {exp.roles[0].title}
                               </p>
                               <Badge
                                 variant="outline"
-                                className="text-lg text-purple-600 border-purple-200"
+                                className="text-sm text-purple-600 border-purple-200"
                               >
                                 {calculateTenure(
                                   exp.roles[0].starts_at,
@@ -851,17 +851,17 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                 href={exp.company_linkedin_profile_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-lg text-purple-700/90 hover:text-purple-900 hover:underline inline-flex items-center gap-1"
+                                className="text-sm text-purple-700/90 hover:text-purple-900 hover:underline inline-flex items-center gap-1"
                               >
                                 {exp.company}
                                 <ExternalLink className="h-3 w-3" />
                               </a>
                             ) : (
-                              <p className="text-lg text-purple-700/90">
+                              <p className="text-sm text-purple-700/90">
                                 {exp.company}
                               </p>
                             )}
-                            <p className="text-base text-purple-600/75">
+                            <p className="text-xs text-purple-600/75">
                               {formatDate(exp.roles[0].starts_at)} -{" "}
                               {exp.roles[0].ends_at
                                 ? formatDate(exp.roles[0].ends_at)
@@ -873,7 +873,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                               ) && (
                                 <Badge
                                   variant="secondary"
-                                  className="text-base bg-emerald-50 text-emerald-700 border-emerald-200 mt-1"
+                                  className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 mt-1"
                                 >
                                   {formatFundingStages(
                                     exp.funding_stages_during_tenure
@@ -882,22 +882,22 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                               )}
                             {exp.roles[0].description && (
                               <div className="space-y-3 pt-2 border-t border-purple-100/50">
-                                <p className="text-lg text-muted-foreground">
+                                <p className="text-sm text-muted-foreground">
                                   {exp.roles[0].description}
                                 </p>
                               </div>
                             )}
                             {exp.roles[0].summarized_job_description && (
                               <div className="mt-3 p-3 bg-purple-50 rounded-md">
-                                <p className="text-xl text-gray-700 font-medium">
+                                <p className="text-base text-gray-700 font-medium">
                                   Generated Job Description
                                 </p>
                                 <div className="space-y-4">
                                   <div>
-                                    <h4 className="font-medium text-lg">
+                                    <h4 className="font-medium text-sm">
                                       Role Summary:
                                     </h4>
-                                    <p className="text-gray-600 text-base">
+                                    <p className="text-gray-600 text-xs">
                                       {
                                         exp.roles[0].summarized_job_description
                                           .role_summary
@@ -908,10 +908,10 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                   {exp.roles[0].summarized_job_description
                                     .skills && (
                                     <div>
-                                      <h4 className="font-medium text-lg">
+                                      <h4 className="font-medium text-sm">
                                         Skills:
                                       </h4>
-                                      <ul className="list-disc list-inside text-gray-600 text-base pl-2 space-y-1">
+                                      <ul className="list-disc list-inside text-gray-600 text-xs pl-2 space-y-1">
                                         {exp.roles[0].summarized_job_description.skills.map(
                                           (skill: string, idx: number) => (
                                             <li key={idx}>{skill}</li>
@@ -924,10 +924,10 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                   {exp.roles[0].summarized_job_description
                                     .requirements && (
                                     <div>
-                                      <h4 className="font-medium text-lg">
+                                      <h4 className="font-medium text-sm">
                                         Requirements:
                                       </h4>
-                                      <ul className="list-disc list-inside text-gray-600 text-base pl-2 space-y-1">
+                                      <ul className="list-disc list-inside text-gray-600 text-xs pl-2 space-y-1">
                                         {exp.roles[0].summarized_job_description.requirements.map(
                                           (req: string, idx: number) => (
                                             <li key={idx}>{req}</li>
@@ -942,7 +942,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                   exp.roles[0].summarized_job_description
                                     .sources.length > 0 && (
                                     <div className="mt-2 pt-2 border-t border-purple-100">
-                                      <p className="text-lg text-gray-500">
+                                      <p className="text-sm text-gray-500">
                                         Sources:
                                       </p>
                                       <div className="mt-1 space-y-1">
@@ -953,7 +953,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                               href={source}
                                               target="_blank"
                                               rel="noopener noreferrer"
-                                              className="block text-base text-purple-600 hover:text-purple-800 hover:underline truncate text-nowrap w-full"
+                                              className="block text-xs text-purple-600 hover:text-purple-800 hover:underline truncate text-nowrap w-full"
                                             >
                                               {source}
                                             </a>
@@ -976,20 +976,20 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                       href={exp.company_linkedin_profile_url}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-xl font-medium text-purple-900 hover:text-purple-900 hover:underline inline-flex items-center gap-1"
+                                      className="text-base font-medium text-purple-900 hover:text-purple-900 hover:underline inline-flex items-center gap-1"
                                     >
                                       {exp.company}
                                       <ExternalLink className="h-3 w-3" />
                                     </a>
                                   ) : (
-                                    <p className="text-xl font-medium text-purple-900">
+                                    <p className="text-base font-medium text-purple-900">
                                       {exp.company}
                                     </p>
                                   )}
                                 </div>
                                 <Badge
                                   variant="outline"
-                                  className="text-lg text-purple-600 border-purple-200"
+                                  className="text-sm text-purple-600 border-purple-200"
                                 >
                                   {calculateTenure(
                                     exp.overall_start,
@@ -1003,7 +1003,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                 ) && (
                                   <Badge
                                     variant="secondary"
-                                    className="text-base bg-emerald-50 text-emerald-700 border-emerald-200 mt-1"
+                                    className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 mt-1"
                                   >
                                     {formatFundingStages(
                                       exp.funding_stages_during_tenure
@@ -1023,12 +1023,12 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                   }`}
                                 >
                                   <div className="flex items-center justify-between mb-1">
-                                    <p className="font-medium text-lg text-purple-800">
+                                    <p className="font-medium text-sm text-purple-800">
                                       {role.title}
                                     </p>
                                     <Badge
                                       variant="outline"
-                                      className="text-base text-purple-600/75 border-purple-200/75"
+                                      className="text-xs text-purple-600/75 border-purple-200/75"
                                     >
                                       {calculateTenure(
                                         role.starts_at,
@@ -1036,7 +1036,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                       )}
                                     </Badge>
                                   </div>
-                                  <p className="text-base text-purple-600/75">
+                                  <p className="text-xs text-purple-600/75">
                                     {formatDate(role.starts_at)} -{" "}
                                     {role.ends_at
                                       ? formatDate(role.ends_at)
@@ -1044,22 +1044,22 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                   </p>
                                   {role.description && (
                                     <div className="mt-2">
-                                      <p className="text-lg text-muted-foreground">
+                                      <p className="text-sm text-muted-foreground">
                                         {role.description}
                                       </p>
                                     </div>
                                   )}
                                   {role.summarized_job_description && (
                                     <div className="mt-3 p-3 bg-purple-50 rounded-md">
-                                      <p className="text-lg text-gray-700 font-medium">
+                                      <p className="text-sm text-gray-700 font-medium">
                                         Generated Job Description
                                       </p>
                                       <div className="space-y-4">
                                         <div>
-                                          <h4 className="font-medium text-base">
+                                          <h4 className="font-medium text-xs">
                                             Role Summary:
                                           </h4>
-                                          <p className="text-gray-600 text-base">
+                                          <p className="text-gray-600 text-xs">
                                             {
                                               role.summarized_job_description
                                                 .role_summary
@@ -1070,10 +1070,10 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                         {role.summarized_job_description
                                           .skills && (
                                           <div>
-                                            <h4 className="font-medium text-base">
+                                            <h4 className="font-medium text-xs">
                                               Skills:
                                             </h4>
-                                            <ul className="list-disc list-inside text-gray-600 text-base pl-2 space-y-1">
+                                            <ul className="list-disc list-inside text-gray-600 text-xs pl-2 space-y-1">
                                               {role.summarized_job_description.skills.map(
                                                 (
                                                   skill: string,
@@ -1089,10 +1089,10 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                         {role.summarized_job_description
                                           .requirements && (
                                           <div>
-                                            <h4 className="font-medium text-base">
+                                            <h4 className="font-medium text-xs">
                                               Requirements:
                                             </h4>
-                                            <ul className="list-disc list-inside text-gray-600 text-base pl-2 space-y-1">
+                                            <ul className="list-disc list-inside text-gray-600 text-xs pl-2 space-y-1">
                                               {role.summarized_job_description.requirements.map(
                                                 (req: string, idx: number) => (
                                                   <li key={idx}>{req}</li>
@@ -1107,7 +1107,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                         role.summarized_job_description.sources
                                           .length > 0 && (
                                           <div className="mt-2 pt-2 border-t border-purple-100">
-                                            <p className="text-base text-gray-500">
+                                            <p className="text-xs text-gray-500">
                                               Sources:
                                             </p>
                                             <div className="mt-1 space-y-1">
@@ -1121,7 +1121,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                                     href={source}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="block text-base text-purple-600 hover:text-purple-800 hover:underline truncate text-nowrap w-full"
+                                                    className="block text-xs text-purple-600 hover:text-purple-800 hover:underline truncate text-nowrap w-full"
                                                   >
                                                     {source}
                                                   </a>
@@ -1148,7 +1148,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
           {candidate.profile?.education &&
             candidate.profile.education.length > 0 && (
               <div className="space-y-4">
-                <h4 className="text-lg font-medium text-purple-800/90 flex items-center gap-2">
+                <h4 className="text-sm font-medium text-purple-800/90 flex items-center gap-2">
                   <GraduationCap className="h-4 w-4" />
                   Education
                 </h4>
@@ -1157,7 +1157,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                     <Card key={index} className="border-purple-100/50">
                       <div className="p-4 space-y-2">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="font-medium text-purple-900 text-lg">
+                          <p className="font-medium text-purple-900 text-sm">
                             {edu.school}
                           </p>
                           {edu.university_tier &&
@@ -1172,7 +1172,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                               </Badge>
                             )}
                         </div>
-                        <p className="text-base text-purple-700/90">
+                        <p className="text-xs text-purple-700/90">
                           {edu.degree_name && edu.field_of_study
                             ? `${edu.degree_name} in ${edu.field_of_study}`
                             : edu.degree_name || edu.field_of_study}
@@ -1192,7 +1192,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
 
           {candidate.citations && candidate.citations.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-purple-900">Sources</h3>
+              <h3 className="text-sm font-medium text-purple-900">Sources</h3>
               <div className="space-y-4">
                 {candidate.citations.map((citation, index) => {
                   const citationWithIndex = { ...citation, index: index + 1 };
@@ -1208,18 +1208,18 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                       <CardHeader className="bg-gradient-to-r from-purple-100 to-purple-50 p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-200 text-purple-700 font-semibold text-lg">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-200 text-purple-700 font-semibold text-sm">
                               {citationWithIndex.index}
                             </div>
                             <div>
-                              <CardTitle className="text-lg font-medium text-purple-900">
+                              <CardTitle className="text-sm font-medium text-purple-900">
                                 {new URL(citationWithIndex.url).hostname}
                               </CardTitle>
                               <a
                                 href={citationWithIndex.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-base text-purple-600 hover:text-purple-800 transition-colors flex items-center mt-1"
+                                className="text-xs text-purple-600 hover:text-purple-800 transition-colors flex items-center mt-1"
                               >
                                 <ExternalLink className="h-3 w-3 mr-1" />
                                 Visit source
@@ -1229,7 +1229,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                           <Badge
                             variant="outline"
                             className={cn(
-                              "px-2 py-1 text-base font-medium",
+                              "px-2 py-1 text-xs font-medium",
                               citationWithIndex.confidence >= 0.8
                                 ? "bg-green-100 text-green-800 border-green-200"
                                 : citationWithIndex.confidence >= 0.6
@@ -1243,7 +1243,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                         </div>
                       </CardHeader>
                       <CardContent className="p-4">
-                        <p className="text-lg text-gray-600 leading-relaxed">
+                        <p className="text-sm text-gray-600 leading-relaxed">
                           {citationWithIndex.distilled_content}
                         </p>
                       </CardContent>

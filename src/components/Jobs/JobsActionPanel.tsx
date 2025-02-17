@@ -60,7 +60,7 @@ const ModeTabs: React.FC<{ mode: Mode; setMode: (mode: Mode) => void }> = ({
       <Button
         variant={mode === "add" ? "default" : "outline"}
         onClick={() => setMode("add")}
-        className="text-base"
+        className="text-xs"
       >
         <PlusCircle className="w-4 h-4 mr-2" />
         Add Candidates
@@ -68,7 +68,7 @@ const ModeTabs: React.FC<{ mode: Mode; setMode: (mode: Mode) => void }> = ({
       <Button
         variant={mode === "view" ? "default" : "outline"}
         onClick={() => setMode("view")}
-        className="text-base"
+        className="text-xs"
       >
         <Eye className="w-4 h-4 mr-2" />
         View Candidates
@@ -91,7 +91,7 @@ const AddModeSelector: React.FC<{
   enableAddSelected,
 }) => (
   <div className="flex-1">
-    <label className="block text-lg font-semibold text-gray-700 mb-1">
+    <label className="block text-sm font-semibold text-gray-700 mb-1">
       Add Mode
     </label>
     <div className="flex gap-2">
@@ -99,7 +99,7 @@ const AddModeSelector: React.FC<{
         <Button
           variant={addMode === "page" ? "default" : "outline"}
           onClick={() => setAddMode("page")}
-          className="text-base"
+          className="text-xs"
         >
           Add Page
         </Button>
@@ -108,7 +108,7 @@ const AddModeSelector: React.FC<{
         <Button
           variant={addMode === "number" ? "default" : "outline"}
           onClick={() => setAddMode("number")}
-          className="text-base"
+          className="text-xs"
         >
           Add Number
         </Button>
@@ -117,7 +117,7 @@ const AddModeSelector: React.FC<{
         <Button
           variant={addMode === "selected" ? "default" : "outline"}
           onClick={() => setAddMode("selected")}
-          className="text-base"
+          className="text-xs"
         >
           Add Selected
         </Button>
@@ -132,10 +132,7 @@ const ProfileCountInput: React.FC<{
   maxPerPage: number;
 }> = ({ numProfiles, setNumProfiles, maxPerPage }) => (
   <div className="flex items-center gap-2">
-    <label
-      htmlFor="numProfiles"
-      className="text-base font-medium text-gray-700"
-    >
+    <label htmlFor="numProfiles" className="text-xs font-medium text-gray-700">
       Number of candidates:
     </label>
     <Input
@@ -176,7 +173,7 @@ const AddButton: React.FC<{
   <Button
     onClick={onClick}
     disabled={isProcessing || disabled}
-    className={`w-full text-base ${
+    className={`w-full text-xs ${
       isAdded ? "bg-green-600 hover:bg-green-700" : ""
     }`}
     variant="default"
@@ -299,26 +296,23 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
                 jobs={jobs}
                 selectedJob={selectedJob || null}
                 onJobChange={handleJobChange}
-                className="w-full text-base"
+                className="w-full text-xs"
               />
             </div>
 
-            {mode === "view" && selectedJob && selectedJobId ? (
+            {mode === "view" && selectedJob ? (
               <div className="flex-1 bg-white">
-                <CandidatesList
-                  jobId={selectedJobId}
-                  jobTitle={selectedJob.job_title}
-                />
+                <CandidatesList selectedJob={selectedJob} filterTraits={[]} />
               </div>
             ) : mode === "view" ? (
-              <div className="text-gray-600 text-base text-center p-4">
+              <div className="text-gray-600 text-xs text-center p-4">
                 Select a job to start viewing candidates
               </div>
             ) : mode === "add" ? (
               selectedJob && selectedJobId ? (
                 <div className="p-6 space-y-4">
                   {customAddMessage ? (
-                    <div className="text-gray-600 text-base text-center p-4">
+                    <div className="text-gray-600 text-xs text-center p-4">
                       {customAddMessage}
                     </div>
                   ) : (
@@ -343,7 +337,7 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
 
                       {onSearchModeChange && (
                         <div className="flex items-center gap-2">
-                          <span className="text-lg font-semibold text-gray-700">
+                          <span className="text-sm font-semibold text-gray-700">
                             Search Mode
                           </span>
                           <Switch
@@ -367,7 +361,7 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
                   )}
                 </div>
               ) : (
-                <div className="text-gray-600 text-base text-center p-4">
+                <div className="text-gray-600 text-xs text-center p-4">
                   Select a job to start adding candidates
                 </div>
               )
