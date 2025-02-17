@@ -36,12 +36,31 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 // Date formatting utilities
 const formatDate = (dateStr: string | null) => {
   if (!dateStr) return "";
   const date = new Date(dateStr);
   return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+};
+
+const formatDuration = (totalMonths: number | undefined): string => {
+  if (totalMonths === undefined || isNaN(totalMonths))
+    return "0 years, 0 months";
+
+  const years = Math.floor(totalMonths / 12);
+  const months = Math.round(totalMonths % 12);
+
+  if (years === 0) {
+    return `${months} month${months !== 1 ? "s" : ""}`;
+  } else if (months === 0) {
+    return `${years} year${years !== 1 ? "s" : ""}`;
+  }
+  return `${years} year${years !== 1 ? "s" : ""}, ${months} month${
+    months !== 1 ? "s" : ""
+  }`;
 };
 
 const calculateTenure = (startDate: string, endDate?: string | null) => {
@@ -150,7 +169,7 @@ const TraitEvaluationItem: React.FC<{ evaluation: TraitEvaluation }> = ({
         <div className="flex items-center gap-2">
           <div
             className={cn(
-              "px-2 py-1 rounded-md text-sm font-medium flex items-center gap-1.5",
+              "px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1.5",
               evaluation.value === true
                 ? "bg-green-50 text-green-700 border border-green-200"
                 : "bg-red-50 text-red-700 border border-red-200",
@@ -431,13 +450,130 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
       <motion.div
-        className="flex items-center justify-between p-4 border-b border-gray-200 relative z-10"
+        className="flex flex-col p-4 border-b border-gray-200 relative z-10"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <div className="flex items-center gap-4">
-          <motion.div className="flex items-center gap-2">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-purple-950">
+            {candidate.name}
+          </h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-8 w-8 hover:bg-red-100 hover:text-red-600 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <p className="text-base text-purple-700/90">
+          {candidate.profile?.occupation}
+        </p>
+        <div className="flex items-center gap-2 mt-2">
+          <motion.div
+            className="flex items-center gap-2"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <div className="flex items-center gap-2 mr-4">
+              <motion.button
+                disabled={!candidate.url}
+                className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
+                onClick={() =>
+                  candidate.url && window.open(candidate.url, "_blank")
+                }
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <LinkedinIcon className="h-4 w-4 text-[#0A66C2]" />
+                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                  View LinkedIn Profile
+                </div>
+              </motion.button>
+              <motion.button
+                disabled={!candidate.url}
+                className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
+                onClick={handleConnectClick}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <UserPlus className="h-4 w-4" />
+                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                  Send LinkedIn Connection Request
+                </div>
+              </motion.button>
+              <motion.button
+                disabled={!candidate.url || !candidate.id}
+                className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
+                onClick={handleEmailClick}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {loadingStates &&
+                candidate.id &&
+                loadingStates[candidate.id]?.email ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  >
+                    <Loader2 className="h-4 w-4" />
+                  </motion.div>
+                ) : (
+                  <Mail className="h-4 w-4" />
+                )}
+                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                  Get Email Address
+                </div>
+              </motion.button>
+              <div className="relative inline-block">
+                <motion.button
+                  className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
+                  onClick={handleReachoutClick}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {loadingStates &&
+                  candidate.id &&
+                  loadingStates[candidate.id]?.message ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                    >
+                      <Loader2 className="h-4 w-4" />
+                    </motion.div>
+                  ) : (
+                    <MessageSquarePlus className="h-4 w-4" />
+                  )}
+                  <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                    Generate LinkedIn Message
+                  </div>
+                </motion.button>
+              </div>
+              <button
+                className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all relative group/tooltip"
+                onClick={(e) => handleDelete(e, candidate.id)}
+                disabled={!candidate.id}
+              >
+                <Trash2 className="h-4 w-4 text-red-500" />
+                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                  Remove Candidate
+                </div>
+              </button>
+            </div>
+          </motion.div>
+          <Separator orientation="vertical" className="h-4 mx-2" />
+          <div className="flex items-center gap-4">
             <motion.button
               onClick={onPrevious}
               disabled={!hasPrevious}
@@ -445,7 +581,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-4 w-4" />
               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
                 Previous candidate
               </div>
@@ -457,133 +593,20 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-4 w-4" />
               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
                 Next candidate
               </div>
             </motion.button>
-          </motion.div>
-          <motion.h2
-            className="text-base font-semibold text-gray-900"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            {candidate.name}
-          </motion.h2>
-        </div>
-        <motion.div
-          className="flex items-center gap-2"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <div className="flex items-center gap-2 mr-4">
-            <motion.button
-              disabled={!candidate.url}
-              className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
-              onClick={() =>
-                candidate.url && window.open(candidate.url, "_blank")
-              }
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <LinkedinIcon className="h-6 w-6 text-[#0A66C2]" />
-              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
-                View LinkedIn Profile
-              </div>
-            </motion.button>
-            <motion.button
-              disabled={!candidate.url}
-              className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
-              onClick={handleConnectClick}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <UserPlus className="h-6 w-6" />
-              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
-                Send LinkedIn Connection Request
-              </div>
-            </motion.button>
-            <motion.button
-              disabled={!candidate.url || !candidate.id}
-              className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
-              onClick={handleEmailClick}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {loadingStates &&
-              candidate.id &&
-              loadingStates[candidate.id]?.email ? (
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                >
-                  <Loader2 className="h-6 w-6" />
-                </motion.div>
-              ) : (
-                <Mail className="h-6 w-6" />
-              )}
-              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
-                Get Email Address
-              </div>
-            </motion.button>
-            <div className="relative inline-block">
-              <motion.button
-                className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
-                onClick={handleReachoutClick}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {loadingStates &&
-                candidate.id &&
-                loadingStates[candidate.id]?.message ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                  >
-                    <Loader2 className="h-6 w-6" />
-                  </motion.div>
-                ) : (
-                  <MessageSquarePlus className="h-6 w-6" />
-                )}
-                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
-                  Generate LinkedIn Message
-                </div>
-              </motion.button>
-            </div>
-            <button
-              className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all relative group/tooltip"
-              onClick={(e) => handleDelete(e, candidate.id)}
-              disabled={!candidate.id}
-            >
-              <Trash2 className="h-6 w-6 text-red-500" />
-              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
-                Remove Candidate
-              </div>
-            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all relative group/tooltip"
-          >
-            <X className="w-6 h-6" />
-            <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
-              Close Sidebar
-            </div>
-          </button>
-        </motion.div>
+        </div>
       </motion.div>
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 space-y-8">
           {/* Trait Evaluation Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-medium text-purple-900">
+              <h3 className="text-lg font-medium text-purple-900">
                 Trait Match
               </h3>
               <div className="flex items-center gap-2">
@@ -596,7 +619,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                         : "outline"
                     }
                     className={cn(
-                      "bg-purple-100 hover:bg-purple-100 text-sm",
+                      "bg-purple-100 hover:bg-purple-100",
                       getRequiredTraitsMet(candidate) ===
                         getTotalRequiredTraits(candidate)
                         ? "text-purple-700 border-purple-200"
@@ -610,7 +633,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                 {getTotalOptionalTraits(candidate) > 0 && (
                   <Badge
                     variant="outline"
-                    className="text-purple-600 border-purple-200 text-sm"
+                    className="text-purple-600 border-purple-200"
                   >
                     {getOptionalTraitsMet(candidate)}/
                     {getTotalOptionalTraits(candidate)} Optional
@@ -631,15 +654,13 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
           {(candidate.summary || candidate.sections) && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-semibold text-purple-900">
-                  Summary
-                </h3>
+                <h3 className="text-lg font-medium text-purple-900">Summary</h3>
                 {candidate.sections && (
                   <div className="flex items-center gap-2">
                     <Badge
                       variant={getFitLabel(candidate.fit).variant}
                       className={cn(
-                        "font-medium hover:bg-inherit text-sm",
+                        "font-medium hover:bg-inherit",
                         candidate.fit && candidate.fit >= 0.8
                           ? "bg-green-100 text-green-700 hover:bg-green-100 border-green-200"
                           : candidate.fit && candidate.fit >= 0.6
@@ -655,9 +676,9 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                 )}
               </div>
               {candidate.summary && (
-                <Card className="text-card-foreground shadow border-purple-100/50">
+                <Card className="border-purple-100/50">
                   <div className="p-4">
-                    <p className="text-sm leading-relaxed">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       {candidate.summary}
                     </p>
                   </div>
@@ -666,9 +687,11 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
             </div>
           )}
 
+          <h3 className="text-lg font-medium text-purple-900">Profile</h3>
+
           {candidate.profile?.career_metrics && (
             <div className="space-y-4">
-              <h3 className="text-base font-semibold text-purple-900 mb-4 flex items-center gap-2">
+              <h3 className="text-base font-medium text-purple-900 mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
                 Career Metrics
               </h3>
@@ -677,22 +700,21 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                   {/* Career Tags */}
                   {candidate.profile.career_metrics.career_tags &&
                     candidate.profile.career_metrics.career_tags.length > 0 && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm text-purple-800">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1.5 text-sm text-purple-800">
                           <Tags className="h-5 w-5" />
                           <span>Career Insights</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {candidate.profile.career_metrics.career_tags.map(
                             (tag, index) => (
-                              <span
+                              <Badge
                                 key={index}
-                                className={`px-3 py-1.5 rounded-full text-sm font-medium ${getCareerTagStyle(
-                                  tag
-                                )}`}
+                                variant="secondary"
+                                className={getCareerTagStyle(tag)}
                               >
                                 {tag}
-                              </span>
+                              </Badge>
                             )
                           )}
                         </div>
@@ -702,22 +724,21 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                   {candidate.profile.career_metrics.experience_tags &&
                     candidate.profile.career_metrics.experience_tags.length >
                       0 && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm text-purple-800">
-                          <Tags className="h-5 w-5" />
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1.5 text-sm text-purple-800">
+                          <Tags className="h-4 w-4" />
                           <span>Experience Insights</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {candidate.profile.career_metrics.experience_tags.map(
                             (tag, index) => (
-                              <span
+                              <Badge
                                 key={index}
-                                className={`px-3 py-1.5 rounded-full text-sm font-medium ${getCareerTagStyle(
-                                  tag
-                                )}`}
+                                variant="secondary"
+                                className={getCareerTagStyle(tag)}
                               >
                                 {tag}
-                              </span>
+                              </Badge>
                             )
                           )}
                         </div>
@@ -725,94 +746,42 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                     )}
 
                   {/* Key Metrics */}
-                  <div className="grid grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-purple-800">
-                        <Timer className="h-5 w-5" />
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-sm text-purple-800">
+                        <Timer className="h-4 w-4" />
                         <span>Total Experience</span>
                       </div>
-                      <p className="text-base font-semibold text-purple-900">
-                        {calculateTenure(
-                          new Date(
-                            Date.now() -
-                              (candidate.profile.career_metrics
-                                .total_experience_months || 0) *
-                                30 *
-                                24 *
-                                60 *
-                                60 *
-                                1000
-                          ).toISOString(),
-                          new Date().toISOString()
+                      <p className="text-lg font-semibold text-purple-900">
+                        {formatDuration(
+                          candidate.profile.career_metrics
+                            .total_experience_months
                         )}
                       </p>
                     </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-purple-800">
-                        <Building2 className="h-5 w-5" />
-                        <span>Avg. Tenure</span>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-sm text-purple-800">
+                        <Building2 className="h-4 w-4" />
+                        <span>Average Tenure</span>
                       </div>
-                      <p className="text-base font-semibold text-purple-900">
-                        {calculateTenure(
-                          new Date(
-                            Date.now() -
-                              (candidate.profile.career_metrics
-                                .average_tenure_months || 0) *
-                                30 *
-                                24 *
-                                60 *
-                                60 *
-                                1000
-                          ).toISOString(),
-                          new Date().toISOString()
+                      <p className="text-lg font-semibold text-purple-900">
+                        {formatDuration(
+                          candidate.profile.career_metrics.average_tenure_months
                         )}
                       </p>
                     </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-purple-800">
-                        <Timer className="h-5 w-5" />
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-sm text-purple-800">
+                        <Timer className="h-4 w-4" />
                         <span>Current Tenure</span>
                       </div>
-                      <p className="text-base font-semibold text-purple-900">
-                        {calculateTenure(
-                          new Date(
-                            Date.now() -
-                              (candidate.profile.career_metrics
-                                .current_tenure_months || 0) *
-                                30 *
-                                24 *
-                                60 *
-                                60 *
-                                1000
-                          ).toISOString(),
-                          new Date().toISOString()
+                      <p className="text-lg font-semibold text-purple-900">
+                        {formatDuration(
+                          candidate.profile.career_metrics.current_tenure_months
                         )}
                       </p>
                     </div>
                   </div>
-
-                  {/* Tech Stacks */}
-                  {candidate.profile.career_metrics.tech_stacks &&
-                    candidate.profile.career_metrics.tech_stacks.length > 0 && (
-                      <div className="space-y-3 pt-4 border-t border-purple-200">
-                        <div className="flex items-center gap-2 text-xs text-purple-800">
-                          <Code2 className="h-5 w-5" />
-                          <span>Tech Stacks</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {candidate.profile.career_metrics.tech_stacks.map(
-                            (stack, index) => (
-                              <span
-                                key={index}
-                                className="px-3 py-1.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-xs"
-                              >
-                                {stack}
-                              </span>
-                            )
-                          )}
-                        </div>
-                      </div>
-                    )}
                 </div>
               </div>
             </div>
@@ -820,7 +789,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
 
           {candidate.profile?.experiences && (
             <div className="space-y-4">
-              <h4 className="text-sm font-medium text-purple-800/90 flex items-center gap-2">
+              <h4 className="text-base font-medium text-purple-800/90 flex items-center gap-2">
                 <BriefcaseIcon className="h-4 w-4" />
                 Experience
               </h4>
@@ -838,7 +807,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                               </p>
                               <Badge
                                 variant="outline"
-                                className="text-sm text-purple-600 border-purple-200"
+                                className="text-xs text-purple-600 border-purple-200"
                               >
                                 {calculateTenure(
                                   exp.roles[0].starts_at,
@@ -889,12 +858,12 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                             )}
                             {exp.roles[0].summarized_job_description && (
                               <div className="mt-3 p-3 bg-purple-50 rounded-md">
-                                <p className="text-base text-gray-700 font-medium">
+                                <p className="text-sm text-gray-700 font-medium">
                                   Generated Job Description
                                 </p>
                                 <div className="space-y-4">
                                   <div>
-                                    <h4 className="font-medium text-sm">
+                                    <h4 className="font-medium text-xs">
                                       Role Summary:
                                     </h4>
                                     <p className="text-gray-600 text-xs">
@@ -908,7 +877,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                   {exp.roles[0].summarized_job_description
                                     .skills && (
                                     <div>
-                                      <h4 className="font-medium text-sm">
+                                      <h4 className="font-medium text-xs">
                                         Skills:
                                       </h4>
                                       <ul className="list-disc list-inside text-gray-600 text-xs pl-2 space-y-1">
@@ -924,7 +893,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                   {exp.roles[0].summarized_job_description
                                     .requirements && (
                                     <div>
-                                      <h4 className="font-medium text-sm">
+                                      <h4 className="font-medium text-xs">
                                         Requirements:
                                       </h4>
                                       <ul className="list-disc list-inside text-gray-600 text-xs pl-2 space-y-1">
@@ -942,7 +911,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                   exp.roles[0].summarized_job_description
                                     .sources.length > 0 && (
                                     <div className="mt-2 pt-2 border-t border-purple-100">
-                                      <p className="text-sm text-gray-500">
+                                      <p className="text-xs text-gray-500">
                                         Sources:
                                       </p>
                                       <div className="mt-1 space-y-1">
@@ -989,7 +958,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                                 </div>
                                 <Badge
                                   variant="outline"
-                                  className="text-sm text-purple-600 border-purple-200"
+                                  className="text-xs text-purple-600 border-purple-200"
                                 >
                                   {calculateTenure(
                                     exp.overall_start,
@@ -1148,7 +1117,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
           {candidate.profile?.education &&
             candidate.profile.education.length > 0 && (
               <div className="space-y-4">
-                <h4 className="text-sm font-medium text-purple-800/90 flex items-center gap-2">
+                <h4 className="text-base font-medium text-purple-800/90 flex items-center gap-2">
                   <GraduationCap className="h-4 w-4" />
                   Education
                 </h4>
@@ -1164,7 +1133,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                             edu.university_tier !== "other" && (
                               <Badge
                                 variant="secondary"
-                                className="text-sm bg-blue-50 text-blue-700 border-blue-200"
+                                className="text-xs bg-blue-50 text-blue-700 border-blue-200"
                               >
                                 {edu.university_tier
                                   .replace("_", " ")
@@ -1172,13 +1141,13 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                               </Badge>
                             )}
                         </div>
-                        <p className="text-xs text-purple-700/90">
+                        <p className="text-sm text-purple-700/90">
                           {edu.degree_name && edu.field_of_study
                             ? `${edu.degree_name} in ${edu.field_of_study}`
                             : edu.degree_name || edu.field_of_study}
                         </p>
                         {edu.starts_at && edu.ends_at && (
-                          <p className="text-sm text-purple-600/75">
+                          <p className="text-xs text-purple-600/75">
                             {formatDate(edu.starts_at)} -{" "}
                             {formatDate(edu.ends_at)}
                           </p>
@@ -1192,7 +1161,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
 
           {candidate.citations && candidate.citations.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-purple-900">Sources</h3>
+              <h3 className="text-lg font-medium text-purple-900">Sources</h3>
               <div className="space-y-4">
                 {candidate.citations.map((citation, index) => {
                   const citationWithIndex = { ...citation, index: index + 1 };
