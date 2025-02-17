@@ -602,7 +602,7 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
         </div>
       </motion.div>
       <div className="flex-1 overflow-y-auto">
-        <div className="p-6 space-y-8">
+        <div className="p-4 space-y-8">
           {/* Trait Evaluation Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">

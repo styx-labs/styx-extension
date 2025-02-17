@@ -248,7 +248,7 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
             transition={{ duration: 0.2 }}
           >
             {loading ? (
-              <div className="p-6 space-y-4">
+              <div className="p-4 space-y-4">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="animate-pulse">
                     <div className="h-16 bg-gray-100 rounded-lg"></div>
@@ -256,11 +256,11 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
                 ))}
               </div>
             ) : error ? (
-              <div className="p-6 text-center">
+              <div className="p-4 text-center">
                 <p className="text-red-500">{error}</p>
               </div>
             ) : filteredCandidates.length === 0 ? (
-              <div className="p-6 text-center">
+              <div className="p-4 text-center">
                 <p className="text-xs text-gray-500">
                   No {statusFilter === "complete" ? "completed" : "processing"}{" "}
                   candidates found for this job.

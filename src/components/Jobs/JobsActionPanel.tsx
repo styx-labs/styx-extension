@@ -308,7 +308,7 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
           <NoJobsState />
         ) : (
           <div className="flex flex-col h-full">
-            <div className="flex-shrink-0 p-4 space-y-4">
+            <div className="flex-shrink-0 p-4 space-y-4 bg-white">
               <JobSelector
                 jobs={jobs}
                 selectedJob={selectedJob || null}
@@ -327,7 +327,7 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
               </div>
             ) : mode === "add" ? (
               selectedJob && selectedJobId ? (
-                <div className="p-6 space-y-4">
+                <div className="p-4 space-y-4">
                   {customAddMessage ? (
                     <div className="text-gray-600 text-xs text-center p-4">
                       {customAddMessage}

@@ -17,8 +17,8 @@ const ExtensionHeader = ({
   onToggle: () => void;
 }) => (
   <div
-    className={`flex items-center p-4 border-b border-gray-100 bg-white max-content ${
-      isExpanded ? "justify-between" : "justify-center"
+    className={`flex items-center py-2 border-b border-gray-100 bg-white max-content ${
+      isExpanded ? "justify-between px-4" : "justify-center px-2"
     }`}
   >
     <div className="flex items-center gap-2">
@@ -33,9 +33,10 @@ const ExtensionHeader = ({
             <img
               src={chrome.runtime.getURL("../../icon/128.png")}
               alt="Styx Logo"
-              className="w-6 h-6"
+              className="w-4 h-4"
+              draggable={false}
             />
-            <h1 className="text-base font-semibold text-gray-900">Styx</h1>
+            <h1 className="text-base font-semibold text-purple-900">Styx</h1>
           </div>
         </a>
       )}
@@ -47,24 +48,27 @@ const ExtensionHeader = ({
             chrome.runtime.sendMessage({ type: "RELOAD_EXTENSION" });
             window.location.reload();
           }}
-          className="w-10 h-10 flex items-center justify-center text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors border border-purple-200 hover:border-purple-300"
+          className="p-2 flex items-center justify-center text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
           aria-label="Reload extension"
         >
-          <RefreshCw className="w-5 h-5" strokeWidth={2} />
+          <RefreshCw className="w-4 h-4" strokeWidth={2} />
         </button>
       )}
       <button
         onClick={onToggle}
-        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+        className={`p-2 text-purple-500 rounded-lg transition-colors ${
+          isExpanded ? "hover:text-purple-700 hover:bg-purple-50" : ""
+        }`}
         aria-label={isExpanded ? "Minimize" : "Expand"}
       >
         {isExpanded ? (
-          <ChevronRight className="w-6 h-6" strokeWidth={2} stroke="#9333ea" />
+          <ChevronRight className="w-4 h-4" strokeWidth={2} stroke="#9333ea" />
         ) : (
           <img
             src={chrome?.runtime?.getURL("icon/128.png")}
             alt="Styx Logo"
-            className="w-6 h-6 object-contain"
+            className="w-4 h-4 object-contain"
+            draggable={false}
           />
         )}
       </button>
@@ -82,7 +86,7 @@ export const ExtensionContainer: React.FC<ExtensionContainerProps> = ({
   return (
     <div
       className={`extension-container bg-white rounded-l-lg shadow-lg flex flex-col ${
-        !isExpanded ? "w-20" : "w-[450px]"
+        !isExpanded ? "w-16" : "w-[450px]"
       } ${className}`}
     >
       <ExtensionHeader isExpanded={isExpanded} onToggle={toggleExpansion} />

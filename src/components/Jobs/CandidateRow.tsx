@@ -18,7 +18,7 @@ export const CandidateRow: React.FC<CandidateRowProps> = ({
     if (fit === 4) return { label: "Ideal", variant: "default" };
     if (fit === 3) return { label: "Good", variant: "secondary" };
     if (fit === 2) return { label: "Potential", variant: "outline" };
-    return { label: "Bad", variant: "outline" };
+    return { label: "Unlikely", variant: "outline" };
   };
 
   // Calculate total required and optional traits
@@ -44,7 +44,7 @@ export const CandidateRow: React.FC<CandidateRowProps> = ({
           )}
         </div>
       </td>
-      <td className="px-2 py-4 whitespace-nowrap max-w-[60px] text-center">
+      <td className="px-2 py-4 whitespace-nowrap max-w-[80px] text-center">
         {candidate.sections && (
           <Badge
             variant={getFitLabel(candidate.fit).variant}
