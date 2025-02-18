@@ -26,7 +26,11 @@ import {
   Shrink,
 } from "lucide-react";
 import type { Candidate, TraitEvaluation, ProfileExperience } from "@/types";
-import { getEmail, getCandidateReachout } from "@/utils/apiUtils";
+import {
+  getEmail,
+  getCandidateReachout,
+  toggleFavorite,
+} from "@/utils/apiUtils";
 import toast from "react-hot-toast";
 import { connectAndMessage } from "@/utils/linkedinUtils";
 import { cn } from "@/utils/cn";
@@ -95,6 +99,7 @@ interface CandidateSidebarProps {
   loadingStates: { [key: string]: { email: boolean; message: boolean } };
   handleDelete: (e: React.MouseEvent, id: string) => Promise<void>;
   jobId?: string;
+  onFavoriteChange?: (candidateId: string, newFavoriteStatus: boolean) => void;
 }
 
 interface GroupedExperience {
@@ -304,10 +309,12 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
   loadingStates,
   handleDelete,
   jobId,
+  onFavoriteChange,
 }) => {
   const citationRefs = useRef<{ [key: number]: HTMLDivElement }>({});
   const { isHeightExpanded, setHeightExpanded, setSidebarExpanded } =
     useLayout();
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
 
   useEffect(() => {
     setSidebarExpanded(true);
@@ -449,6 +456,41 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
     }
   };
 
+  const handleFavoriteClick = async () => {
+    if (!candidate.id || !jobId || isFavoriteLoading) return;
+
+    try {
+      setIsFavoriteLoading(true);
+      // Immediately update the UI
+      const newFavoriteStatus = !candidate.favorite;
+      candidate.favorite = newFavoriteStatus;
+      onFavoriteChange?.(candidate.id, newFavoriteStatus);
+
+      // Make the backend call without waiting for the response
+      toggleFavorite(jobId, candidate.id).catch((error) => {
+        // If the backend call fails, revert the UI state
+        candidate.favorite = !newFavoriteStatus;
+        onFavoriteChange?.(candidate.id, !newFavoriteStatus);
+        throw error;
+      });
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      toast.error("Failed to update favorite status", {
+        style: {
+          background: "#EF4444",
+          color: "#FFFFFF",
+          padding: "16px",
+        },
+        iconTheme: {
+          primary: "#FFFFFF",
+          secondary: "#EF4444",
+        },
+      });
+    } finally {
+      setIsFavoriteLoading(false);
+    }
+  };
+
   if (!candidate) return null;
 
   return (
@@ -586,6 +628,38 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                   </div>
                 </motion.button>
               </div>
+              <motion.button
+                disabled={!candidate.id || !jobId}
+                className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
+                onClick={handleFavoriteClick}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {isFavoriteLoading ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  >
+                    <Loader2 className="h-4 w-4" />
+                  </motion.div>
+                ) : (
+                  <Star
+                    className={cn(
+                      "h-4 w-4",
+                      candidate.favorite && "fill-yellow-400 text-yellow-400"
+                    )}
+                  />
+                )}
+                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                  {candidate.favorite
+                    ? "Remove from Favorites"
+                    : "Add to Favorites"}
+                </div>
+              </motion.button>
               <button
                 className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all relative group/tooltip"
                 onClick={(e) => handleDelete(e, candidate.id)}
@@ -636,52 +710,75 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                 Trait Match
               </h3>
               <div className="flex items-center gap-2">
-                {getTotalRequiredTraits(candidate) > 0 && (
-                  <Badge
-                    variant={
-                      getRequiredTraitsMet(candidate) ===
-                      getTotalRequiredTraits(candidate)
-                        ? "secondary"
-                        : "outline"
-                    }
-                    className={cn(
-                      "bg-purple-100 hover:bg-purple-100",
-                      getRequiredTraitsMet(candidate) ===
-                        getTotalRequiredTraits(candidate)
-                        ? "text-purple-700 border-purple-200"
-                        : "text-purple-600 border-purple-200"
+                {candidate.sections ? (
+                  <>
+                    {getTotalRequiredTraits(candidate) > 0 && (
+                      <Badge
+                        variant={
+                          getRequiredTraitsMet(candidate) ===
+                          getTotalRequiredTraits(candidate)
+                            ? "secondary"
+                            : "outline"
+                        }
+                        className={cn(
+                          "bg-purple-100 hover:bg-purple-100",
+                          getRequiredTraitsMet(candidate) ===
+                            getTotalRequiredTraits(candidate)
+                            ? "text-purple-700 border-purple-200"
+                            : "text-purple-600 border-purple-200"
+                        )}
+                      >
+                        {getRequiredTraitsMet(candidate)}/
+                        {getTotalRequiredTraits(candidate)} Required
+                      </Badge>
                     )}
-                  >
-                    {getRequiredTraitsMet(candidate)}/
-                    {getTotalRequiredTraits(candidate)} Required
-                  </Badge>
-                )}
-                {getTotalOptionalTraits(candidate) > 0 && (
-                  <Badge
-                    variant="outline"
-                    className="text-purple-600 border-purple-200"
-                  >
-                    {getOptionalTraitsMet(candidate)}/
-                    {getTotalOptionalTraits(candidate)} Optional
-                  </Badge>
+                    {getTotalOptionalTraits(candidate) > 0 && (
+                      <Badge
+                        variant="outline"
+                        className="text-purple-600 border-purple-200"
+                      >
+                        {getOptionalTraitsMet(candidate)}/
+                        {getTotalOptionalTraits(candidate)} Optional
+                      </Badge>
+                    )}
+                  </>
+                ) : (
+                  // Skeleton badges
+                  <div className="flex items-center gap-2">
+                    <div className="h-5 w-24 bg-purple-100/50 animate-pulse rounded-full" />
+                    <div className="h-5 w-24 bg-purple-100/50 animate-pulse rounded-full" />
+                  </div>
                 )}
               </div>
             </div>
             <Card className="border-purple-100/50">
               <div className="p-4 space-y-3">
-                {candidate.sections?.map((section, index) => (
-                  <TraitEvaluationItem key={index} evaluation={section} />
-                ))}
+                {candidate.sections
+                  ? candidate.sections.map((section, index) => (
+                      <TraitEvaluationItem key={index} evaluation={section} />
+                    ))
+                  : // Skeleton loading states
+                    Array.from({ length: 5 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between animate-pulse"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="h-7 w-32 bg-purple-100/50 rounded-md" />
+                        </div>
+                        <div className="h-4 w-4 bg-purple-100/50 rounded-full" />
+                      </div>
+                    ))}
               </div>
             </Card>
           </div>
 
           {/* Summary Section */}
-          {(candidate.summary || candidate.sections) && (
+          {(candidate.summary || candidate.sections || !candidate) && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium text-purple-900">Summary</h3>
-                {candidate.sections && (
+                {candidate.sections ? (
                   <div className="flex items-center gap-2">
                     <Badge
                       variant={getFitLabel(candidate.fit).variant}
@@ -699,17 +796,28 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                       {getFitLabel(candidate.fit).label}
                     </Badge>
                   </div>
+                ) : (
+                  // Skeleton badge
+                  <div className="h-5 w-20 bg-purple-100/50 animate-pulse rounded-full" />
                 )}
               </div>
-              {candidate.summary && (
-                <Card className="border-purple-100/50">
-                  <div className="p-4">
+              <Card className="border-purple-100/50">
+                <div className="p-4">
+                  {candidate.summary ? (
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       {candidate.summary}
                     </p>
-                  </div>
-                </Card>
-              )}
+                  ) : (
+                    // Skeleton loading state for summary text
+                    <div className="space-y-2">
+                      <div className="h-4 bg-purple-100/50 animate-pulse rounded w-full" />
+                      <div className="h-4 bg-purple-100/50 animate-pulse rounded w-11/12" />
+                      <div className="h-4 bg-purple-100/50 animate-pulse rounded w-4/5" />
+                      <div className="h-4 bg-purple-100/50 animate-pulse rounded w-9/12" />
+                    </div>
+                  )}
+                </div>
+              </Card>
             </div>
           )}
 

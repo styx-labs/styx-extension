@@ -52,7 +52,7 @@ const SingleProfileView: React.FC = () => {
       // Auto-add candidate if auto mode is enabled and we have a selected job
       if (autoMode && selectedJobId) {
         console.log("Adding candidate to job", selectedJobId);
-        handleCreateCandidate(selectedJobId);
+        void handleCreateCandidate(selectedJobId);
       }
     }
   });

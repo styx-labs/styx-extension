@@ -164,7 +164,7 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
       }
 
       // Favorites filter
-      if (showFavorites && !candidate.is_favorite) {
+      if (showFavorites && !candidate.favorite) {
         return false;
       }
 
@@ -179,6 +179,19 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
     selectedCareerTags,
     showFavorites,
   ]);
+
+  const handleFavoriteChange = (
+    candidateId: string,
+    newFavoriteStatus: boolean
+  ) => {
+    setCandidates((prevCandidates) =>
+      prevCandidates.map((candidate) =>
+        candidate.id === candidateId
+          ? { ...candidate, favorite: newFavoriteStatus }
+          : candidate
+      )
+    );
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -327,6 +340,7 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
           loadingStates={loadingStates}
           handleDelete={handleDelete}
           jobId={selectedJob.id}
+          onFavoriteChange={handleFavoriteChange}
         />
       )}
     </div>

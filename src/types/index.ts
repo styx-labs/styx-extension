@@ -48,7 +48,7 @@ export interface Candidate {
   profile?: Profile;
   citations?: Citation[];
   is_loading_indicator?: boolean;
-  is_favorite?: boolean;
+  favorite?: boolean;
 }
 
 export interface TraitEvaluation {

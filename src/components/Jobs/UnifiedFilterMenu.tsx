@@ -138,10 +138,9 @@ export function UnifiedFilterMenu({
             )}
           >
             <Filter className="mr-2 h-4 w-4" />
-            Filters
+            {!hasFilters && "Filters"}
             {hasFilters && (
               <>
-                <Separator orientation="vertical" className="mx-2 h-4" />
                 <Badge
                   variant="secondary"
                   className="rounded-sm px-1 font-normal"

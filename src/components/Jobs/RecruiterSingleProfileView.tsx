@@ -64,23 +64,32 @@ const RecruiterSingleProfileView: React.FC = () => {
     }
   }, [loading, jobs]);
 
-  const getProfileUrl = () => {
-    // First try to get the URL from the public profile link in the hoverable content
-    const publicProfileLink = document.querySelector(
-      "a[data-test-public-profile-link]"
-    );
-    if (
-      publicProfileLink instanceof HTMLAnchorElement &&
-      publicProfileLink.href
-    ) {
-      return publicProfileLink.href;
+  const getProfileUrl = async () => {
+    // Try up to 5 times with a 1 second delay between attempts
+    for (let attempt = 0; attempt < 5; attempt++) {
+      // First try to get the URL from the public profile link in the hoverable content
+      const publicProfileLink = document.querySelector(
+        "a[data-test-public-profile-link]"
+      );
+      if (
+        publicProfileLink instanceof HTMLAnchorElement &&
+        publicProfileLink.href
+      ) {
+        return publicProfileLink.href;
+      }
+
+      // If not found, wait 1 second before trying again
+      if (attempt < 4) {
+        // Don't wait on the last attempt
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
     }
 
     return null;
   };
 
-  const getProfileId = () => {
-    const url = getProfileUrl();
+  const getProfileId = async () => {
+    const url = await getProfileUrl();
     if (!url) return null;
     const match = url.match(/\/in\/([^/?]+)/);
     if (!match) return null;
@@ -93,7 +102,7 @@ const RecruiterSingleProfileView: React.FC = () => {
       setIsProcessing(true);
 
       // Get the profile ID first
-      const profileId = getProfileId();
+      const profileId = await getProfileId();
       if (!profileId) {
         setError("Could not determine profile ID");
         return;
@@ -119,7 +128,7 @@ const RecruiterSingleProfileView: React.FC = () => {
       }
 
       // If candidate doesn't exist, create them
-      const profileUrl = getProfileUrl();
+      const profileUrl = await getProfileUrl();
       if (!profileUrl) {
         setError("Could not find a valid LinkedIn profile URL");
         return;

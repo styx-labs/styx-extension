@@ -409,3 +409,40 @@ export const getCandidate = async (
     );
   }
 };
+
+export const toggleFavorite = async (
+  jobId: string,
+  candidateId: string
+): Promise<boolean> => {
+  const token = await getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  try {
+    const response = await fetch(
+      `${
+        import.meta.env.VITE_API_URL
+      }/jobs/${jobId}/candidates/${candidateId}/favorite`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to toggle favorite: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.favorite;
+  } catch (error) {
+    console.error("Error toggling favorite:", error);
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to toggle favorite"
+    );
+  }
+};
