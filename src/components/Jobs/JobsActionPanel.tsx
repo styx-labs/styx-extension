@@ -58,7 +58,6 @@ interface JobsActionPanelProps {
   isSingleMode?: boolean;
   customAddMessage?: string;
   addingCandidateId?: string | null;
-  customButtonText?: (jobId: string) => string | undefined;
 }
 
 const SELECTED_JOB_KEY = "styx-selected-job-id";
@@ -175,7 +174,6 @@ const AddButton: React.FC<{
   addMode: AddMode;
   numProfiles: number;
   isAdded: boolean;
-  customText?: string;
 }> = ({
   onClick,
   disabled,
@@ -184,20 +182,17 @@ const AddButton: React.FC<{
   addMode,
   numProfiles,
   isAdded,
-  customText,
 }) => (
   <Button
     onClick={onClick}
-    disabled={isProcessing}
+    disabled={isProcessing || disabled}
     className={`w-full text-xs ${
-      isAdded && !customText ? "bg-green-600 hover:bg-green-700" : ""
+      isAdded ? "bg-green-600 hover:bg-green-700" : ""
     }`}
     variant="default"
   >
     {isProcessing ? (
       <Loader2 className="w-5 h-5 animate-spin" />
-    ) : customText ? (
-      customText
     ) : isAdded ? (
       <>
         <Check className="w-5 h-5 mr-2" />
@@ -236,7 +231,6 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
   isSingleMode = false,
   customAddMessage,
   addingCandidateId,
-  customButtonText,
 }) => {
   const { mode, setMode } = useExtensionMode();
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>(() => {
@@ -392,11 +386,6 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
                           addMode={addMode}
                           numProfiles={numProfiles}
                           isAdded={isAdded(selectedJobId)}
-                          customText={
-                            selectedJobId
-                              ? customButtonText?.(selectedJobId)
-                              : undefined
-                          }
                         />
                       </>
                     )}
