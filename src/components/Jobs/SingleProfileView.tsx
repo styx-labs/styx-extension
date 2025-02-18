@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { createCandidate, getCandidates } from "../../utils/apiUtils";
+import { createCandidate, getCandidate } from "../../utils/apiUtils";
 import { useJobsState } from "../../hooks/useJobsState";
 import { useUrlWatcher } from "../../hooks/useUrlWatcher";
 import { useSettings } from "../../contexts/SettingsContext";
 import JobsActionPanel from "./JobsActionPanel";
+import { AddModeCandidateSidebar } from "../sidebar/AddModeCandidateSidebar";
 
 const SELECTED_JOB_KEY = "styx-selected-job-id";
 
@@ -32,6 +33,7 @@ const SingleProfileView: React.FC = () => {
   const [addingCandidateId, setAddingCandidateId] = useState<string | null>(
     null
   );
+  const [existingCandidate, setExistingCandidate] = useState<boolean>(false);
 
   // Add URL watcher to reset state when profile changes
   useUrlWatcher(() => {
@@ -39,6 +41,7 @@ const SingleProfileView: React.FC = () => {
       setAddedJobs(new Set());
       setLoadingJobs(new Set());
       setAddingCandidateId(null);
+      setExistingCandidate(false);
 
       // Auto-add candidate if auto mode is enabled and we have a selected job
       if (autoMode && selectedJobId) {
@@ -93,6 +96,30 @@ const SingleProfileView: React.FC = () => {
       setLoadingJobs((prev) => new Set([...prev, jobId]));
       setIsProcessing(true);
 
+      // Get the profile ID first
+      const profileId = getProfileId();
+      if (!profileId) {
+        setError("Could not determine profile ID");
+        return;
+      }
+
+      // Check if candidate already exists
+      const existingCandidate = await getCandidate(jobId, profileId);
+      if (existingCandidate) {
+        // Candidate exists, show the sidebar
+        setExistingCandidate(true);
+        setAddingCandidateId(profileId);
+        setAddedJobs((prev) => new Set([...prev, jobId]));
+        setIsProcessing(false);
+        setLoadingJobs((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(jobId);
+          return newSet;
+        });
+        return;
+      }
+
+      // If candidate doesn't exist, create them
       const profileUrl = getProfileUrl();
       if (!profileUrl) {
         setError("Could not find a valid LinkedIn profile URL");
@@ -105,33 +132,33 @@ const SingleProfileView: React.FC = () => {
         return;
       }
 
-      // Get the profile ID that we're adding
-      const profileId = getProfileId();
-      if (!profileId) {
-        setError("Could not determine profile ID");
-        return;
-      }
-
       // Start polling for the candidate
       let attempts = 0;
       const maxAttempts = 30; // 30 attempts * 2 seconds = 60 seconds max
       const pollInterval = setInterval(async () => {
         try {
           attempts++;
-          const response = await getCandidates(jobId);
+          const candidate = await getCandidate(jobId, profileId);
 
-          if (response === null) {
-            clearInterval(pollInterval);
-            setError("not_authenticated");
+          if (candidate === null) {
+            if (attempts >= maxAttempts) {
+              clearInterval(pollInterval);
+              setError("Timed out waiting for candidate to be processed");
+              setIsProcessing(false);
+              setLoadingJobs((prev) => {
+                const newSet = new Set(prev);
+                newSet.delete(jobId);
+                return newSet;
+              });
+            }
             return;
           }
 
-          const candidate = response.candidates.find((c) => c.id === profileId);
-
-          if (candidate && candidate.status === "complete") {
+          if (candidate.status === "complete") {
             clearInterval(pollInterval);
             setAddingCandidateId(profileId);
             setAddedJobs((prev) => new Set([...prev, jobId]));
+            setExistingCandidate(true); // Set to true since candidate is now complete
             setIsProcessing(false);
             setLoadingJobs((prev) => {
               const newSet = new Set(prev);

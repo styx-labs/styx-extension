@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getSearchCredits } from "@/utils/apiUtils";
+import { getSearchCredits, checkAuth } from "@/utils/apiUtils";
 
 export function useSearchCredits() {
   const [searchCredits, setSearchCredits] = useState<number | null>(null);
@@ -9,6 +9,11 @@ export function useSearchCredits() {
   const fetchCredits = async () => {
     try {
       setLoading(true);
+      const isAuthenticated = await checkAuth();
+      if (!isAuthenticated) {
+        setSearchCredits(null);
+        return;
+      }
       const credits = await getSearchCredits();
       setSearchCredits(credits);
       setError(null);

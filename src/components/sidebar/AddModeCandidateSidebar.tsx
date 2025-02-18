@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import type { Candidate } from "@/types";
 import { CandidateSidebar } from "./CandidateSidebar";
-import { getCandidates, deleteCandidate } from "@/utils/apiUtils";
+import { getCandidate, deleteCandidate } from "@/utils/apiUtils";
 
 interface AddModeCandidateSidebarProps {
   candidateId: string;
@@ -19,19 +19,18 @@ export const AddModeCandidateSidebar: React.FC<
 
   const pollCandidate = async () => {
     try {
-      const response = await getCandidates(jobId);
-      if (response) {
-        const foundCandidate = response.candidates.find(
-          (candidate) => candidate.id === candidateId
-        );
-        if (foundCandidate) {
-          setCandidate(foundCandidate);
-          // If the candidate is complete, stop loading
-          if (foundCandidate.status === "complete") {
-            setLoading(false);
-            return true; // Signal to stop polling
-          }
+      const foundCandidate = await getCandidate(jobId, candidateId);
+      if (foundCandidate) {
+        setCandidate(foundCandidate);
+        // If the candidate is complete, stop loading
+        if (foundCandidate.status === "complete") {
+          setLoading(false);
+          return true; // Signal to stop polling
         }
+      } else if (foundCandidate === null) {
+        // Candidate not found (404)
+        setLoading(false);
+        return true; // Stop polling
       }
       return false; // Continue polling
     } catch (error) {
@@ -70,9 +69,9 @@ export const AddModeCandidateSidebar: React.FC<
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (!candidateId || !jobId) return;
+    if (!id || !jobId) return;
     try {
-      await deleteCandidate(jobId, candidateId);
+      await deleteCandidate(jobId, id);
       setCandidate(null);
     } catch (error) {
       console.error("Error deleting candidate:", error);

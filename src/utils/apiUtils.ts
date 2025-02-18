@@ -356,7 +356,7 @@ export async function getSearchCredits(): Promise<number> {
   const response = await fetch(
     `${import.meta.env.VITE_API_URL}/get-search-credits`,
     {
-      method: "POST",
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -371,3 +371,41 @@ export async function getSearchCredits(): Promise<number> {
   const data = await response.json();
   return data.search_credits;
 }
+
+export const getCandidate = async (
+  jobId: string,
+  candidateId: string
+): Promise<Candidate | null> => {
+  const token = await getAuthToken();
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/jobs/${jobId}/candidates/${candidateId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      throw new Error(`Failed to get candidate: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching candidate:", error);
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to get candidate"
+    );
+  }
+};

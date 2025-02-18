@@ -34,17 +34,20 @@ export function SearchCredits({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-            variant="ghost"
-            size="sm"
-            onClick={refetch}
-            className={cn("text-destructive hover:text-destructive", className)}
-          >
-            <Search className="h-3 w-3" />
-            <span className="ml-1">Error</span>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Failed to load credits. Click to retry.</p>
+              variant="ghost"
+              size="sm"
+              onClick={refetch}
+              className={cn(
+                "text-destructive hover:text-destructive",
+                className
+              )}
+            >
+              <Search className="h-3 w-3" />
+              <span className="ml-1">Error</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Failed to load credits. Click to retry.</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -64,6 +67,9 @@ export function SearchCredits({
           "flex items-center gap-1 text-xs text-primary bg-primary/10 px-1.5 py-0.5 h-auto font-normal",
           className
         )}
+        onClick={() => {
+          window.open(`${import.meta.env.VITE_FRONTEND_URL}/pricing`, "_blank");
+        }}
       >
         <Search className="h-3 w-3" />
         <span>{searchCredits}</span>
@@ -76,6 +82,9 @@ export function SearchCredits({
       variant="ghost"
       size="sm"
       className={cn("flex items-center gap-1 text-primary", className)}
+      onClick={() => {
+        window.open(`${import.meta.env.VITE_FRONTEND_URL}/pricing`, "_blank");
+      }}
     >
       <Search className="h-4 w-4" />
       <span>{searchCredits} remaining search credits</span>
