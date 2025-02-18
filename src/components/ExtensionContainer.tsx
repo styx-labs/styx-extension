@@ -10,6 +10,7 @@ import { useExtensionState } from "../hooks/useExtensionState";
 import { usePosition } from "../contexts/PositionContext";
 import { useLayout } from "../contexts/LayoutContext";
 import { cn } from "@/utils/cn";
+import { SearchCredits } from "./SearchCredits";
 
 interface ExtensionContainerProps {
   children: React.ReactNode;
@@ -56,6 +57,7 @@ const ExtensionHeader = ({
       <div className="flex items-center gap-2">
         {isExpanded && (
           <>
+            <SearchCredits variant="compact" />
             <button
               onClick={() => {
                 chrome.runtime.sendMessage({ type: "RELOAD_EXTENSION" });

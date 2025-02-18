@@ -346,3 +346,28 @@ export const deleteCandidate = async (
     throw error;
   }
 };
+
+export async function getSearchCredits(): Promise<number> {
+  const token = await getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  const response = await fetch(
+    `${import.meta.env.VITE_API_URL}/get-search-credits`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch search credits");
+  }
+
+  const data = await response.json();
+  return data.search_credits;
+}
