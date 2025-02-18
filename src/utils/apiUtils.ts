@@ -219,7 +219,7 @@ export const getCandidates = async (
   try {
     const queryParams = new URLSearchParams();
     if (filterTraits && filterTraits.length > 0) {
-      queryParams.append("traits", filterTraits.join(","));
+      queryParams.append("filter_traits", filterTraits.join(","));
     }
     queryParams.append("status", status);
 
@@ -344,5 +344,105 @@ export const deleteCandidate = async (
   } catch (error) {
     console.error("Error deleting candidate:", error);
     throw error;
+  }
+};
+
+export async function getSearchCredits(): Promise<number> {
+  const token = await getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  const response = await fetch(
+    `${import.meta.env.VITE_API_URL}/get-search-credits`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch search credits");
+  }
+
+  const data = await response.json();
+  return data.search_credits;
+}
+
+export const getCandidate = async (
+  jobId: string,
+  candidateId: string
+): Promise<Candidate | null> => {
+  const token = await getAuthToken();
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/jobs/${jobId}/candidates/${candidateId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      throw new Error(`Failed to get candidate: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching candidate:", error);
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to get candidate"
+    );
+  }
+};
+
+export const toggleFavorite = async (
+  jobId: string,
+  candidateId: string
+): Promise<boolean> => {
+  const token = await getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  try {
+    const response = await fetch(
+      `${
+        import.meta.env.VITE_API_URL
+      }/jobs/${jobId}/candidates/${candidateId}/favorite`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to toggle favorite: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.favorite;
+  } catch (error) {
+    console.error("Error toggling favorite:", error);
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to toggle favorite"
+    );
   }
 };

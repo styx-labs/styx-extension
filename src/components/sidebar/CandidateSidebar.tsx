@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   X,
   ChevronLeft,
@@ -20,21 +20,54 @@ import {
   Trash2,
   Link,
   UserPlus,
+  Star,
+  ChevronDown,
+  Expand,
+  Shrink,
 } from "lucide-react";
-import type { Candidate, TraitEvaluation } from "@/types";
-import { getEmail, getCandidateReachout } from "@/utils/apiUtils";
+import type { Candidate, TraitEvaluation, ProfileExperience } from "@/types";
+import {
+  getEmail,
+  getCandidateReachout,
+  toggleFavorite,
+} from "@/utils/apiUtils";
 import toast from "react-hot-toast";
 import { connectAndMessage } from "@/utils/linkedinUtils";
 import { cn } from "@/utils/cn";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { useLayout } from "@/contexts/LayoutContext";
 
 // Date formatting utilities
 const formatDate = (dateStr: string | null) => {
   if (!dateStr) return "";
   const date = new Date(dateStr);
   return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+};
+
+const formatDuration = (totalMonths: number | undefined): string => {
+  if (totalMonths === undefined || isNaN(totalMonths))
+    return "0 years, 0 months";
+
+  const years = Math.floor(totalMonths / 12);
+  const months = Math.round(totalMonths % 12);
+
+  if (years === 0) {
+    return `${months} month${months !== 1 ? "s" : ""}`;
+  } else if (months === 0) {
+    return `${years} year${years !== 1 ? "s" : ""}`;
+  }
+  return `${years} year${years !== 1 ? "s" : ""}, ${months} month${
+    months !== 1 ? "s" : ""
+  }`;
 };
 
 const calculateTenure = (startDate: string, endDate?: string | null) => {
@@ -66,7 +99,72 @@ interface CandidateSidebarProps {
   loadingStates: { [key: string]: { email: boolean; message: boolean } };
   handleDelete: (e: React.MouseEvent, id: string) => Promise<void>;
   jobId?: string;
+  onFavoriteChange?: (candidateId: string, newFavoriteStatus: boolean) => void;
 }
+
+interface GroupedExperience {
+  company: string;
+  company_linkedin_profile_url?: string;
+  roles: Array<ProfileExperience>;
+  overall_start: string;
+  overall_end?: string;
+  funding_stages_during_tenure?: string[];
+}
+
+const groupExperiences = (
+  experiences: ProfileExperience[]
+): GroupedExperience[] => {
+  const sortedExperiences = [...experiences].sort(
+    (a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime()
+  );
+
+  const grouped: GroupedExperience[] = [];
+  let currentGroup: GroupedExperience | null = null;
+
+  sortedExperiences.forEach((exp) => {
+    if (!currentGroup || currentGroup.company !== exp.company) {
+      if (currentGroup) {
+        grouped.push(currentGroup);
+      }
+      currentGroup = {
+        company: exp.company,
+        company_linkedin_profile_url: exp.company_linkedin_profile_url,
+        roles: [exp],
+        overall_start: exp.starts_at,
+        overall_end: exp.ends_at,
+        funding_stages_during_tenure: exp.funding_stages_during_tenure,
+      };
+    } else {
+      currentGroup.roles.push(exp);
+      // Update overall dates
+      if (new Date(exp.starts_at) < new Date(currentGroup.overall_start)) {
+        currentGroup.overall_start = exp.starts_at;
+      }
+      if (
+        !currentGroup.overall_end ||
+        (exp.ends_at &&
+          new Date(exp.ends_at) > new Date(currentGroup.overall_end))
+      ) {
+        currentGroup.overall_end = exp.ends_at;
+      }
+      // Merge funding stages
+      if (exp.funding_stages_during_tenure) {
+        currentGroup.funding_stages_during_tenure = [
+          ...new Set([
+            ...(currentGroup.funding_stages_during_tenure || []),
+            ...exp.funding_stages_during_tenure,
+          ]),
+        ];
+      }
+    }
+  });
+
+  if (currentGroup) {
+    grouped.push(currentGroup);
+  }
+
+  return grouped;
+};
 
 const TraitEvaluationItem: React.FC<{ evaluation: TraitEvaluation }> = ({
   evaluation,
@@ -74,41 +172,44 @@ const TraitEvaluationItem: React.FC<{ evaluation: TraitEvaluation }> = ({
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
-    <div className="p-4 border border-purple-200 rounded-lg hover:border-purple-300 transition-all">
-      <div
-        className="flex items-center justify-between cursor-pointer"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <h4 className="text-lg font-medium text-purple-900">
-          {evaluation.section}
-        </h4>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
-          <span
-            className={`px-3 py-1.5 rounded-full text-base font-medium ${
+          <div
+            className={cn(
+              "px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1.5",
               evaluation.value === true
-                ? "bg-green-50 text-green-700"
-                : "bg-red-50 text-red-700"
-            }`}
+                ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-red-50 text-red-700 border border-red-200",
+              evaluation.required ? "shadow-sm" : "opacity-75"
+            )}
           >
             {evaluation.value === true ? (
-              <Check className="w-5 h-5" />
+              <Check className="h-3 w-3" />
             ) : (
-              <X className="w-5 h-5" />
+              <X className="h-3 w-3" />
             )}
-          </span>
-          <ChevronRight
-            className={`w-5 h-5 transition-transform ${
-              isOpen ? "rotate-90" : ""
-            }`}
-          />
+            <span className="flex items-center gap-1">
+              {evaluation.section}
+              {evaluation.required ? (
+                <Star className="h-3 w-3 fill-current opacity-75" />
+              ) : null}
+            </span>
+          </div>
         </div>
-      </div>
-      {isOpen && (
-        <div className="text-base text-muted-foreground mt-3 pl-3 border-l-2 border-purple-200">
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 text-muted-foreground transition-transform duration-200",
+            isOpen ? "rotate-180" : ""
+          )}
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="overflow-hidden transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+        <div className="px-4 py-3 mt-1.5 text-sm text-muted-foreground bg-muted/50 rounded-md border border-muted">
           {evaluation.content}
         </div>
-      )}
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 };
 
@@ -120,8 +221,8 @@ const formatFundingStages = (stages?: string[]) => {
   if (validStages.length === 0) return null;
   if (validStages.length === 1 && validStages[0] === "IPO") return null;
   if (validStages.length === 1) return `Worked during ${validStages[0]}`;
-  const firstStage = validStages[0];
-  const lastStage = validStages[validStages.length - 1];
+  const firstStage = validStages[validStages.length - 1];
+  const lastStage = validStages[0];
   return firstStage === lastStage
     ? `Worked during ${firstStage}`
     : `Worked during ${firstStage} to ${lastStage}`;
@@ -208,7 +309,18 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
   loadingStates,
   handleDelete,
   jobId,
+  onFavoriteChange,
 }) => {
+  const citationRefs = useRef<{ [key: number]: HTMLDivElement }>({});
+  const { isHeightExpanded, setHeightExpanded, setSidebarExpanded } =
+    useLayout();
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
+
+  useEffect(() => {
+    setSidebarExpanded(true);
+    return () => setSidebarExpanded(false);
+  }, [setSidebarExpanded]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -344,24 +456,224 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
     }
   };
 
+  const handleFavoriteClick = async () => {
+    if (!candidate.id || !jobId || isFavoriteLoading) return;
+
+    try {
+      setIsFavoriteLoading(true);
+      // Immediately update the UI
+      const newFavoriteStatus = !candidate.favorite;
+      candidate.favorite = newFavoriteStatus;
+      onFavoriteChange?.(candidate.id, newFavoriteStatus);
+
+      // Make the backend call without waiting for the response
+      toggleFavorite(jobId, candidate.id).catch((error) => {
+        // If the backend call fails, revert the UI state
+        candidate.favorite = !newFavoriteStatus;
+        onFavoriteChange?.(candidate.id, !newFavoriteStatus);
+        throw error;
+      });
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      toast.error("Failed to update favorite status", {
+        style: {
+          background: "#EF4444",
+          color: "#FFFFFF",
+          padding: "16px",
+        },
+        iconTheme: {
+          primary: "#FFFFFF",
+          secondary: "#EF4444",
+        },
+      });
+    } finally {
+      setIsFavoriteLoading(false);
+    }
+  };
+
   if (!candidate) return null;
 
   return (
     <motion.div
-      className="fixed inset-y-0 right-0 w-[450px] bg-white shadow-xl border-l border-gray-200 z-[9999] flex flex-col"
+      className={cn(
+        "fixed inset-y-0 right-0 bg-white shadow-xl border-l border-gray-200 z-[9999] flex flex-col w-full"
+      )}
       initial={{ x: "100%" }}
       animate={{ x: 0 }}
       exit={{ x: "100%" }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
       <motion.div
-        className="flex items-center justify-between p-4 border-b border-gray-200 relative z-10"
+        className="flex flex-col p-4 border-b border-gray-200 relative z-10"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <div className="flex items-center gap-4">
-          <motion.div className="flex items-center gap-2">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-purple-950">
+            {candidate.name}
+          </h2>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setHeightExpanded(!isHeightExpanded)}
+              className="h-8 w-8 hover:bg-purple-100 hover:text-purple-600 transition-colors"
+            >
+              {isHeightExpanded ? (
+                <Shrink className="h-4 w-4" />
+              ) : (
+                <Expand className="h-4 w-4" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-8 w-8 hover:bg-red-100 hover:text-red-600 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        <p className="text-base text-purple-700/90">
+          {candidate.profile?.occupation}
+        </p>
+        <div className="flex items-center gap-2 mt-2">
+          <motion.div
+            className="flex items-center gap-2"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <div className="flex items-center gap-2 mr-4">
+              <motion.button
+                disabled={!candidate.url}
+                className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
+                onClick={() =>
+                  candidate.url && window.open(candidate.url, "_blank")
+                }
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <LinkedinIcon className="h-4 w-4 text-[#0A66C2]" />
+                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                  View LinkedIn Profile
+                </div>
+              </motion.button>
+              <motion.button
+                disabled={!candidate.url}
+                className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
+                onClick={handleConnectClick}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <UserPlus className="h-4 w-4" />
+                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                  Send LinkedIn Connection Request
+                </div>
+              </motion.button>
+              <motion.button
+                disabled={!candidate.url || !candidate.id}
+                className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
+                onClick={handleEmailClick}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {loadingStates &&
+                candidate.id &&
+                loadingStates[candidate.id]?.email ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  >
+                    <Loader2 className="h-4 w-4" />
+                  </motion.div>
+                ) : (
+                  <Mail className="h-4 w-4" />
+                )}
+                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                  Get Email Address
+                </div>
+              </motion.button>
+              <div className="relative inline-block">
+                <motion.button
+                  className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
+                  onClick={handleReachoutClick}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {loadingStates &&
+                  candidate.id &&
+                  loadingStates[candidate.id]?.message ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                    >
+                      <Loader2 className="h-4 w-4" />
+                    </motion.div>
+                  ) : (
+                    <MessageSquarePlus className="h-4 w-4" />
+                  )}
+                  <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                    Generate LinkedIn Message
+                  </div>
+                </motion.button>
+              </div>
+              <motion.button
+                disabled={!candidate.id || !jobId}
+                className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
+                onClick={handleFavoriteClick}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {isFavoriteLoading ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  >
+                    <Loader2 className="h-4 w-4" />
+                  </motion.div>
+                ) : (
+                  <Star
+                    className={cn(
+                      "h-4 w-4",
+                      candidate.favorite && "fill-yellow-400 text-yellow-400"
+                    )}
+                  />
+                )}
+                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                  {candidate.favorite
+                    ? "Remove from Favorites"
+                    : "Add to Favorites"}
+                </div>
+              </motion.button>
+              <button
+                className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all relative group/tooltip"
+                onClick={(e) => handleDelete(e, candidate.id)}
+                disabled={!candidate.id}
+              >
+                <Trash2 className="h-4 w-4 text-red-500" />
+                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+                  Remove Candidate
+                </div>
+              </button>
+            </div>
+          </motion.div>
+          <Separator orientation="vertical" className="h-4 mx-2" />
+          <div className="flex items-center gap-4">
             <motion.button
               onClick={onPrevious}
               disabled={!hasPrevious}
@@ -369,8 +681,8 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <ChevronLeft className="h-5 w-5" />
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+              <ChevronLeft className="h-4 w-4" />
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
                 Previous candidate
               </div>
             </motion.button>
@@ -381,190 +693,102 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <ChevronRight className="h-5 w-5" />
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
+              <ChevronRight className="h-4 w-4" />
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
                 Next candidate
               </div>
             </motion.button>
-          </motion.div>
-          <motion.h2
-            className="text-xl font-semibold text-gray-900"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            {candidate.name}
-          </motion.h2>
-        </div>
-        <motion.div
-          className="flex items-center gap-2"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <div className="flex items-center gap-2 mr-4">
-            <motion.button
-              disabled={!candidate.url}
-              className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
-              onClick={() =>
-                candidate.url && window.open(candidate.url, "_blank")
-              }
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <LinkedinIcon className="h-6 w-6 text-[#0A66C2]" />
-              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
-                View LinkedIn Profile
-              </div>
-            </motion.button>
-            <motion.button
-              disabled={!candidate.url}
-              className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
-              onClick={handleConnectClick}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <UserPlus className="h-6 w-6" />
-              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
-                Send LinkedIn Connection Request
-              </div>
-            </motion.button>
-            <motion.button
-              disabled={!candidate.url || !candidate.id}
-              className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
-              onClick={handleEmailClick}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {loadingStates &&
-              candidate.id &&
-              loadingStates[candidate.id]?.email ? (
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                >
-                  <Loader2 className="h-6 w-6" />
-                </motion.div>
-              ) : (
-                <Mail className="h-6 w-6" />
-              )}
-              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
-                Get Email Address
-              </div>
-            </motion.button>
-            <div className="relative inline-block">
-              <motion.button
-                className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all disabled:opacity-50 relative group/tooltip"
-                onClick={handleReachoutClick}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {loadingStates &&
-                candidate.id &&
-                loadingStates[candidate.id]?.message ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                  >
-                    <Loader2 className="h-6 w-6" />
-                  </motion.div>
-                ) : (
-                  <MessageSquarePlus className="h-6 w-6" />
-                )}
-                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
-                  Generate LinkedIn Message
-                </div>
-              </motion.button>
-            </div>
-            <button
-              className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all relative group/tooltip"
-              onClick={(e) => handleDelete(e, candidate.id)}
-              disabled={!candidate.id}
-            >
-              <Trash2 className="h-6 w-6 text-red-500" />
-              <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
-                Remove Candidate
-              </div>
-            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-all relative group/tooltip"
-          >
-            <X className="w-6 h-6" />
-            <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-base rounded-md whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none z-50">
-              Close Sidebar
-            </div>
-          </button>
-        </motion.div>
+        </div>
       </motion.div>
       <div className="flex-1 overflow-y-auto">
-        <div className="p-6 space-y-8">
+        <div className="p-4 space-y-8">
           {/* Trait Evaluation Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-purple-900">
+              <h3 className="text-lg font-medium text-purple-900">
                 Trait Match
               </h3>
               <div className="flex items-center gap-2">
-                {getTotalRequiredTraits(candidate) > 0 && (
-                  <Badge
-                    variant={
-                      getRequiredTraitsMet(candidate) ===
-                      getTotalRequiredTraits(candidate)
-                        ? "secondary"
-                        : "outline"
-                    }
-                    className={cn(
-                      "bg-purple-100 hover:bg-purple-100 text-lg",
-                      getRequiredTraitsMet(candidate) ===
-                        getTotalRequiredTraits(candidate)
-                        ? "text-purple-700 border-purple-200"
-                        : "text-purple-600 border-purple-200"
+                {candidate.sections ? (
+                  <>
+                    {getTotalRequiredTraits(candidate) > 0 && (
+                      <Badge
+                        variant={
+                          getRequiredTraitsMet(candidate) ===
+                          getTotalRequiredTraits(candidate)
+                            ? "secondary"
+                            : "outline"
+                        }
+                        className={cn(
+                          "bg-purple-100 hover:bg-purple-100",
+                          getRequiredTraitsMet(candidate) ===
+                            getTotalRequiredTraits(candidate)
+                            ? "text-purple-700 border-purple-200"
+                            : "text-purple-600 border-purple-200"
+                        )}
+                      >
+                        {getRequiredTraitsMet(candidate)}/
+                        {getTotalRequiredTraits(candidate)} Required
+                      </Badge>
                     )}
-                  >
-                    {getRequiredTraitsMet(candidate)}/
-                    {getTotalRequiredTraits(candidate)} Required
-                  </Badge>
-                )}
-                {getTotalOptionalTraits(candidate) > 0 && (
-                  <Badge
-                    variant="outline"
-                    className="text-purple-600 border-purple-200 text-lg"
-                  >
-                    {getOptionalTraitsMet(candidate)}/
-                    {getTotalOptionalTraits(candidate)} Optional
-                  </Badge>
+                    {getTotalOptionalTraits(candidate) > 0 && (
+                      <Badge
+                        variant="outline"
+                        className="text-purple-600 border-purple-200"
+                      >
+                        {getOptionalTraitsMet(candidate)}/
+                        {getTotalOptionalTraits(candidate)} Optional
+                      </Badge>
+                    )}
+                  </>
+                ) : (
+                  // Skeleton badges
+                  <div className="flex items-center gap-2">
+                    <div className="h-5 w-24 bg-purple-100/50 animate-pulse rounded-full" />
+                    <div className="h-5 w-24 bg-purple-100/50 animate-pulse rounded-full" />
+                  </div>
                 )}
               </div>
             </div>
-            {candidate.sections?.map((section, index) => (
-              <TraitEvaluationItem key={index} evaluation={section} />
-            ))}
+            <Card className="border-purple-100/50">
+              <div className="p-4 space-y-3">
+                {candidate.sections
+                  ? candidate.sections.map((section, index) => (
+                      <TraitEvaluationItem key={index} evaluation={section} />
+                    ))
+                  : // Skeleton loading states
+                    Array.from({ length: 5 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between animate-pulse"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="h-7 w-32 bg-purple-100/50 rounded-md" />
+                        </div>
+                        <div className="h-4 w-4 bg-purple-100/50 rounded-full" />
+                      </div>
+                    ))}
+              </div>
+            </Card>
           </div>
 
           {/* Summary Section */}
-          {(candidate.summary || candidate.sections) && (
+          {(candidate.summary || candidate.sections || !candidate) && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-purple-900">
-                  Summary
-                </h3>
-                {candidate.sections && (
+                <h3 className="text-lg font-medium text-purple-900">Summary</h3>
+                {candidate.sections ? (
                   <div className="flex items-center gap-2">
                     <Badge
                       variant={getFitLabel(candidate.fit).variant}
                       className={cn(
-                        "font-medium hover:bg-inherit text-lg",
-                        candidate.fit && candidate.fit >= 0.8
+                        "font-medium hover:bg-inherit",
+                        candidate.fit && candidate.fit >= 4
                           ? "bg-green-100 text-green-700 hover:bg-green-100 border-green-200"
-                          : candidate.fit && candidate.fit >= 0.6
+                          : candidate.fit && candidate.fit >= 3
                           ? "bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200"
-                          : candidate.fit && candidate.fit >= 0.4
+                          : candidate.fit && candidate.fit >= 2
                           ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-200"
                           : "bg-red-100 text-red-700 hover:bg-red-100 border-red-200"
                       )}
@@ -572,23 +796,36 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                       {getFitLabel(candidate.fit).label}
                     </Badge>
                   </div>
+                ) : (
+                  // Skeleton badge
+                  <div className="h-5 w-20 bg-purple-100/50 animate-pulse rounded-full" />
                 )}
               </div>
-              {candidate.summary && (
-                <Card className="text-card-foreground shadow border-purple-100/50">
-                  <div className="p-4">
-                    <p className="text-lg leading-relaxed">
+              <Card className="border-purple-100/50">
+                <div className="p-4">
+                  {candidate.summary ? (
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       {candidate.summary}
                     </p>
-                  </div>
-                </Card>
-              )}
+                  ) : (
+                    // Skeleton loading state for summary text
+                    <div className="space-y-2">
+                      <div className="h-4 bg-purple-100/50 animate-pulse rounded w-full" />
+                      <div className="h-4 bg-purple-100/50 animate-pulse rounded w-11/12" />
+                      <div className="h-4 bg-purple-100/50 animate-pulse rounded w-4/5" />
+                      <div className="h-4 bg-purple-100/50 animate-pulse rounded w-9/12" />
+                    </div>
+                  )}
+                </div>
+              </Card>
             </div>
           )}
 
+          <h3 className="text-lg font-medium text-purple-900">Profile</h3>
+
           {candidate.profile?.career_metrics && (
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-purple-900 mb-4 flex items-center gap-2">
+              <h3 className="text-base font-medium text-purple-900 mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
                 Career Metrics
               </h3>
@@ -597,22 +834,21 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                   {/* Career Tags */}
                   {candidate.profile.career_metrics.career_tags &&
                     candidate.profile.career_metrics.career_tags.length > 0 && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-lg text-purple-800">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1.5 text-sm text-purple-800">
                           <Tags className="h-5 w-5" />
                           <span>Career Insights</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {candidate.profile.career_metrics.career_tags.map(
                             (tag, index) => (
-                              <span
+                              <Badge
                                 key={index}
-                                className={`px-3 py-1.5 rounded-full text-lg font-medium ${getCareerTagStyle(
-                                  tag
-                                )}`}
+                                variant="secondary"
+                                className={getCareerTagStyle(tag)}
                               >
                                 {tag}
-                              </span>
+                              </Badge>
                             )
                           )}
                         </div>
@@ -622,22 +858,21 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                   {candidate.profile.career_metrics.experience_tags &&
                     candidate.profile.career_metrics.experience_tags.length >
                       0 && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-lg text-purple-800">
-                          <Tags className="h-5 w-5" />
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1.5 text-sm text-purple-800">
+                          <Tags className="h-4 w-4" />
                           <span>Experience Insights</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {candidate.profile.career_metrics.experience_tags.map(
                             (tag, index) => (
-                              <span
+                              <Badge
                                 key={index}
-                                className={`px-3 py-1.5 rounded-full text-lg font-medium ${getCareerTagStyle(
-                                  tag
-                                )}`}
+                                variant="secondary"
+                                className={getCareerTagStyle(tag)}
                               >
                                 {tag}
-                              </span>
+                              </Badge>
                             )
                           )}
                         </div>
@@ -645,275 +880,414 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
                     )}
 
                   {/* Key Metrics */}
-                  <div className="grid grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-lg text-purple-800">
-                        <Timer className="h-5 w-5" />
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-sm text-purple-800">
+                        <Timer className="h-4 w-4" />
                         <span>Total Experience</span>
                       </div>
-                      <p className="text-xl font-semibold text-purple-900">
-                        {calculateTenure(
-                          new Date(
-                            Date.now() -
-                              (candidate.profile.career_metrics
-                                .total_experience_months || 0) *
-                                30 *
-                                24 *
-                                60 *
-                                60 *
-                                1000
-                          ).toISOString(),
-                          new Date().toISOString()
+                      <p className="text-lg font-semibold text-purple-900">
+                        {formatDuration(
+                          candidate.profile.career_metrics
+                            .total_experience_months
                         )}
                       </p>
                     </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-lg text-purple-800">
-                        <Building2 className="h-5 w-5" />
-                        <span>Avg. Tenure</span>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-sm text-purple-800">
+                        <Building2 className="h-4 w-4" />
+                        <span>Average Tenure</span>
                       </div>
-                      <p className="text-xl font-semibold text-purple-900">
-                        {calculateTenure(
-                          new Date(
-                            Date.now() -
-                              (candidate.profile.career_metrics
-                                .average_tenure_months || 0) *
-                                30 *
-                                24 *
-                                60 *
-                                60 *
-                                1000
-                          ).toISOString(),
-                          new Date().toISOString()
+                      <p className="text-lg font-semibold text-purple-900">
+                        {formatDuration(
+                          candidate.profile.career_metrics.average_tenure_months
                         )}
                       </p>
                     </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-lg text-purple-800">
-                        <Timer className="h-5 w-5" />
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-sm text-purple-800">
+                        <Timer className="h-4 w-4" />
                         <span>Current Tenure</span>
                       </div>
-                      <p className="text-xl font-semibold text-purple-900">
-                        {calculateTenure(
-                          new Date(
-                            Date.now() -
-                              (candidate.profile.career_metrics
-                                .current_tenure_months || 0) *
-                                30 *
-                                24 *
-                                60 *
-                                60 *
-                                1000
-                          ).toISOString(),
-                          new Date().toISOString()
+                      <p className="text-lg font-semibold text-purple-900">
+                        {formatDuration(
+                          candidate.profile.career_metrics.current_tenure_months
                         )}
                       </p>
                     </div>
                   </div>
-
-                  {/* Tech Stacks */}
-                  {candidate.profile.career_metrics.tech_stacks &&
-                    candidate.profile.career_metrics.tech_stacks.length > 0 && (
-                      <div className="space-y-3 pt-4 border-t border-purple-200">
-                        <div className="flex items-center gap-2 text-base text-purple-800">
-                          <Code2 className="h-5 w-5" />
-                          <span>Tech Stacks</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {candidate.profile.career_metrics.tech_stacks.map(
-                            (stack, index) => (
-                              <span
-                                key={index}
-                                className="px-3 py-1.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-base"
-                              >
-                                {stack}
-                              </span>
-                            )
-                          )}
-                        </div>
-                      </div>
-                    )}
                 </div>
               </div>
             </div>
           )}
 
           {candidate.profile?.experiences && (
-            <div>
-              <h3 className="text-xl font-semibold text-purple-900 mb-4 flex items-center gap-2">
-                <BriefcaseIcon className="w-5 h-5" />
+            <div className="space-y-4">
+              <h4 className="text-base font-medium text-purple-800/90 flex items-center gap-2">
+                <BriefcaseIcon className="h-4 w-4" />
                 Experience
-              </h3>
+              </h4>
               <div className="space-y-4">
-                {candidate.profile.experiences.map((experience, index) => (
-                  <div
-                    key={index}
-                    className="p-5 border bg-card text-card-foreground shadow border-purple-100/50 rounded-lg transition-all"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="text-lg font-medium text-purple-900">
-                          {experience.title}
-                        </h4>
-                        {experience.company_linkedin_profile_url ? (
-                          <a
-                            href={experience.company_linkedin_profile_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-base text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
-                          >
-                            {experience.company}
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        ) : (
-                          <p className="text-base text-purple-700">
-                            {experience.company}
-                          </p>
-                        )}
-                        <div className="flex items-center justify-between mt-1">
-                          <p className="text-base text-purple-600">
-                            {formatDate(experience.starts_at)} -{" "}
-                            {experience.ends_at
-                              ? formatDate(experience.ends_at)
-                              : "Present"}
-                          </p>
-                          <span className="text-base bg-purple-100 text-purple-700 px-3 py-1 rounded-full ml-3">
-                            {calculateTenure(
-                              experience.starts_at,
-                              experience.ends_at
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                      {experience.funding_stages_during_tenure &&
-                        formatFundingStages(
-                          experience.funding_stages_during_tenure
-                        ) && (
-                          <span className="text-base bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full">
-                            {formatFundingStages(
-                              experience.funding_stages_during_tenure
-                            )}
-                          </span>
-                        )}
-                    </div>
-                    {experience.description && (
-                      <div className="space-y-4 pt-3 border-t border-purple-200 mt-4">
-                        <p className="text-lg">{experience.description}</p>
-                        {experience.summarized_job_description && (
-                          <div className="mt-4 p-4 bg-purple-50 rounded-lg">
-                            <p className="text-lg font-medium text-purple-900 mb-4">
-                              Generated Job Description
-                            </p>
-                            <div className="space-y-5">
-                              <div>
-                                <h4 className="font-medium text-lg text-purple-800 mb-2">
-                                  Role Summary:
-                                </h4>
-                                <p className="text-base text-purple-600">
-                                  {
-                                    experience.summarized_job_description
-                                      .role_summary
-                                  }
-                                </p>
-                              </div>
-
-                              <div>
-                                <h4 className="font-medium text-base text-purple-800 mb-2">
-                                  Skills:
-                                </h4>
-                                <ul className="list-disc list-inside text-base text-purple-600 space-y-1.5 ml-2">
-                                  {experience.summarized_job_description.skills?.map(
-                                    (skill, idx) => (
-                                      <li key={idx}>{skill}</li>
-                                    )
-                                  )}
-                                </ul>
-                              </div>
-
-                              <div>
-                                <h4 className="font-medium text-base text-purple-800 mb-2">
-                                  Requirements:
-                                </h4>
-                                <ul className="list-disc list-inside text-base text-purple-600 space-y-1.5 ml-2">
-                                  {experience.summarized_job_description.requirements?.map(
-                                    (req, idx) => (
-                                      <li key={idx}>{req}</li>
-                                    )
-                                  )}
-                                </ul>
-                              </div>
+                {groupExperiences(candidate.profile.experiences).map(
+                  (exp, index) => (
+                    <Card key={index} className="border-purple-100/50">
+                      <div className="p-4 space-y-3">
+                        {exp.roles.length === 1 ? (
+                          // Single role experience
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="font-medium text-base text-purple-900">
+                                {exp.roles[0].title}
+                              </p>
+                              <Badge
+                                variant="outline"
+                                className="text-xs text-purple-600 border-purple-200"
+                              >
+                                {calculateTenure(
+                                  exp.roles[0].starts_at,
+                                  exp.roles[0].ends_at || null
+                                )}
+                              </Badge>
                             </div>
-                            {experience.summarized_job_description.sources
-                              .length > 0 && (
-                              <div className="mt-4 pt-3 border-t border-purple-200">
-                                <p className="text-base text-purple-700 mb-2">
-                                  Sources:
+                            {exp.company_linkedin_profile_url ? (
+                              <a
+                                href={exp.company_linkedin_profile_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-purple-700/90 hover:text-purple-900 hover:underline inline-flex items-center gap-1"
+                              >
+                                {exp.company}
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            ) : (
+                              <p className="text-sm text-purple-700/90">
+                                {exp.company}
+                              </p>
+                            )}
+                            <p className="text-xs text-purple-600/75">
+                              {formatDate(exp.roles[0].starts_at)} -{" "}
+                              {exp.roles[0].ends_at
+                                ? formatDate(exp.roles[0].ends_at)
+                                : "Present"}
+                            </p>
+                            {exp.funding_stages_during_tenure &&
+                              formatFundingStages(
+                                exp.funding_stages_during_tenure
+                              ) && (
+                                <Badge
+                                  variant="secondary"
+                                  className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 mt-1"
+                                >
+                                  {formatFundingStages(
+                                    exp.funding_stages_during_tenure
+                                  )}
+                                </Badge>
+                              )}
+                            {exp.roles[0].description && (
+                              <div className="space-y-3 pt-2 border-t border-purple-100/50">
+                                <p className="text-sm text-muted-foreground">
+                                  {exp.roles[0].description}
                                 </p>
-                                <div className="space-y-1.5">
-                                  {experience.summarized_job_description.sources.map(
-                                    (source, idx) => (
-                                      <a
-                                        key={idx}
-                                        href={source}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="block text-base text-blue-600 hover:text-blue-800 hover:underline truncate"
-                                      >
-                                        {source}
-                                      </a>
-                                    )
+                              </div>
+                            )}
+                            {exp.roles[0].summarized_job_description && (
+                              <div className="mt-3 p-3 bg-purple-50 rounded-md">
+                                <p className="text-sm text-gray-700 font-medium">
+                                  Generated Job Description
+                                </p>
+                                <div className="space-y-4">
+                                  <div>
+                                    <h4 className="font-medium text-xs">
+                                      Role Summary:
+                                    </h4>
+                                    <p className="text-gray-600 text-xs">
+                                      {
+                                        exp.roles[0].summarized_job_description
+                                          .role_summary
+                                      }
+                                    </p>
+                                  </div>
+
+                                  {exp.roles[0].summarized_job_description
+                                    .skills && (
+                                    <div>
+                                      <h4 className="font-medium text-xs">
+                                        Skills:
+                                      </h4>
+                                      <ul className="list-disc list-inside text-gray-600 text-xs pl-2 space-y-1">
+                                        {exp.roles[0].summarized_job_description.skills.map(
+                                          (skill: string, idx: number) => (
+                                            <li key={idx}>{skill}</li>
+                                          )
+                                        )}
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                  {exp.roles[0].summarized_job_description
+                                    .requirements && (
+                                    <div>
+                                      <h4 className="font-medium text-xs">
+                                        Requirements:
+                                      </h4>
+                                      <ul className="list-disc list-inside text-gray-600 text-xs pl-2 space-y-1">
+                                        {exp.roles[0].summarized_job_description.requirements.map(
+                                          (req: string, idx: number) => (
+                                            <li key={idx}>{req}</li>
+                                          )
+                                        )}
+                                      </ul>
+                                    </div>
                                   )}
                                 </div>
+                                {exp.roles[0].summarized_job_description
+                                  .sources &&
+                                  exp.roles[0].summarized_job_description
+                                    .sources.length > 0 && (
+                                    <div className="mt-2 pt-2 border-t border-purple-100">
+                                      <p className="text-xs text-gray-500">
+                                        Sources:
+                                      </p>
+                                      <div className="mt-1 space-y-1">
+                                        {exp.roles[0].summarized_job_description.sources.map(
+                                          (source: string, idx: number) => (
+                                            <a
+                                              key={idx}
+                                              href={source}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="block text-xs text-purple-600 hover:text-purple-800 hover:underline truncate text-nowrap w-full"
+                                            >
+                                              {source}
+                                            </a>
+                                          )
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
                               </div>
                             )}
                           </div>
+                        ) : (
+                          // Multiple roles experience
+                          <>
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <div>
+                                  {exp.company_linkedin_profile_url ? (
+                                    <a
+                                      href={exp.company_linkedin_profile_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-base font-medium text-purple-900 hover:text-purple-900 hover:underline inline-flex items-center gap-1"
+                                    >
+                                      {exp.company}
+                                      <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                  ) : (
+                                    <p className="text-base font-medium text-purple-900">
+                                      {exp.company}
+                                    </p>
+                                  )}
+                                </div>
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs text-purple-600 border-purple-200"
+                                >
+                                  {calculateTenure(
+                                    exp.overall_start,
+                                    exp.overall_end || null
+                                  )}
+                                </Badge>
+                              </div>
+                              {exp.funding_stages_during_tenure &&
+                                formatFundingStages(
+                                  exp.funding_stages_during_tenure
+                                ) && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 mt-1"
+                                  >
+                                    {formatFundingStages(
+                                      exp.funding_stages_during_tenure
+                                    )}
+                                  </Badge>
+                                )}
+                            </div>
+
+                            <div className="space-y-4 pt-2">
+                              {exp.roles.map((role, roleIndex) => (
+                                <div
+                                  key={roleIndex}
+                                  className={`${
+                                    roleIndex !== 0
+                                      ? "border-t border-purple-100/50 pt-4"
+                                      : ""
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between mb-1">
+                                    <p className="font-medium text-sm text-purple-800">
+                                      {role.title}
+                                    </p>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs text-purple-600/75 border-purple-200/75"
+                                    >
+                                      {calculateTenure(
+                                        role.starts_at,
+                                        role.ends_at || null
+                                      )}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-xs text-purple-600/75">
+                                    {formatDate(role.starts_at)} -{" "}
+                                    {role.ends_at
+                                      ? formatDate(role.ends_at)
+                                      : "Present"}
+                                  </p>
+                                  {role.description && (
+                                    <div className="mt-2">
+                                      <p className="text-sm text-muted-foreground">
+                                        {role.description}
+                                      </p>
+                                    </div>
+                                  )}
+                                  {role.summarized_job_description && (
+                                    <div className="mt-3 p-3 bg-purple-50 rounded-md">
+                                      <p className="text-sm text-gray-700 font-medium">
+                                        Generated Job Description
+                                      </p>
+                                      <div className="space-y-4">
+                                        <div>
+                                          <h4 className="font-medium text-xs">
+                                            Role Summary:
+                                          </h4>
+                                          <p className="text-gray-600 text-xs">
+                                            {
+                                              role.summarized_job_description
+                                                .role_summary
+                                            }
+                                          </p>
+                                        </div>
+
+                                        {role.summarized_job_description
+                                          .skills && (
+                                          <div>
+                                            <h4 className="font-medium text-xs">
+                                              Skills:
+                                            </h4>
+                                            <ul className="list-disc list-inside text-gray-600 text-xs pl-2 space-y-1">
+                                              {role.summarized_job_description.skills.map(
+                                                (
+                                                  skill: string,
+                                                  idx: number
+                                                ) => (
+                                                  <li key={idx}>{skill}</li>
+                                                )
+                                              )}
+                                            </ul>
+                                          </div>
+                                        )}
+
+                                        {role.summarized_job_description
+                                          .requirements && (
+                                          <div>
+                                            <h4 className="font-medium text-xs">
+                                              Requirements:
+                                            </h4>
+                                            <ul className="list-disc list-inside text-gray-600 text-xs pl-2 space-y-1">
+                                              {role.summarized_job_description.requirements.map(
+                                                (req: string, idx: number) => (
+                                                  <li key={idx}>{req}</li>
+                                                )
+                                              )}
+                                            </ul>
+                                          </div>
+                                        )}
+                                      </div>
+                                      {role.summarized_job_description
+                                        .sources &&
+                                        role.summarized_job_description.sources
+                                          .length > 0 && (
+                                          <div className="mt-2 pt-2 border-t border-purple-100">
+                                            <p className="text-xs text-gray-500">
+                                              Sources:
+                                            </p>
+                                            <div className="mt-1 space-y-1">
+                                              {role.summarized_job_description.sources.map(
+                                                (
+                                                  source: string,
+                                                  idx: number
+                                                ) => (
+                                                  <a
+                                                    key={idx}
+                                                    href={source}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="block text-xs text-purple-600 hover:text-purple-800 hover:underline truncate text-nowrap w-full"
+                                                  >
+                                                    {source}
+                                                  </a>
+                                                )
+                                              )}
+                                            </div>
+                                          </div>
+                                        )}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </>
                         )}
                       </div>
-                    )}
-                  </div>
-                ))}
+                    </Card>
+                  )
+                )}
               </div>
             </div>
           )}
 
           {candidate.profile?.education &&
             candidate.profile.education.length > 0 && (
-              <div>
-                <h3 className="text-xl font-semibold text-purple-900 mb-4 flex items-center gap-2">
-                  <GraduationCap className="w-5 h-5" />
+              <div className="space-y-4">
+                <h4 className="text-base font-medium text-purple-800/90 flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4" />
                   Education
-                </h3>
+                </h4>
                 <div className="space-y-4">
                   {candidate.profile.education.map((edu, index) => (
-                    <div
-                      key={index}
-                      className="p-5 border bg-card text-card-foreground shadow border-purple-100/50 rounded-lg transition-all"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-lg font-medium text-purple-900">
-                          {edu.school}
+                    <Card key={index} className="border-purple-100/50">
+                      <div className="p-4 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-medium text-purple-900 text-sm">
+                            {edu.school}
+                          </p>
+                          {edu.university_tier &&
+                            edu.university_tier !== "other" && (
+                              <Badge
+                                variant="secondary"
+                                className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                              >
+                                {edu.university_tier
+                                  .replace("_", " ")
+                                  .toUpperCase()}
+                              </Badge>
+                            )}
+                        </div>
+                        <p className="text-sm text-purple-700/90">
+                          {edu.degree_name && edu.field_of_study
+                            ? `${edu.degree_name} in ${edu.field_of_study}`
+                            : edu.degree_name || edu.field_of_study}
                         </p>
-                        {edu.university_tier &&
-                          edu.university_tier !== "other" && (
-                            <span className="text-base bg-blue-50 text-blue-700 px-3 py-1 rounded-full">
-                              {edu.university_tier
-                                .replace("_", " ")
-                                .toUpperCase()}
-                            </span>
-                          )}
+                        {edu.starts_at && edu.ends_at && (
+                          <p className="text-xs text-purple-600/75">
+                            {formatDate(edu.starts_at)} -{" "}
+                            {formatDate(edu.ends_at)}
+                          </p>
+                        )}
                       </div>
-                      <p className="text-base text-purple-700 mt-1">
-                        {edu.degree_name && edu.field_of_study
-                          ? `${edu.degree_name} in ${edu.field_of_study}`
-                          : edu.degree_name || edu.field_of_study}
-                      </p>
-                      {edu.starts_at && edu.ends_at && (
-                        <p className="text-base text-purple-600 mt-1">
-                          {formatDate(edu.starts_at)} -{" "}
-                          {formatDate(edu.ends_at)}
-                        </p>
-                      )}
-                    </div>
+                    </Card>
                   ))}
                 </div>
               </div>
@@ -921,35 +1295,62 @@ export const CandidateSidebar: React.FC<CandidateSidebarProps> = ({
 
           {candidate.citations && candidate.citations.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-purple-900 mb-4 flex items-center gap-2">
-                <Link className="w-5 h-5" />
-                Sources
-              </h3>
+              <h3 className="text-lg font-medium text-purple-900">Sources</h3>
               <div className="space-y-4">
-                {candidate.citations.map((citation, index) => (
-                  <div
-                    key={index}
-                    className="p-5 border bg-card text-card-foreground shadow border-purple-100/50 rounded-lg transition-all"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <a
-                        href={citation.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-base text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
-                      >
-                        {new URL(citation.url).hostname}
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                      <span className="text-base text-purple-600">
-                        Confidence: {Math.round(citation.confidence * 100)}%
-                      </span>
-                    </div>
-                    <p className="text-base text-purple-600">
-                      {citation.distilled_content}
-                    </p>
-                  </div>
-                ))}
+                {candidate.citations.map((citation, index) => {
+                  const citationWithIndex = { ...citation, index: index + 1 };
+                  return (
+                    <Card
+                      key={index}
+                      ref={(el) => {
+                        if (el)
+                          citationRefs.current[citationWithIndex.index] = el;
+                      }}
+                      className="overflow-hidden transition-all duration-300 hover:shadow-lg scroll-mt-6"
+                    >
+                      <CardHeader className="bg-gradient-to-r from-purple-100 to-purple-50 p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-200 text-purple-700 font-semibold text-sm">
+                            {citationWithIndex.index}
+                          </div>
+                          <div>
+                            <CardTitle className="text-sm font-medium text-purple-900">
+                              {new URL(citationWithIndex.url).hostname}
+                            </CardTitle>
+                            <a
+                              href={citationWithIndex.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-purple-600 hover:text-purple-800 transition-colors flex items-center mt-1"
+                            >
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              Visit source
+                            </a>
+                          </div>
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "px-2 py-1 text-xs font-medium",
+                            citationWithIndex.confidence >= 0.8
+                              ? "bg-green-100 text-green-800 border-green-200"
+                              : citationWithIndex.confidence >= 0.6
+                              ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                              : "bg-red-100 text-red-800 border-red-200"
+                          )}
+                        >
+                          {Math.round(citationWithIndex.confidence * 100)}%
+                          confidence
+                        </Badge>
+                      </CardHeader>
+                      <CardContent className="p-4">
+                        <p className="text-sm text-gray-600 leading-relaxed">
+                          {citationWithIndex.distilled_content}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           )}

@@ -5,14 +5,14 @@ import { useUrlWatcher } from "../../hooks/useUrlWatcher";
 import { useSettings } from "../../contexts/SettingsContext";
 import JobsActionPanel from "./JobsActionPanel";
 import type { Candidate } from "../../types";
-const SELECTED_JOB_KEY = "styx-selected-job-id";
-
 interface GetCandidateResponse {
   success: boolean;
   candidate: Candidate | null;
 }
 
-const SingleProfileView: React.FC = () => {
+const SELECTED_JOB_KEY = "styx-selected-job-id";
+
+const RecruiterSingleProfileView: React.FC = () => {
   const {
     jobs,
     loading,
@@ -26,7 +26,6 @@ const SingleProfileView: React.FC = () => {
 
   const { autoMode } = useSettings();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [useSearchMode, setUseSearchMode] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>(() => {
     // Initialize with saved job ID if it exists and is valid
     const savedJobId = localStorage.getItem(SELECTED_JOB_KEY);
@@ -37,9 +36,7 @@ const SingleProfileView: React.FC = () => {
   const [addingCandidateId, setAddingCandidateId] = useState<string | null>(
     null
   );
-  const [existingCandidate, setExistingCandidate] = useState<Candidate | null>(
-    null
-  );
+  const [existingCandidate, setExistingCandidate] = useState<boolean>(false);
 
   // Add URL watcher to reset state when profile changes
   useUrlWatcher(() => {
@@ -47,12 +44,12 @@ const SingleProfileView: React.FC = () => {
       setAddedJobs(new Set());
       setLoadingJobs(new Set());
       setAddingCandidateId(null);
-      setExistingCandidate(null);
+      setExistingCandidate(false);
 
       // Auto-add candidate if auto mode is enabled and we have a selected job
       if (autoMode && selectedJobId) {
         console.log("Adding candidate to job", selectedJobId);
-        void handleCreateCandidate(selectedJobId);
+        handleCreateCandidate(selectedJobId);
       }
     }
   });
@@ -67,33 +64,35 @@ const SingleProfileView: React.FC = () => {
     }
   }, [loading, jobs]);
 
-  const getProfileUrl = () => {
-    if (useSearchMode) {
-      const profileLink = document.querySelector('a[href*="linkedin.com/in/"]');
-      const href = profileLink?.getAttribute("href");
-      if (!href) return null;
+  const getProfileUrl = async () => {
+    // Try up to 5 times with a 1 second delay between attempts
+    for (let attempt = 0; attempt < 5; attempt++) {
+      // First try to get the URL from the public profile link in the hoverable content
+      const publicProfileLink = document.querySelector(
+        "a[data-test-public-profile-link]"
+      );
+      if (
+        publicProfileLink instanceof HTMLAnchorElement &&
+        publicProfileLink.href
+      ) {
+        return publicProfileLink.href;
+      }
 
-      const match = href.match(/\/in\/([^/?]+)/);
-      if (!match) return null;
-
-      return `https://www.linkedin.com/in/${match[1]}`;
+      // If not found, wait 1 second before trying again
+      if (attempt < 4) {
+        // Don't wait on the last attempt
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
     }
 
-    const path = window.location.pathname;
-    const match = path.match(/\/in\/([^/?]+)/);
-    if (!match) return null;
-
-    return `https://www.linkedin.com/in/${match[1]}`;
+    return null;
   };
 
-  const getProfileId = () => {
-    const profileLink = document.querySelector('a[href*="linkedin.com/in/"]');
-    const href = profileLink?.getAttribute("href");
-    if (!href) return null;
-
-    const match = href.match(/\/in\/([^/?]+)/);
+  const getProfileId = async () => {
+    const url = await getProfileUrl();
+    if (!url) return null;
+    const match = url.match(/\/in\/([^/?]+)/);
     if (!match) return null;
-
     return match[1];
   };
 
@@ -103,7 +102,7 @@ const SingleProfileView: React.FC = () => {
       setIsProcessing(true);
 
       // Get the profile ID first
-      const profileId = getProfileId();
+      const profileId = await getProfileId();
       if (!profileId) {
         setError("Could not determine profile ID");
         return;
@@ -116,8 +115,7 @@ const SingleProfileView: React.FC = () => {
       )) as unknown as GetCandidateResponse;
       if (response?.success && response?.candidate) {
         // Candidate exists, show the sidebar
-        console.log("existingCandidate", existingCandidate);
-        setExistingCandidate(response.candidate);
+        setExistingCandidate(true);
         setAddingCandidateId(profileId);
         setAddedJobs((prev) => new Set([...prev, jobId]));
         setIsProcessing(false);
@@ -130,7 +128,7 @@ const SingleProfileView: React.FC = () => {
       }
 
       // If candidate doesn't exist, create them
-      const profileUrl = getProfileUrl();
+      const profileUrl = await getProfileUrl();
       if (!profileUrl) {
         setError("Could not find a valid LinkedIn profile URL");
         return;
@@ -159,7 +157,7 @@ const SingleProfileView: React.FC = () => {
               clearInterval(pollInterval);
               setAddingCandidateId(profileId);
               setAddedJobs((prev) => new Set([...prev, jobId]));
-              setExistingCandidate(pollResponse.candidate);
+              setExistingCandidate(true);
               setIsProcessing(false);
               setLoadingJobs((prev) => {
                 const newSet = new Set(prev);
@@ -235,17 +233,16 @@ const SingleProfileView: React.FC = () => {
       isAdded={(jobId) => addedJobs.has(jobId)}
       isLoading={(jobId) => loadingJobs.has(jobId)}
       isProcessing={isProcessing}
-      useSearchMode={useSearchMode}
-      onSearchModeChange={setUseSearchMode}
+      useSearchMode={false}
+      onSearchModeChange={() => {}}
       enableAddPage={false}
       enableAddNumber={false}
       enableAddSelected={false}
       maxPerPage={1}
       isSingleMode={true}
       addingCandidateId={addingCandidateId}
-      existingCandidate={existingCandidate || undefined}
     />
   );
 };
 
-export default SingleProfileView;
+export default RecruiterSingleProfileView;

@@ -3,14 +3,19 @@ import { Toaster } from "react-hot-toast";
 import SingleProfileView from "./components/Jobs/SingleProfileView";
 import SearchView from "./components/Jobs/SearchView";
 import RecruiterSearchView from "./components/Jobs/RecruiterSearchView";
+import RecruiterSingleProfileView from "./components/Jobs/RecruiterSingleProfileView";
 import CompanyView from "./components/Jobs/CompanyView";
 import FallbackView from "./components/Jobs/FallbackView";
+import { LayoutProvider } from "./contexts/LayoutContext";
+import { SettingsProvider } from "./contexts/SettingsContext";
 
 const PageLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <>
-    {children}
-    <Toaster position="bottom-right" />
-  </>
+  <SettingsProvider>
+    <LayoutProvider>
+      {children}
+      <Toaster position="bottom-right" />
+    </LayoutProvider>
+  </SettingsProvider>
 );
 
 const App: React.FC = () => {
@@ -65,6 +70,19 @@ const App: React.FC = () => {
     /\/talent\/hire\/[^/]+\/discover\/automatedSourcing/,
     /\/talent\/hire\/[^/]+\/manage/,
   ];
+
+  const recruiterProfilePath = [
+    /\/talent\/hire\/[^/]+\/discover\/recruiterSearch\/profile\/[^/?]+/,
+    /\/talent\/hire\/[^/]+\/manage\/all\/profile\/[^/?]+/,
+  ];
+
+  if (pathMatches(recruiterProfilePath)) {
+    return (
+      <PageLayout>
+        <RecruiterSingleProfileView />
+      </PageLayout>
+    );
+  }
 
   if (pathMatches(recruiterPaths)) {
     return (

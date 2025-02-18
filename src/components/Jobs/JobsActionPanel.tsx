@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { PlusCircle, Eye, Loader2, Check } from "lucide-react";
 import { useExtensionMode } from "../../hooks/useExtensionMode";
-import type { Job } from "../../types";
+import { useSettings } from "../../contexts/SettingsContext";
+import type { Job, Candidate } from "../../types";
 import {
   LoadingState,
   ErrorState,
@@ -14,6 +15,16 @@ import CandidatesList from "./CandidatesList";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipProvider,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { Label } from "@/components/ui/label";
+import { AddModeCandidateSidebar } from "../sidebar/AddModeCandidateSidebar";
+
 type Mode = "add" | "view";
 type AddMode = "page" | "number" | "selected";
 
@@ -25,7 +36,8 @@ interface JobsActionPanelProps {
     count?: number,
     selectedIds?: string[]
   ) => void;
-  onViewCandidates: (jobId: string, jobTitle: string) => void;
+  onViewCandidates: (jobId: string) => void;
+  onJobChange?: (jobId: string) => void;
   isAdded: (jobId: string) => boolean;
   isLoading: (jobId: string) => boolean;
   jobs: Job[];
@@ -47,6 +59,8 @@ interface JobsActionPanelProps {
   selectedCandidateIds?: string[];
   isSingleMode?: boolean;
   customAddMessage?: string;
+  addingCandidateId?: string | null;
+  existingCandidate?: Candidate;
 }
 
 const SELECTED_JOB_KEY = "styx-selected-job-id";
@@ -55,26 +69,28 @@ const ModeTabs: React.FC<{ mode: Mode; setMode: (mode: Mode) => void }> = ({
   mode,
   setMode,
 }) => (
-  <div className="border-t p-4">
-    <div className="flex justify-center gap-2">
-      <Button
-        variant={mode === "add" ? "default" : "outline"}
-        onClick={() => setMode("add")}
-        className="text-base"
+  <Tabs
+    value={mode}
+    onValueChange={(value) => setMode(value as Mode)}
+    className="w-full"
+  >
+    <TabsList className="grid w-full grid-cols-2 bg-transparent">
+      <TabsTrigger
+        value="add"
+        className="flex items-center justify-center data-[state=active]:text-purple-600"
       >
         <PlusCircle className="w-4 h-4 mr-2" />
-        Add Candidates
-      </Button>
-      <Button
-        variant={mode === "view" ? "default" : "outline"}
-        onClick={() => setMode("view")}
-        className="text-base"
+        Add
+      </TabsTrigger>
+      <TabsTrigger
+        value="view"
+        className="flex items-center justify-center data-[state=active]:text-purple-600"
       >
         <Eye className="w-4 h-4 mr-2" />
-        View Candidates
-      </Button>
-    </div>
-  </div>
+        View
+      </TabsTrigger>
+    </TabsList>
+  </Tabs>
 );
 
 const AddModeSelector: React.FC<{
@@ -91,7 +107,7 @@ const AddModeSelector: React.FC<{
   enableAddSelected,
 }) => (
   <div className="flex-1">
-    <label className="block text-lg font-semibold text-gray-700 mb-1">
+    <label className="block text-sm font-semibold text-gray-700 mb-1">
       Add Mode
     </label>
     <div className="flex gap-2">
@@ -99,7 +115,7 @@ const AddModeSelector: React.FC<{
         <Button
           variant={addMode === "page" ? "default" : "outline"}
           onClick={() => setAddMode("page")}
-          className="text-base"
+          className="text-xs"
         >
           Add Page
         </Button>
@@ -108,7 +124,7 @@ const AddModeSelector: React.FC<{
         <Button
           variant={addMode === "number" ? "default" : "outline"}
           onClick={() => setAddMode("number")}
-          className="text-base"
+          className="text-xs"
         >
           Add Number
         </Button>
@@ -117,7 +133,7 @@ const AddModeSelector: React.FC<{
         <Button
           variant={addMode === "selected" ? "default" : "outline"}
           onClick={() => setAddMode("selected")}
-          className="text-base"
+          className="text-xs"
         >
           Add Selected
         </Button>
@@ -132,10 +148,7 @@ const ProfileCountInput: React.FC<{
   maxPerPage: number;
 }> = ({ numProfiles, setNumProfiles, maxPerPage }) => (
   <div className="flex items-center gap-2">
-    <label
-      htmlFor="numProfiles"
-      className="text-base font-medium text-gray-700"
-    >
+    <label htmlFor="numProfiles" className="text-sm font-medium text-gray-700">
       Number of candidates:
     </label>
     <Input
@@ -176,7 +189,7 @@ const AddButton: React.FC<{
   <Button
     onClick={onClick}
     disabled={isProcessing || disabled}
-    className={`w-full text-base ${
+    className={`w-full text-xs ${
       isAdded ? "bg-green-600 hover:bg-green-700" : ""
     }`}
     variant="default"
@@ -205,6 +218,7 @@ const AddButton: React.FC<{
 const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
   onAddCandidate,
   onViewCandidates,
+  onJobChange,
   isAdded,
   jobs,
   loading,
@@ -220,8 +234,11 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
   selectedCandidateIds = [],
   isSingleMode = false,
   customAddMessage,
+  addingCandidateId,
+  existingCandidate,
 }) => {
   const { mode, setMode } = useExtensionMode();
+  const { autoMode, setAutoMode } = useSettings();
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>(() => {
     // Initialize with either external ID, saved ID, or undefined
     const savedJobId = localStorage.getItem(SELECTED_JOB_KEY);
@@ -241,8 +258,6 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
   const [numProfiles, setNumProfiles] = useState<number>(maxPerPage);
 
   const selectedJob = jobs.find((job) => job.id === selectedJobId);
-  const maxHeight =
-    mode === "view" && selectedJobId ? "calc(100vh-50px)" : "calc(100vh-100px)";
 
   const handleJobChange = (jobId: string) => {
     setSelectedJobId(jobId);
@@ -251,9 +266,12 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
     if (mode === "view") {
       const job = jobs.find((j) => j.id === jobId);
       if (job) {
-        onViewCandidates(jobId, job.job_title);
+        onViewCandidates(jobId);
       }
     }
+
+    // Call the onJobChange prop if provided
+    onJobChange?.(jobId);
   };
 
   const handleAdd = () => {
@@ -281,97 +299,153 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
     }
   };
 
-  return (
-    <ExtensionContainer maxHeight={maxHeight}>
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        {loading ? (
-          <LoadingState />
-        ) : error === "not_authenticated" ? (
-          <NotLoggedInState />
-        ) : error ? (
-          <ErrorState message={error} />
-        ) : jobs.length === 0 ? (
-          <NoJobsState />
-        ) : (
-          <div className="flex flex-col h-full">
-            <div className="flex-shrink-0 p-6 space-y-4">
-              <JobSelector
-                jobs={jobs}
-                selectedJob={selectedJob || null}
-                onJobChange={handleJobChange}
-                className="w-full text-base"
-              />
-            </div>
+  const enabledModesCount = [
+    enableAddPage,
+    enableAddNumber,
+    enableAddSelected,
+  ].filter(Boolean).length;
 
-            {mode === "view" && selectedJob && selectedJobId ? (
-              <div className="flex-1 bg-white">
-                <CandidatesList
-                  jobId={selectedJobId}
-                  jobTitle={selectedJob.job_title}
+  return (
+    <ExtensionContainer>
+      <div className="flex flex-col h-full">
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {loading ? (
+            <LoadingState />
+          ) : error === "not_authenticated" ? (
+            <NotLoggedInState />
+          ) : error ? (
+            <ErrorState message={error} />
+          ) : jobs.length === 0 ? (
+            <NoJobsState />
+          ) : (
+            <div className="flex flex-col h-full">
+              <div className="flex-shrink-0 p-4 space-y-4 bg-white">
+                <JobSelector
+                  jobs={jobs}
+                  selectedJob={selectedJob || null}
+                  onJobChange={handleJobChange}
+                  className="w-full text-xs"
                 />
               </div>
-            ) : mode === "add" ? (
-              selectedJob && selectedJobId ? (
-                <div className="p-6 space-y-4">
-                  {customAddMessage ? (
-                    <div className="text-gray-600 text-base text-center p-4">
-                      {customAddMessage}
-                    </div>
-                  ) : (
-                    <>
-                      {!isSingleMode && (
-                        <AddModeSelector
-                          addMode={addMode}
-                          setAddMode={setAddMode}
-                          enableAddPage={enableAddPage}
-                          enableAddNumber={enableAddNumber}
-                          enableAddSelected={enableAddSelected}
-                        />
-                      )}
 
-                      {!isSingleMode && addMode === "number" && (
-                        <ProfileCountInput
-                          numProfiles={numProfiles}
-                          setNumProfiles={setNumProfiles}
-                          maxPerPage={maxPerPage}
-                        />
-                      )}
-
-                      {onSearchModeChange && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg font-semibold text-gray-700">
-                            Search Mode
-                          </span>
-                          <Switch
-                            checked={useSearchMode || false}
-                            onCheckedChange={onSearchModeChange}
-                            disabled={isProcessing}
+              {mode === "view" && selectedJob ? (
+                <div className="flex-1 bg-white">
+                  <CandidatesList selectedJob={selectedJob} filterTraits={[]} />
+                </div>
+              ) : mode === "view" ? (
+                <div className="text-gray-600 text-xs text-center p-4">
+                  Select a job to start viewing candidates
+                </div>
+              ) : mode === "add" ? (
+                selectedJob && selectedJobId ? (
+                  <div className="p-4 space-y-4 bg-white">
+                    {customAddMessage ? (
+                      <div className="text-gray-600 text-xs text-center p-4">
+                        {customAddMessage}
+                      </div>
+                    ) : (
+                      <>
+                        {!isSingleMode && enabledModesCount >= 2 && (
+                          <AddModeSelector
+                            addMode={addMode}
+                            setAddMode={setAddMode}
+                            enableAddPage={enableAddPage}
+                            enableAddNumber={enableAddNumber}
+                            enableAddSelected={enableAddSelected}
                           />
-                        </div>
-                      )}
+                        )}
 
-                      <AddButton
-                        onClick={handleAdd}
-                        disabled={isProcessing || isAdded(selectedJobId)}
-                        isProcessing={isProcessing}
-                        isSingleMode={isSingleMode}
-                        addMode={addMode}
-                        numProfiles={numProfiles}
-                        isAdded={isAdded(selectedJobId)}
-                      />
-                    </>
-                  )}
-                </div>
-              ) : (
-                <div className="text-gray-600 text-base text-center p-4">
-                  Select a job to start adding candidates
-                </div>
-              )
-            ) : null}
-          </div>
-        )}
+                        {!isSingleMode && addMode === "number" && (
+                          <ProfileCountInput
+                            numProfiles={numProfiles}
+                            setNumProfiles={setNumProfiles}
+                            maxPerPage={maxPerPage}
+                          />
+                        )}
+
+                        {onSearchModeChange && (
+                          <TooltipProvider delayDuration={100}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center space-x-2">
+                                  <Switch
+                                    id="search-mode"
+                                    checked={!!useSearchMode}
+                                    onCheckedChange={onSearchModeChange}
+                                  />
+                                  <Label htmlFor="search-mode">
+                                    Search Mode
+                                  </Label>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="w-48">
+                                When enabled, searches through candidate
+                                profiles and their previous jobs for better
+                                matches, but takes longer to process
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+
+                        {isSingleMode && (
+                          <TooltipProvider delayDuration={100}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center space-x-2">
+                                  <Switch
+                                    id="auto-mode"
+                                    checked={autoMode}
+                                    onCheckedChange={setAutoMode}
+                                  />
+                                  <Label htmlFor="auto-mode">Auto Mode</Label>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="w-48">
+                                When enabled, candidates will be automatically
+                                added to the selected job when viewing their
+                                profile
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+
+                        <AddButton
+                          onClick={handleAdd}
+                          disabled={isProcessing || isAdded(selectedJobId)}
+                          isProcessing={isProcessing}
+                          isSingleMode={isSingleMode}
+                          addMode={addMode}
+                          numProfiles={numProfiles}
+                          isAdded={isAdded(selectedJobId)}
+                        />
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-gray-600 text-xs text-center p-4">
+                    Select a job to start adding candidates
+                  </div>
+                )
+              ) : null}
+            </div>
+          )}
+        </div>
+        {!loading &&
+          error !== "not_authenticated" &&
+          !error &&
+          jobs.length > 0 && (
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-2">
+              <ModeTabs mode={mode} setMode={setMode} />
+            </div>
+          )}
       </div>
-      <ModeTabs mode={mode} setMode={setMode} />
+      {addingCandidateId && selectedJobId && (
+        <AddModeCandidateSidebar
+          candidateId={addingCandidateId}
+          jobId={selectedJobId}
+          existingCandidate={existingCandidate}
+        />
+      )}
     </ExtensionContainer>
   );
 };
