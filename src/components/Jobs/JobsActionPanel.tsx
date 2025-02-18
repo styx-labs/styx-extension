@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { PlusCircle, Eye, Loader2, Check } from "lucide-react";
 import { useExtensionMode } from "../../hooks/useExtensionMode";
+import { useSettings } from "../../contexts/SettingsContext";
 import type { Job } from "../../types";
 import {
   LoadingState,
@@ -36,6 +37,7 @@ interface JobsActionPanelProps {
     selectedIds?: string[]
   ) => void;
   onViewCandidates: (jobId: string) => void;
+  onJobChange?: (jobId: string) => void;
   isAdded: (jobId: string) => boolean;
   isLoading: (jobId: string) => boolean;
   jobs: Job[];
@@ -215,6 +217,7 @@ const AddButton: React.FC<{
 const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
   onAddCandidate,
   onViewCandidates,
+  onJobChange,
   isAdded,
   jobs,
   loading,
@@ -233,6 +236,7 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
   addingCandidateId,
 }) => {
   const { mode, setMode } = useExtensionMode();
+  const { autoMode, setAutoMode } = useSettings();
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>(() => {
     // Initialize with either external ID, saved ID, or undefined
     const savedJobId = localStorage.getItem(SELECTED_JOB_KEY);
@@ -263,6 +267,9 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
         onViewCandidates(jobId);
       }
     }
+
+    // Call the onJobChange prop if provided
+    onJobChange?.(jobId);
   };
 
   const handleAdd = () => {
@@ -373,6 +380,28 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
                                 When enabled, searches through candidate
                                 profiles and their previous jobs for better
                                 matches, but takes longer to process
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+
+                        {isSingleMode && (
+                          <TooltipProvider delayDuration={100}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center space-x-2">
+                                  <Switch
+                                    id="auto-mode"
+                                    checked={autoMode}
+                                    onCheckedChange={setAutoMode}
+                                  />
+                                  <Label htmlFor="auto-mode">Auto Mode</Label>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                When enabled, candidates will be automatically
+                                added to the selected job when viewing their
+                                profile
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>

@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createCandidate, getCandidates } from "../../utils/apiUtils";
 import { useJobsState } from "../../hooks/useJobsState";
 import { useUrlWatcher } from "../../hooks/useUrlWatcher";
+import { useSettings } from "../../contexts/SettingsContext";
 import JobsActionPanel from "./JobsActionPanel";
+
+const SELECTED_JOB_KEY = "styx-selected-job-id";
 
 const SingleProfileView: React.FC = () => {
   const {
@@ -16,9 +19,16 @@ const SingleProfileView: React.FC = () => {
     setLoadingJobs,
   } = useJobsState();
 
+  const { autoMode } = useSettings();
   const [isProcessing, setIsProcessing] = useState(false);
   const [useSearchMode, setUseSearchMode] = useState(false);
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [selectedJobId, setSelectedJobId] = useState<string | undefined>(() => {
+    // Initialize with saved job ID if it exists and is valid
+    const savedJobId = localStorage.getItem(SELECTED_JOB_KEY);
+    return savedJobId && jobs.some((job) => job.id === savedJobId)
+      ? savedJobId
+      : undefined;
+  });
   const [addingCandidateId, setAddingCandidateId] = useState<string | null>(
     null
   );
@@ -29,8 +39,24 @@ const SingleProfileView: React.FC = () => {
       setAddedJobs(new Set());
       setLoadingJobs(new Set());
       setAddingCandidateId(null);
+
+      // Auto-add candidate if auto mode is enabled and we have a selected job
+      if (autoMode && selectedJobId) {
+        console.log("Adding candidate to job", selectedJobId);
+        handleCreateCandidate(selectedJobId);
+      }
     }
   });
+
+  // Update selectedJobId when jobs load
+  useEffect(() => {
+    if (!loading && jobs.length > 0) {
+      const savedJobId = localStorage.getItem(SELECTED_JOB_KEY);
+      if (savedJobId && jobs.some((job) => job.id === savedJobId)) {
+        setSelectedJobId(savedJobId);
+      }
+    }
+  }, [loading, jobs]);
 
   const getProfileUrl = () => {
     if (useSearchMode) {
