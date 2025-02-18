@@ -3,15 +3,23 @@ import type { Candidate } from "@/types";
 import { CandidateSidebar } from "./CandidateSidebar";
 import { getCandidate, deleteCandidate } from "@/utils/apiUtils";
 
+interface GetCandidateResponse {
+  success: boolean;
+  candidate: Candidate | null;
+}
+
 interface AddModeCandidateSidebarProps {
   candidateId: string;
   jobId: string;
+  existingCandidate?: Candidate;
 }
 
 export const AddModeCandidateSidebar: React.FC<
   AddModeCandidateSidebarProps
-> = ({ candidateId, jobId }) => {
-  const [candidate, setCandidate] = useState<Candidate | null>(null);
+> = ({ candidateId, jobId, existingCandidate }) => {
+  const [candidate, setCandidate] = useState<Candidate | null>(
+    existingCandidate || null
+  );
   const [loading, setLoading] = useState(true);
   const [loadingStates, setLoadingStates] = useState<{
     [key: string]: { email: boolean; message: boolean };
@@ -19,16 +27,20 @@ export const AddModeCandidateSidebar: React.FC<
 
   const pollCandidate = async () => {
     try {
-      const foundCandidate = await getCandidate(jobId, candidateId);
-      if (foundCandidate) {
-        setCandidate(foundCandidate);
+      const response = (await getCandidate(
+        jobId,
+        candidateId
+      )) as unknown as GetCandidateResponse;
+
+      if (response?.success && response?.candidate) {
+        setCandidate(response.candidate);
         // If the candidate is complete, stop loading
-        if (foundCandidate.status === "complete") {
+        if (response.candidate.status === "complete") {
           setLoading(false);
           return true; // Signal to stop polling
         }
-      } else if (foundCandidate === null) {
-        // Candidate not found (404)
+      } else {
+        // Candidate not found or error
         setLoading(false);
         return true; // Stop polling
       }
@@ -41,6 +53,10 @@ export const AddModeCandidateSidebar: React.FC<
   };
 
   useEffect(() => {
+    if (existingCandidate) {
+      setLoading(false);
+      return;
+    }
     let pollInterval: NodeJS.Timeout;
 
     const startPolling = async () => {

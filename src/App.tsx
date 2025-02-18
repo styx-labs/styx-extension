@@ -3,6 +3,7 @@ import { Toaster } from "react-hot-toast";
 import SingleProfileView from "./components/Jobs/SingleProfileView";
 import SearchView from "./components/Jobs/SearchView";
 import RecruiterSearchView from "./components/Jobs/RecruiterSearchView";
+import RecruiterSingleProfileView from "./components/Jobs/RecruiterSingleProfileView";
 import CompanyView from "./components/Jobs/CompanyView";
 import FallbackView from "./components/Jobs/FallbackView";
 import { LayoutProvider } from "./contexts/LayoutContext";
@@ -69,6 +70,19 @@ const App: React.FC = () => {
     /\/talent\/hire\/[^/]+\/discover\/automatedSourcing/,
     /\/talent\/hire\/[^/]+\/manage/,
   ];
+
+  const recruiterProfilePath = [
+    /\/talent\/hire\/[^/]+\/discover\/recruiterSearch\/profile\/[^/?]+/,
+    /\/talent\/hire\/[^/]+\/manage\/all\/profile\/[^/?]+/,
+  ];
+
+  if (pathMatches(recruiterProfilePath)) {
+    return (
+      <PageLayout>
+        <RecruiterSingleProfileView />
+      </PageLayout>
+    );
+  }
 
   if (pathMatches(recruiterPaths)) {
     return (

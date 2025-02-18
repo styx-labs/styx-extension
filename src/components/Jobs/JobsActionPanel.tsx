@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { PlusCircle, Eye, Loader2, Check } from "lucide-react";
 import { useExtensionMode } from "../../hooks/useExtensionMode";
 import { useSettings } from "../../contexts/SettingsContext";
-import type { Job } from "../../types";
+import type { Job, Candidate } from "../../types";
 import {
   LoadingState,
   ErrorState,
@@ -60,6 +60,7 @@ interface JobsActionPanelProps {
   isSingleMode?: boolean;
   customAddMessage?: string;
   addingCandidateId?: string | null;
+  existingCandidate?: Candidate;
 }
 
 const SELECTED_JOB_KEY = "styx-selected-job-id";
@@ -234,6 +235,7 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
   isSingleMode = false,
   customAddMessage,
   addingCandidateId,
+  existingCandidate,
 }) => {
   const { mode, setMode } = useExtensionMode();
   const { autoMode, setAutoMode } = useSettings();
@@ -376,7 +378,7 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
                                   </Label>
                                 </div>
                               </TooltipTrigger>
-                              <TooltipContent>
+                              <TooltipContent className="w-48">
                                 When enabled, searches through candidate
                                 profiles and their previous jobs for better
                                 matches, but takes longer to process
@@ -398,7 +400,7 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
                                   <Label htmlFor="auto-mode">Auto Mode</Label>
                                 </div>
                               </TooltipTrigger>
-                              <TooltipContent>
+                              <TooltipContent className="w-48">
                                 When enabled, candidates will be automatically
                                 added to the selected job when viewing their
                                 profile
@@ -441,6 +443,7 @@ const JobsActionPanel: React.FC<JobsActionPanelProps> = ({
         <AddModeCandidateSidebar
           candidateId={addingCandidateId}
           jobId={selectedJobId}
+          existingCandidate={existingCandidate}
         />
       )}
     </ExtensionContainer>

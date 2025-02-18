@@ -347,8 +347,8 @@ const ProcessingCandidateRow: React.FC<{
         </div>
       </div>
     </td>
-    <td className="px-6 py-4 whitespace-nowrap text-center max-w-[60px] min-w-[60px]">
-      <Skeleton className="h-8 w-[60px] mx-auto rounded-full" />
+    <td className="px-6 py-4 whitespace-nowrap max-w-[80px] min-w-[80px]">
+      <Skeleton className="h-8 w-[80px] mx-auto rounded-full" />
     </td>
     <td className="px-6 py-4 whitespace-nowrap text-center min-w-[100px]">
       <div className="flex flex-col items-center gap-2 text-xs">
@@ -370,7 +370,7 @@ const LoadingIndicatorCard: React.FC<{
   }, 0);
 
   return (
-    <div className="mx-6 mb-4 rounded-lg bg-purple-100 border border-purple-200 shadow-sm">
+    <div className="mx-6 my-4 rounded-lg bg-purple-100 border border-purple-200 shadow-sm">
       <div className="px-4 py-3">
         <div className="flex items-center gap-2 text-xs text-purple-700">
           <Loader2 className="h-4 w-4 animate-spin" />
